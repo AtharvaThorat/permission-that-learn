@@ -1,0 +1,21 @@
+{
+  "baseline": {
+    "checkpoint": "convaiinnovations/laya",
+    "revision": "7b928d828b7b0e022f929d9bd2e44165aa270148"
+  },
+  "typed-decisions": {
+    "checkpoint": "convaiinnovations/laya-typed-decisions",
+    "revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0"
+  },
+  "default_profile": "baseline",
+  "default_question_mode": "single",
+  "device": "cpu",
+  "question_template_versions": {
+    "single": "single-v1",
+    "decomposed": "decomposed-v1"
+  },
+  "experimental": [
+    "typed-decisions",
+    "decomposed"
+  ]
+}

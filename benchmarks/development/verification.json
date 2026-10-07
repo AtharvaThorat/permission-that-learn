@@ -1,0 +1,42 @@
+{
+  "controls_match": true,
+  "changed_decision_case_ids": [],
+  "equivalent_behavior": true,
+  "reference_timing_reused": false,
+  "python": "3.13.9",
+  "status": "completed",
+  "checkpoint": "convaiinnovations/laya",
+  "revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+  "device": "cpu",
+  "overall": {
+    "count": 20,
+    "correct": 14,
+    "accuracy": 0.7
+  },
+  "semantic": {
+    "count": 15,
+    "correct": 7,
+    "accuracy": 0.4666666666666667
+  },
+  "incorrect_allow_case_ids": [
+    "GK-007",
+    "GK-008",
+    "GK-009",
+    "GK-011",
+    "GK-016"
+  ],
+  "initialization_seconds": 13.138228900003014,
+  "first_inference_seconds": 0.39349790001870133,
+  "warm_inference_and_ipc_seconds": {
+    "count": 15,
+    "median": 0.465059400012251,
+    "min": 0.38322300001163967,
+    "max": 0.547865999978967
+  },
+  "load_warnings": [
+    "laya: this checkpoint ships invalid temperatures or values outside [0.5, 5]; using choice:11+=0.10058280825614929 -> 0.5. Treat confidence from the affected entries as uncalibrated."
+  ],
+  "isolated_environment": true,
+  "cache_mode": "offline reuse; no weights copied",
+  "verification_date": "2026-10-07"
+}

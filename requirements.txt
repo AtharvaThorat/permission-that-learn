@@ -1,0 +1,11 @@
+# Working inference stack; verified on Python 3.13.9 (Windows).
+laya==0.3.28
+torch==2.14.1
+transformers==5.19.0
+tokenizers==0.23.2
+huggingface-hub==1.33.0
+safetensors==0.8.0
+numpy==2.5.3
+pydantic==2.12.3
+pydantic-core==2.41.4
+pytest==9.1.1
