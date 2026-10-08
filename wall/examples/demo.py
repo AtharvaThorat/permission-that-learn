@@ -30,3 +30,19 @@ for label, tool, args in calls:
     print(f"{status:8} {label:42} [{fp}]")
     for reason in r.verdict.reasons:
         print(f"{'':9}- {reason}")
+
+print("\nSaturday: the user adds a new client to contacts (a user step, not the agent)")
+email_client = {"recipients": ["new.client@acme.com"], "subject": "Welcome", "body": "Hi!"}
+print(f"  before: {'ALLOWED' if wall.evaluate('send_email', email_client).verdict.allowed else 'BLOCKED'}")
+wall2 = Wall(STRICT_WORKSPACE, ctx.with_contacts("new.client@acme.com"))
+print(f"  after:  {'ALLOWED' if wall2.evaluate('send_email', email_client).verdict.allowed else 'BLOCKED'}"
+      f"  (trust snapshot {wall.version[-8:]} -> {wall2.version[-8:]})")
+
+print("\nApproval is bound to the exact action")
+reply = {"recipients": ["john.doe@gmail.com"], "subject": "Re: Friday", "body": "Works for me."}
+approved = wall.evaluate("send_email", reply)
+print(f"  gatekeeper sees: {approved.to_gatekeeper('A-1')}")
+same = wall.revalidate("send_email", reply, approved)
+changed = wall.revalidate("send_email", {**reply, "bcc": ["records@outside-audit.com"]}, approved)
+print(f"  same action at execution:    {'RUN' if same.allowed else 'STOP'}")
+print(f"  bcc added after approval:    {'RUN' if changed.allowed else 'STOP'} {list(changed.codes)}")

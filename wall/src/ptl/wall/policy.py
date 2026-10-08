@@ -72,34 +72,41 @@ class WallPolicy(BaseModel):
 
     def check(self, action: Action) -> Verdict:
         reasons: list[str] = []
+        codes: list[str] = []
 
         if action.tool in self.forbidden_tools:
             reasons.append(f"tool '{action.tool}' is forbidden")
+            codes.append("TOOL_FORBIDDEN")
 
         allowed = self.allowed_targets(action.capability)
         if not allowed:
             reasons.append(f"capability '{action.capability.value}' is not allowed")
+            codes.append(f"CAPABILITY_NOT_GRANTED:{action.capability.value}")
         else:
             bad = sorted({t.value for t in action.targets if t not in allowed})
             if bad:
                 reasons.append(f"'{action.capability.value}' is not allowed to: {', '.join(bad)}")
+                codes.extend(f"TARGET_NOT_ALLOWED:{b}" for b in bad)
 
         if action.has_attachments:
             bad = sorted({t.value for t in action.targets if t not in self.attachments_allowed_to})
             if bad:
                 reasons.append(f"attachments are not allowed to: {', '.join(bad)}")
+                codes.extend(f"ATTACHMENT_NOT_ALLOWED:{b}" for b in bad)
 
         if self.max_recipients is not None and len(action.target_addresses) > self.max_recipients:
             reasons.append(
                 f"{len(action.target_addresses)} recipients exceeds the limit of {self.max_recipients}"
             )
+            codes.append("TOO_MANY_RECIPIENTS")
 
         if action.capability == Capability.SHARE:
             level = normalize_share_permission(action.share_permission)
             if _SHARE_RANK[level] > _SHARE_RANK[self.max_share_permission]:
                 reasons.append(f"sharing with '{level}' access exceeds '{self.max_share_permission}'")
+                codes.append("SHARE_LEVEL_EXCEEDED")
 
-        return Verdict(allowed=not reasons, reasons=tuple(reasons))
+        return Verdict(allowed=not reasons, reasons=tuple(reasons), codes=tuple(codes))
 
     # ------------------------------------------------------------------ identity
     def canonical_json(self) -> str:

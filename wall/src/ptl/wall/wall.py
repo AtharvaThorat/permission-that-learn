@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+import hashlib
+import json
+from collections.abc import Mapping
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -16,6 +19,15 @@ class UnknownToolError(KeyError):
     """Raised when a tool is not in the inventory. The Wall treats this as a block."""
 
 
+def action_digest(tool: str, args: Mapping[str, Any]) -> str:
+    """Hash of the exact tool call (tool + every argument). Binds an approval to this one action.
+
+    Any change to any argument, including the email body, gives a different digest.
+    """
+    canonical = json.dumps({"tool": tool, "args": args}, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode()).hexdigest()[:32]
+
+
 class WallResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -23,6 +35,32 @@ class WallResult(BaseModel):
     action: Action | None
     verdict: Verdict
     policy_fingerprint: str
+    context_fingerprint: str = ""
+    action_digest: str = ""
+
+    @property
+    def wall_version(self) -> str:
+        """One opaque string for "which limits and which trust snapshot made this decision"."""
+        return f"{self.policy_fingerprint}.{self.context_fingerprint}"
+
+    def to_gatekeeper(self, action_id: str) -> dict:
+        """The `wall` object of the gatekeeper contract (data/gatekeeper_contract.md, v0.1).
+
+        PASS / DENY, `policy_version`, `evaluated_action_id`, `reason_codes`. The harness supplies
+        `action_id`; it must be the same ID it sends to the gatekeeper for this action.
+        """
+        if not action_id:
+            raise ValueError("action_id is required")
+        return {
+            "verdict": "PASS" if self.verdict.allowed else "DENY",
+            "policy_version": self.wall_version,
+            "evaluated_action_id": action_id,
+            "reason_codes": list(self.verdict.codes),
+        }
+
+    def blocked_message(self) -> str:
+        """Text to return to the agent instead of running the tool. Lists reasons, not the policy."""
+        return f"Blocked by policy: the '{self.tool}' call was not run ({'; '.join(self.verdict.reasons)})."
 
 
 class Wall:
@@ -33,6 +71,7 @@ class Wall:
         self._context = context
         self._inventory = inventory or ToolInventory.workspace()
         self._fingerprint = policy.fingerprint()
+        self._context_fingerprint = context.fingerprint()
 
     @property
     def policy(self) -> WallPolicy:
@@ -46,6 +85,10 @@ class Wall:
     def fingerprint(self) -> str:
         return self._fingerprint
 
+    @property
+    def version(self) -> str:
+        return f"{self._fingerprint}.{self._context_fingerprint}"
+
     def to_action(self, tool: str, args: Mapping[str, Any]) -> Action:
         spec = self._inventory.get(tool)
         if spec is None:
@@ -53,14 +96,30 @@ class Wall:
 
         addresses: list[str] = []
         targets: list[TargetClass] = []
+
+        def add(raw: object) -> None:
+            addresses.append(str(raw))
+            targets.append(self._context.classify(raw))
+
         for arg in spec.target_args:
             value = args.get(arg)
             if value is None:
                 continue
             items = value if isinstance(value, (list, tuple)) else [value]
             for item in items:
-                addresses.append(str(item))
-                targets.append(self._context.classify(item))
+                add(item)
+
+        if spec.requires_target and not targets:
+            targets.append(TargetClass.UNKNOWN)            # e.g. an email with no recipient
+
+        if spec.resource_arg is not None:
+            people = self._context.resource_people(spec.resource_kind, args.get(spec.resource_arg))
+            if people is None:
+                targets.append(TargetClass.UNKNOWN)        # unknown event/file: fail closed
+            else:
+                for person in sorted(people):
+                    if self._context.classify(person) is not TargetClass.SELF:
+                        targets.append(self._context.classify(person))
 
         has_attachments = bool(args.get(spec.attachment_arg)) if spec.attachment_arg else False
         permission = (
@@ -77,14 +136,38 @@ class Wall:
 
     def evaluate(self, tool: str, args: Mapping[str, Any] | None = None) -> WallResult:
         args = args or {}
+        common = {
+            "tool": tool,
+            "policy_fingerprint": self._fingerprint,
+            "context_fingerprint": self._context_fingerprint,
+        }
+        if not isinstance(args, Mapping):
+            verdict = Verdict(allowed=False, reasons=("tool arguments are not a mapping",), codes=("MALFORMED_ARGS",))
+            return WallResult(action=None, verdict=verdict, **common)
+        digest = action_digest(tool, args)
         try:
             action = self.to_action(tool, args)
         except UnknownToolError:
-            verdict = Verdict(allowed=False, reasons=(f"unknown tool '{tool}' is not in the inventory",))
-            return WallResult(tool=tool, action=None, verdict=verdict, policy_fingerprint=self._fingerprint)
-        return WallResult(
-            tool=tool,
-            action=action,
-            verdict=self._policy.check(action),
-            policy_fingerprint=self._fingerprint,
-        )
+            verdict = Verdict(allowed=False, reasons=(f"unknown tool '{tool}' is not in the inventory",),
+                              codes=("UNKNOWN_TOOL",))
+            return WallResult(action=None, verdict=verdict, action_digest=digest, **common)
+        return WallResult(action=action, verdict=self._policy.check(action), action_digest=digest, **common)
+
+    def revalidate(self, tool: str, args: Mapping[str, Any] | None, approved: WallResult) -> Verdict:
+        """Check again right before execution, against an earlier PASS (e.g. one the user approved).
+
+        Blocks if the action changed in any way, if the limits or trust snapshot changed since,
+        or if the action no longer passes. Call this in the executor, after the gatekeeper.
+        """
+        now = self.evaluate(tool, args)
+        reasons, codes = list(now.verdict.reasons), list(now.verdict.codes)
+        if not approved.verdict.allowed:
+            reasons.append("the earlier wall result was not a pass")
+            codes.append("NOT_PREVIOUSLY_PASSED")
+        if now.action_digest != approved.action_digest or now.tool != approved.tool:
+            reasons.append("the action changed after it was checked")
+            codes.append("ACTION_CHANGED")
+        if now.wall_version != approved.wall_version:
+            reasons.append("the user's limits or trust snapshot changed after the check")
+            codes.append("WALL_VERSION_CHANGED")
+        return Verdict(allowed=not reasons, reasons=tuple(reasons), codes=tuple(codes))

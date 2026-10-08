@@ -6,7 +6,7 @@ test_properties_hypothesis.py runs the same properties with Hypothesis (and shri
 
 import random
 
-from ptl.wall import ALLOW_ALL, TargetClass, Wall, WallContext, WallPolicy
+from ptl.wall import ALLOW_ALL, TargetClass, Wall, WallContext, WallPolicy, action_digest
 
 from .constants import ACCOUNT, CONTACT
 from .generators import gen_call, gen_policy, weaken
@@ -55,12 +55,25 @@ def check_deterministic_and_policy_unchanged(rng):
     assert policy.fingerprint() == before
 
 
+def check_revalidate_never_looser_than_evaluate(rng):
+    policy = gen_policy(rng)
+    wall = Wall(policy, CTX)
+    tool, args = gen_call(rng)
+    first = wall.evaluate(tool, args)
+    again = wall.revalidate(tool, args, first)
+    assert again.allowed == first.verdict.allowed
+    other_tool, other_args = gen_call(rng)
+    if (other_tool, other_args) != (tool, args) and wall.revalidate(other_tool, other_args, first).allowed:
+        assert action_digest(other_tool, other_args) == first.action_digest
+
+
 PROPERTIES = [
     check_deny_by_default,
     check_unknown_targets_always_blocked,
     check_weaker_policy_never_allows_more,
     check_allowed_means_every_target_granted,
     check_deterministic_and_policy_unchanged,
+    check_revalidate_never_looser_than_evaluate,
 ]
 
 
@@ -88,3 +101,7 @@ def test_allowed_means_every_target_granted():
 
 def test_deterministic_and_policy_unchanged():
     _fuzz(check_deterministic_and_policy_unchanged)
+
+
+def test_revalidate_never_looser_than_evaluate():
+    _fuzz(check_revalidate_never_looser_than_evaluate)

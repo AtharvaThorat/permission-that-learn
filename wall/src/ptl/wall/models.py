@@ -62,9 +62,14 @@ class Action(BaseModel):
 
 
 class Verdict(BaseModel):
-    """The Wall's answer. `reasons` is empty when allowed, and explains every violation otherwise."""
+    """The Wall's answer. `reasons` is empty when allowed, and explains every violation otherwise.
+
+    `codes` carries the same violations in machine-readable form (for logs and the gatekeeper),
+    e.g. "TARGET_NOT_ALLOWED:external". `reasons` is the human-readable text.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     allowed: bool
     reasons: tuple[str, ...] = ()
+    codes: tuple[str, ...] = ()
