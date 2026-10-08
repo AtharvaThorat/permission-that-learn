@@ -22,3 +22,7 @@ pythonpath = ["src", "."]
 
 [tool.ruff]
 line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]  # line length is a style choice, not a defect
