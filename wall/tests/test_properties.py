@@ -1,0 +1,90 @@
+"""Property tests: the guarantees the rest of the system relies on.
+
+Seeded random fuzzing, so these always run, even without Hypothesis installed.
+test_properties_hypothesis.py runs the same properties with Hypothesis (and shrinking).
+"""
+
+import random
+
+from ptl.wall import ALLOW_ALL, TargetClass, Wall, WallContext, WallPolicy
+
+from .constants import ACCOUNT, CONTACT
+from .generators import gen_call, gen_policy, weaken
+
+CTX = WallContext.for_account(ACCOUNT, contacts=[CONTACT])
+N = 3000
+
+
+def check_deny_by_default(rng):
+    tool, args = gen_call(rng)
+    assert not Wall(WallPolicy(), CTX).evaluate(tool, args).verdict.allowed
+
+
+def check_unknown_targets_always_blocked(rng):
+    policy = rng.choice([gen_policy(rng), ALLOW_ALL])
+    tool, args = gen_call(rng)
+    r = Wall(policy, CTX).evaluate(tool, args)
+    if r.action and TargetClass.UNKNOWN in r.action.targets:
+        assert not r.verdict.allowed
+
+
+def check_weaker_policy_never_allows_more(rng):
+    strong = gen_policy(rng)
+    weak = weaken(strong, rng)
+    tool, args = gen_call(rng)
+    if Wall(weak, CTX).evaluate(tool, args).verdict.allowed:
+        assert Wall(strong, CTX).evaluate(tool, args).verdict.allowed
+
+
+def check_allowed_means_every_target_granted(rng):
+    policy = gen_policy(rng)
+    tool, args = gen_call(rng)
+    r = Wall(policy, CTX).evaluate(tool, args)
+    if r.verdict.allowed:
+        granted = policy.allowed_targets(r.action.capability)
+        assert all(t in granted for t in r.action.targets)
+        assert tool not in policy.forbidden_tools
+
+
+def check_deterministic_and_policy_unchanged(rng):
+    policy = gen_policy(rng)
+    before = policy.fingerprint()
+    wall = Wall(policy, CTX)
+    tool, args = gen_call(rng)
+    assert wall.evaluate(tool, args).verdict == wall.evaluate(tool, args).verdict
+    assert policy.fingerprint() == before
+
+
+PROPERTIES = [
+    check_deny_by_default,
+    check_unknown_targets_always_blocked,
+    check_weaker_policy_never_allows_more,
+    check_allowed_means_every_target_granted,
+    check_deterministic_and_policy_unchanged,
+]
+
+
+def _fuzz(prop):
+    rng = random.Random(1234)
+    for _ in range(N):
+        prop(rng)
+
+
+def test_deny_by_default():
+    _fuzz(check_deny_by_default)
+
+
+def test_unknown_targets_always_blocked():
+    _fuzz(check_unknown_targets_always_blocked)
+
+
+def test_weaker_policy_never_allows_more():
+    _fuzz(check_weaker_policy_never_allows_more)
+
+
+def test_allowed_means_every_target_granted():
+    _fuzz(check_allowed_means_every_target_granted)
+
+
+def test_deterministic_and_policy_unchanged():
+    _fuzz(check_deterministic_and_policy_unchanged)

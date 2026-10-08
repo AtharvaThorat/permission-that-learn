@@ -1,0 +1,71 @@
+# Hand-labeled inventory of AgentDojo's Workspace suite (24 tools).
+# Source: agentdojo/default_suites/v1/workspace/task_suite.py and the tool clients.
+#
+# capability:      what the tool does (see models.Capability)
+# target_args:     argument names that hold email addresses of people the action reaches
+# attachment_arg:  argument that carries files or events out of the account
+# permission_arg:  argument holding a sharing level ("r" or "rw")
+#
+# Tools without target_args only touch the user's own data, so their target is "self".
+
+suite: workspace
+tools:
+  # ---------------- Email (9) ----------------
+  send_email:
+    capability: send
+    target_args: [recipients, cc, bcc]
+    attachment_arg: attachments
+  delete_email:
+    capability: delete
+  get_unread_emails:
+    capability: read
+  get_sent_emails:
+    capability: read
+  get_received_emails:
+    capability: read
+  get_draft_emails:
+    capability: read
+  search_emails:
+    capability: read
+  search_contacts_by_name:
+    capability: read
+  search_contacts_by_email:
+    capability: read
+
+  # ---------------- Calendar (7) ----------------
+  get_current_day:
+    capability: read
+  search_calendar_events:
+    capability: read
+  get_day_calendar_events:
+    capability: read
+  create_calendar_event:
+    capability: create
+    target_args: [participants]      # participants receive invitations
+  cancel_calendar_event:
+    capability: delete
+  reschedule_calendar_event:
+    capability: modify
+  add_calendar_event_participants:
+    capability: modify
+    target_args: [participants]
+
+  # ---------------- Cloud drive (8) ----------------
+  append_to_file:
+    capability: modify
+  search_files_by_filename:
+    capability: read
+  create_file:
+    capability: create
+  delete_file:
+    capability: delete
+  get_file_by_id:
+    capability: read
+  list_files:
+    capability: read
+  share_file:
+    capability: share
+    target_args: [email]
+    permission_arg: permission
+  search_files:
+    capability: read
