@@ -35,20 +35,125 @@ a tool call          â”‚              (labels)   (frozen snapshot)    check    â
 
 ## Contents
 
-1. [Quick start](#quick-start)
-2. [The verdict: PASS, DENY, UNKNOWN](#the-verdict-pass-deny-unknown)
-3. [How a call is checked](#how-a-call-is-checked)
-4. [Plugging in: harness, gatekeeper, executor](#plugging-in-harness-gatekeeper-executor)
-5. [Reason codes](#reason-codes)
-6. [Policies and presets](#policies-and-presets)
-7. [Changing the limits](#changing-the-limits)
-8. [Results on AgentDojo](#results-on-agentdojo)
-9. [Guarantees and how they are tested](#guarantees-and-how-they-are-tested)
-10. [Known limits](#known-limits)
-11. [Project layout](#project-layout)
-12. [Status and next steps](#status-and-next-steps)
+1. [What is built](#what-is-built)
+2. [Quick start](#quick-start)
+3. [The verdict: PASS, DENY, UNKNOWN](#the-verdict-pass-deny-unknown)
+4. [How a call is checked](#how-a-call-is-checked)
+5. [Plugging in: harness, gatekeeper, executor](#plugging-in-harness-gatekeeper-executor)
+6. [Reason codes](#reason-codes)
+7. [Policies and presets](#policies-and-presets)
+8. [Changing the limits](#changing-the-limits)
+9. [Results on AgentDojo](#results-on-agentdojo)
+10. [Guarantees and how they are tested](#guarantees-and-how-they-are-tested)
+11. [Known limits](#known-limits)
+12. [Project layout](#project-layout)
+13. [Status and next steps](#status-and-next-steps)
+---
+
+## What is built
+
+Everything below is implemented on `feature/wall`, covered by tests, and passing CI (ruff and
+pytest on Python 3.11, also checked on 3.13). "Verified by" names the evidence, so a reader can
+check each claim.
+
+### 1. Tool labels for the whole Workspace suite
+
+| | |
+|---|---|
+| **What** | All 24 AgentDojo Workspace tools hand-labeled with a capability (`read`, `create`, `modify`, `send`, `share`, `delete`), the arguments that name people, the attachment argument, the sharing-level argument, whether a recipient is required, and which event or file the call touches |
+| **Where** | `workspace_tools.yaml`, `inventory.py` |
+| **Why** | Code tells you what a tool *can* do; the labels say what it means for the user. Labeling by hand avoids trusting an automatic scan |
+| **Verified by** | `test_wall.py` checks all 24 are present (14 read, 3 delete). Tool names and argument names were checked against AgentDojo's source (commit 089ed468, suite v1.2.2) |
+
+### 2. Who-does-it-reach classification
+
+| | |
+|---|---|
+| **What** | Every address in a call is classified as `self`, `internal`, `contact`, `external`, or `unknown` from a frozen snapshot of the user's account, trusted domains, and contacts. Display names (`Bob <bob@x.com>`) and case are normalized; lookalike domains, subdomains, non-ASCII text and several addresses in one string are caught |
+| **Where** | `context.py` (`WallContext.classify`, `normalize_address`) |
+| **Also built** | Resource labels: rescheduling or cancelling an event, or appending to a file, also counts everyone who can already see it (`event_participants`, `file_collaborators`). `WallContext.from_agentdojo_env()` takes the snapshot from a clean AgentDojo environment |
+| **Verified by** | `test_context.py` (8 tests: classes, normalization, lookalikes, malformed input, AgentDojo snapshot); resource cases in `test_integration_contract.py` |
+
+### 3. The policy and the check
+
+| | |
+|---|---|
+| **What** | `WallPolicy`: a frozen, deny-by-default set of grants (capability to target classes), plus limits on attachments, recipient count (`max_recipients`), and sharing level (`r` or `rw`), and an optional forbidden-tool list. `check()` lists every problem as readable text and as a stable reason code |
+| **Where** | `policy.py`, `presets.py` |
+| **Presets** | `STRICT_WORKSPACE` (the pitch's limits), `WORKSPACE_RELAXED`, `READ_ONLY`, `ALLOW_ALL` (baseline) |
+| **Safety** | `unknown` can never be granted; unknown fields are rejected; each capability is granted once; policies cannot be edited in place; `fingerprint()` hashes the policy so any change is visible; `explain()` prints it in plain English for the user to confirm |
+| **Verified by** | `test_wall.py` (21 tests: pitch examples, delete always blocked, one bad recipient blocks the email, sharing rules, policy integrity, fingerprints, `explain`) |
+
+### 4. Three-way verdict: PASS, DENY, UNKNOWN
+
+| | |
+|---|---|
+| **What** | `Wall.evaluate(tool, args)` returns `PASS`, `DENY` (a verified violation), or `UNKNOWN` (nothing violated, but the Wall cannot verify the call). The decision is derived from the reason codes, so it cannot disagree with them, and `DENY` beats `UNKNOWN` |
+| **Fail closed** | `evaluate` never raises: unknown tools, non-dict arguments, malformed or missing recipients, unknown events or files, bad tool names, and internal errors all become `UNKNOWN`, never `PASS` |
+| **Where** | `models.py` (`Verdict.decision`, `WallDecision`, `UNVERIFIABLE_CODES`), `wall.py` |
+| **Verified by** | `test_decision.py` (23 tests covering each outcome, DENY beating UNKNOWN, internal errors, bad tool names) and a property test that the verdict always matches its codes |
+
+### 5. Gatekeeper contract output
+
+| | |
+|---|---|
+| **What** | `WallResult.to_gatekeeper(action_id)` emits the exact `wall` object of the gatekeeper contract v0.1: `verdict`, `policy_version`, `evaluated_action_id`, `reason_codes`, and no extra fields. `blocked_message()` gives the text returned to the agent instead of running a blocked tool |
+| **Verified by** | `test_integration_contract.py` mirrors the gatekeeper's strict schema and replays the gatekeeper's own 20 fixture cases (using `tests/data/gatekeeper_mock_tools.yaml` for its mock tool names). The Wall matches every policy case; the documented exceptions are GK-019 (`UNKNOWN` by design) and GK-020 (a harness condition) |
+
+### 6. Approval bound to the exact action
+
+| | |
+|---|---|
+| **What** | `action_digest` hashes the tool plus every argument (key order ignored). `wall_version` combines the policy fingerprint and the snapshot fingerprint. `Wall.revalidate(tool, args, approved=...)` re-runs the Wall right before execution and blocks with `ACTION_CHANGED`, `WALL_VERSION_CHANGED`, or `NOT_PREVIOUSLY_PASSED` |
+| **Why** | An approval for "reply to John" cannot be reused for "reply to John and bcc a stranger", or after the user tightens a limit |
+| **Verified by** | `test_integration_contract.py` (digest sensitivity, changed body or cc, policy change, contact change, a DENY never becoming a pass) and a property test that `revalidate` is never looser than `evaluate` |
+
+### 7. User-confirmed changes to the limits
+
+| | |
+|---|---|
+| **What** | `PolicyHistory`: an append-only list of policy versions. `replace()` refuses unless `confirmed` is exactly `True`. `WallContext.with_contacts()` is the user step for adding a contact. Both change `wall_version`, so old approvals stop working |
+| **Where** | `versioning.py`, `context.py` |
+| **Verified by** | `test_integration_contract.py` (confirmation required, versions increase, identical resubmission still versioned, contact addition changes the version) |
+
+### 8. Plain-English policy drafting
+
+| | |
+|---|---|
+| **What** | `draft_policy(text, llm=...)` asks any LLM (a plain `str -> str` function) to turn the user's own words into a policy once, before the agent runs. Output is strictly validated: non-JSON, unknown fields, or `unknown` targets raise `PolicyDraftError`. The user confirms `explain()` before it is used |
+| **Where** | `from_text.py`; `scripts/check_draft_policy.py` sends 10 phrasings to an OpenAI-compatible endpoint and flags any draft looser than `STRICT_WORKSPACE` |
+| **Verified by** | `test_from_text.py` (8 tests with a stubbed LLM). **Not yet run with a real model** |
+
+### 9. Replay against AgentDojo and labeled actions
+
+| | |
+|---|---|
+| **What** | `scripts/replay_agentdojo.py` runs every Workspace user task (40) and injection task (14) through the Wall under each preset, without an LLM. Injection tasks 6 to 13 ship no reference calls, so their essential calls were reconstructed from each goal's text |
+| **Output** | `benchmarks/agentdojo_workspace_v1.2.2_wall_labels.jsonl`: 504 calls (376 AgentDojo reference calls, 128 reconstructed), each with its verdict in gatekeeper format. Reusable as labeled actions for the gatekeeper and the evaluation |
+| **Result** | Strict limits stop all 14 injection goals and block 11 of 40 honest tasks; see [Results on AgentDojo](#results-on-agentdojo). These numbers were rechecked against the committed labels file |
+
+### 10. Property tests and CI
+
+| | |
+|---|---|
+| **What** | Seven guarantees checked on 3,000 seeded random cases each, and again under Hypothesis: deny by default, `unknown` never allowed, a weaker policy never allows more, allowed means every target was granted, deterministic results, `revalidate` never looser than `evaluate`, verdict matches codes |
+| **CI** | `.github/workflows/wall-ci.yml` runs `ruff check .` and `pytest -q` on Python 3.11 for every change under `wall/` |
+| **Count** | 96 tests: `test_wall.py` 21, `test_decision.py` 23, `test_integration_contract.py` 22, `test_context.py` 8, `test_from_text.py` 8, `test_properties.py` 7, `test_properties_hypothesis.py` 7 |
+
+### What is not built or not verified yet
+
+| Item | Status |
+|---|---|
+| Running inside a live agent loop | Not yet. The harness (AgentDojo runner) is separate work; every result above uses replayed reference calls, not a real agent's choices |
+| A real proposed call from the team's acting model | Not yet run through `evaluate`; planned for the Oct 17 checkpoint |
+| Gatekeeper handling `UNKNOWN` end to end | The gatekeeper's schema accepts it; its decision logic for `UNKNOWN` is not yet confirmed |
+| AgentDojo tool names in the gatekeeper | The gatekeeper's fixtures use mock names (`email.send`); the live pipeline needs AgentDojo names (`send_email`) |
+| `draft_policy` with a real LLM | Built and unit-tested with a stub; `scripts/check_draft_policy.py` has not been run with an API key |
+| Reading content (email bodies, file text) | Not built, by design. Content attacks to allowed people are the gatekeeper's job |
+| Suites other than Workspace | Not built. Banking (a `pay` capability with amount limits) is a stretch goal |
 
 ---
+
 
 ## Quick start
 
@@ -396,10 +501,7 @@ change under `wall/`.
 
 ## Status and next steps
 
-**Done:** labels for all 24 Workspace tools; deterministic PASS / DENY / UNKNOWN checks;
-gatekeeper contract output; exact-action binding and pre-execution revalidation; resource labels
-for events and files; versioned, user-confirmed limits; replay against every Workspace user and
-injection task.
+**Done:** see [What is built](#what-is-built) for each component and its evidence.
 
 **Next:**
 
