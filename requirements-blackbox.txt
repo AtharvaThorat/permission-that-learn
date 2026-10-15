@@ -1,0 +1,6 @@
+# Proposed CPU integration additions. NOT resolved/installed/verified in this phase.
+# Preserve the existing full lock, including Laya/model pins.
+-r requirements-lock.txt
+agentdojo @ git+https://github.com/ethz-spylab/agentdojo.git@089ed468cf3ed0322acc66b0211f26d9d90dbf60
+# Upstream agent_pipeline imports requests; retain an explicit dependency.
+requests>=2.32.3,<3

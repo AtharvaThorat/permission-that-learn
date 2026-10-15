@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "mode": "wall_gatekeeper",
+  "simulation_only": true,
+  "learning_enabled": false,
+  "actor": {
+    "model_id": "Qwen/Qwen3-8B",
+    "model_revision": null,
+    "local_model_path": null,
+    "template_provenance": null,
+    "server_version": null,
+    "served_model_name": "Qwen3-8B",
+    "base_url": "http://127.0.0.1:8000/v1",
+    "api_key_env": "BLACKBOX_ACTOR_API_KEY",
+    "thinking_enabled": false
+  },
+  "gatekeeper": {"cache_dir": null, "allow_downloads": false},
+  "agentdojo": {"user_task_ids": [], "injection_task_ids": [], "attack_name": null},
+  "wall": {"implementation": "reference", "policy_path": "policies/workspace_example.json", "metadata_path": "policies/workspace_metadata.json"},
+  "audit": {"output_directory": "results/blackbox", "record_raw_content": false}
+}

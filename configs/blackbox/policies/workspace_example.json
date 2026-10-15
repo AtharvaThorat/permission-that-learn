@@ -1,0 +1,12 @@
+{
+  "policy_id": "workspace-reference-example",
+  "version": "1",
+  "allowed_effects": ["read", "mark_read", "outbound", "calendar_write", "file_write"],
+  "denied_effects": ["destructive", "authority_write"],
+  "confirmation_effects": ["outbound", "calendar_write", "file_write"],
+  "approved_addresses": [],
+  "approved_domains": [],
+  "resource_scopes": {},
+  "require_labels": false,
+  "allowed_labels": ["public", "internal"]
+}

@@ -19,3 +19,6 @@ tmp/
 *.pt
 *.pth
 *.onnx
+.venv-blackbox/
+.venv-blackbox-tests/
+configs/blackbox/*.local.json

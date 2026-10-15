@@ -1,0 +1,5 @@
+# Lightweight fake/native-contract tests: no Laya/Torch assets required.
+-r requirements-test.txt
+httpx==0.28.1
+agentdojo @ git+https://github.com/ethz-spylab/agentdojo.git@089ed468cf3ed0322acc66b0211f26d9d90dbf60
+requests>=2.32.3,<3

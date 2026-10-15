@@ -50,9 +50,12 @@ class GateDecision:
 Evaluation = GateDecision  # Backward-compatible experiment record name.
 
 class Gatekeeper:
-    def __init__(self, backend=None):
+    def __init__(self, backend=None, *, request_validator=None):
         from .laya_adapter import LayaBackend
         self.backend = backend if backend is not None else LayaBackend()
+        # Trusted integration seam. Default prototype schemas/semantics stay intact.
+        # An adapter may validate native tool schemas without renaming/lossy mapping.
+        self.request_validator = request_validator or validate
 
     def initialize(self):
         self.backend.initialize()
@@ -70,7 +73,7 @@ class Gatekeeper:
         started = perf_counter()
         if isinstance(raw, Request):
             raw = raw.model_dump()
-        req, invalid = validate(raw)
+        req, invalid = self.request_validator(raw)
         raw_dict = raw if isinstance(raw, dict) else {}
         action = raw_dict.get('action', {})
         action = action if isinstance(action, dict) else {}

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "mode": "unprotected",
+  "simulation_only": true,
+  "wall": {"implementation": "reference", "policy_path": "policies/workspace_example.json", "metadata_path": "policies/workspace_metadata.json"},
+  "agentdojo": {"user_task_ids": []}
+}
