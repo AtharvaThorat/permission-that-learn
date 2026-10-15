@@ -83,13 +83,16 @@ class WallPolicy(BaseModel):
             reasons.append(f"capability '{action.capability.value}' is not allowed")
             codes.append(f"CAPABILITY_NOT_GRANTED:{action.capability.value}")
         else:
-            bad = sorted({t.value for t in action.targets if t not in allowed})
+            bad = sorted({t.value for t in action.targets if t not in allowed and t is not TargetClass.UNKNOWN})
             if bad:
                 reasons.append(f"'{action.capability.value}' is not allowed to: {', '.join(bad)}")
                 codes.extend(f"TARGET_NOT_ALLOWED:{b}" for b in bad)
 
         if action.has_attachments:
-            bad = sorted({t.value for t in action.targets if t not in self.attachments_allowed_to})
+            bad = sorted({
+                t.value for t in action.targets
+                if t not in self.attachments_allowed_to and t is not TargetClass.UNKNOWN
+            })
             if bad:
                 reasons.append(f"attachments are not allowed to: {', '.join(bad)}")
                 codes.extend(f"ATTACHMENT_NOT_ALLOWED:{b}" for b in bad)
@@ -105,6 +108,13 @@ class WallPolicy(BaseModel):
             if _SHARE_RANK[level] > _SHARE_RANK[self.max_share_permission]:
                 reasons.append(f"sharing with '{level}' access exceeds '{self.max_share_permission}'")
                 codes.append("SHARE_LEVEL_EXCEEDED")
+
+        # Unknown targets (malformed address, no recipient, unknown event/file) are never granted,
+        # but they are "could not verify", not a verified violation: the code makes that UNKNOWN.
+        n_unknown = sum(1 for t in action.targets if t is TargetClass.UNKNOWN)
+        if n_unknown:
+            reasons.append(f"could not verify {n_unknown} target(s)")
+            codes.append("TARGET_UNVERIFIED")
 
         return Verdict(allowed=not reasons, reasons=tuple(reasons), codes=tuple(codes))
 

@@ -6,7 +6,7 @@ test_properties_hypothesis.py runs the same properties with Hypothesis (and shri
 
 import random
 
-from ptl.wall import ALLOW_ALL, TargetClass, Wall, WallContext, WallPolicy, action_digest
+from ptl.wall import ALLOW_ALL, UNVERIFIABLE_CODES, TargetClass, Wall, WallContext, WallDecision, WallPolicy, action_digest
 
 from .constants import ACCOUNT, CONTACT
 from .generators import gen_call, gen_policy, weaken
@@ -67,6 +67,18 @@ def check_revalidate_never_looser_than_evaluate(rng):
         assert action_digest(other_tool, other_args) == first.action_digest
 
 
+def check_decision_matches_codes(rng):
+    """PASS only when allowed; UNKNOWN only when every code is 'could not verify'; else DENY."""
+    policy = rng.choice([gen_policy(rng), ALLOW_ALL])
+    tool, args = gen_call(rng)
+    v = Wall(policy, CTX).evaluate(tool, args).verdict
+    assert (v.decision is WallDecision.PASS) == v.allowed
+    if v.decision is WallDecision.UNKNOWN:
+        assert v.codes and set(v.codes) <= UNVERIFIABLE_CODES
+    if v.decision is WallDecision.DENY:
+        assert set(v.codes) - UNVERIFIABLE_CODES or not v.codes
+
+
 PROPERTIES = [
     check_deny_by_default,
     check_unknown_targets_always_blocked,
@@ -74,6 +86,7 @@ PROPERTIES = [
     check_allowed_means_every_target_granted,
     check_deterministic_and_policy_unchanged,
     check_revalidate_never_looser_than_evaluate,
+    check_decision_matches_codes,
 ]
 
 
@@ -105,3 +118,7 @@ def test_deterministic_and_policy_unchanged():
 
 def test_revalidate_never_looser_than_evaluate():
     _fuzz(check_revalidate_never_looser_than_evaluate)
+
+
+def test_decision_matches_codes():
+    _fuzz(check_decision_matches_codes)

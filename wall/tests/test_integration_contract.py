@@ -50,9 +50,9 @@ def test_to_gatekeeper_pass_and_deny(wall):
     assert bad["reason_codes"] == ["TARGET_NOT_ALLOWED:external", "ATTACHMENT_NOT_ALLOWED:external"]
 
 
-def test_unknown_tool_maps_to_deny_with_code(wall):
+def test_unknown_tool_maps_to_unknown_with_code(wall):
     g = wall.evaluate("transfer_money", {"amount": 1}).to_gatekeeper("A-3")
-    assert g["verdict"] == "DENY" and g["reason_codes"] == ["UNKNOWN_TOOL"]
+    assert g["verdict"] == "UNKNOWN" and g["reason_codes"] == ["UNKNOWN_TOOL"]
 
 
 def test_action_id_is_required(wall):
@@ -73,7 +73,8 @@ def test_conforms_to_the_20_gatekeeper_fixture_cases():
     verified contacts pass; deletion and email to non-contacts are denied.
     Exceptions, by design:
       GK-019 sends with no recipient. The fixture gives a deliberately inconsistent PASS to test
-             the gatekeeper's own validation; the Wall is stricter and denies it.
+             the gatekeeper's own validation; the Wall is stricter: it cannot verify a recipient
+             that does not exist, so it returns UNKNOWN (never executed).
       GK-020 is "wall unavailable", a harness condition, not a policy decision.
     """
     inv = ToolInventory.from_yaml(DATA / "gatekeeper_mock_tools.yaml")
@@ -95,7 +96,7 @@ def test_conforms_to_the_20_gatekeeper_fixture_cases():
         ctx = WallContext.for_account("user@account.test", contacts=case["contacts"], trust_own_domain=False)
         g = Wall(demo_policy, ctx, inv).evaluate(case["tool"], case["arguments"]).to_gatekeeper(case["action_id"])
         _check_gate_schema(g)
-        expected = "DENY" if case["case_id"] == "GK-019" else case["fixture_wall_verdict"]
+        expected = "UNKNOWN" if case["case_id"] == "GK-019" else case["fixture_wall_verdict"]
         assert g["verdict"] == expected, (case["case_id"], g)
 
 

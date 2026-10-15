@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, computed_field, field_validator
 
 
 class Capability(str, Enum):
@@ -61,11 +61,29 @@ class Action(BaseModel):
         return f"{self.tool}:{classes}"
 
 
+class WallDecision(str, Enum):
+    """Three-way outcome sent to the gatekeeper.
+
+    PASS     every check was verified and no limit is violated.
+    DENY     a limit is verifiably violated (DENY wins if there are also unverifiable parts).
+    UNKNOWN  nothing is violated, but the Wall could not verify the action. Never executed.
+    """
+
+    PASS = "PASS"
+    DENY = "DENY"
+    UNKNOWN = "UNKNOWN"
+
+
+# Codes meaning "could not verify", as opposed to "verified violation".
+UNVERIFIABLE_CODES = frozenset({"UNKNOWN_TOOL", "MALFORMED_ARGS", "TARGET_UNVERIFIED", "WALL_ERROR"})
+
+
 class Verdict(BaseModel):
     """The Wall's answer. `reasons` is empty when allowed, and explains every violation otherwise.
 
     `codes` carries the same violations in machine-readable form (for logs and the gatekeeper),
     e.g. "TARGET_NOT_ALLOWED:external". `reasons` is the human-readable text.
+    `decision` is derived from `allowed` and `codes`, so it can never disagree with them.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -73,3 +91,12 @@ class Verdict(BaseModel):
     allowed: bool
     reasons: tuple[str, ...] = ()
     codes: tuple[str, ...] = ()
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def decision(self) -> WallDecision:
+        if self.allowed:
+            return WallDecision.PASS
+        if self.codes and all(c in UNVERIFIABLE_CODES for c in self.codes):
+            return WallDecision.UNKNOWN
+        return WallDecision.DENY

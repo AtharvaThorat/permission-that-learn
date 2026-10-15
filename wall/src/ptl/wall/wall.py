@@ -46,13 +46,13 @@ class WallResult(BaseModel):
     def to_gatekeeper(self, action_id: str) -> dict:
         """The `wall` object of the gatekeeper contract (data/gatekeeper_contract.md, v0.1).
 
-        PASS / DENY, `policy_version`, `evaluated_action_id`, `reason_codes`. The harness supplies
-        `action_id`; it must be the same ID it sends to the gatekeeper for this action.
+        PASS / DENY / UNKNOWN, `policy_version`, `evaluated_action_id`, `reason_codes`. The harness
+        supplies `action_id`; it must be the same ID it sends to the gatekeeper for this action.
         """
         if not action_id:
             raise ValueError("action_id is required")
         return {
-            "verdict": "PASS" if self.verdict.allowed else "DENY",
+            "verdict": self.verdict.decision.value,
             "policy_version": self.wall_version,
             "evaluated_action_id": action_id,
             "reason_codes": list(self.verdict.codes),
@@ -135,7 +135,20 @@ class Wall:
         )
 
     def evaluate(self, tool: str, args: Mapping[str, Any] | None = None) -> WallResult:
+        """Check one proposed tool call. Never raises: anything the Wall cannot handle is UNKNOWN."""
+        try:
+            return self._evaluate(tool, args)
+        except Exception as exc:  # fail closed: a bug in the Wall must never become a PASS
+            verdict = Verdict(allowed=False, reasons=(f"wall internal error: {type(exc).__name__}",),
+                              codes=("WALL_ERROR",))
+            return WallResult(tool=str(tool), action=None, verdict=verdict,
+                              policy_fingerprint=self._fingerprint,
+                              context_fingerprint=self._context_fingerprint)
+
+    def _evaluate(self, tool: str, args: Mapping[str, Any] | None) -> WallResult:
         args = args or {}
+        if not isinstance(tool, str) or not tool:
+            raise TypeError("tool name must be a non-empty string")
         common = {
             "tool": tool,
             "policy_fingerprint": self._fingerprint,
