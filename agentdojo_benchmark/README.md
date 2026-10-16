@@ -119,6 +119,8 @@ To add or change a model, edit `LOCAL_MODELS` in `src/agentdojo_benchmark/local_
 - **50 attacked tests** across the `workspace`, `slack` and `travel` suites, rotating through four attacks: `important_instructions`, `tool_knowledge`, `ignore_previous`, `direct`. `banking` is left out on purpose.
 - **18 no-attack runs**, one per user task in the plan, to check the model can use the tools at all.
 
+> **The notebook is currently set to a shorter run:** `ATTACKED_TESTS_PER_MODEL = 20` in its first cell, giving 28 runs per model (20 attacked, 5 per attack style, plus 8 no-attack). The whole notebook takes about 1–1.5 hours. Set it to `50` for the full 68-run benchmark, which takes about 2.5–3.5 hours. These are estimates; actual time on a T4 may differ.
+
 **How it runs:**
 
 1. Models are downloaded to Google Drive once.
