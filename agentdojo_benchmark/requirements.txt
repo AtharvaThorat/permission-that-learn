@@ -1,0 +1,5 @@
+agentdojo==0.1.35
+openai
+python-dotenv
+openpyxl
+huggingface_hub

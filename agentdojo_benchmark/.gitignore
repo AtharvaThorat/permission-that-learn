@@ -1,0 +1,28 @@
+# Secrets: never commit your API key
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Archived runs and cached task reference (regenerated automatically)
+logs_archive/
+.cache/
+
+# Local-model benchmark (phase 6): downloaded models and run output, if run outside Colab/Drive
+local_models_cache/
+local_benchmark_output/
+
+# Excel lock file, created while experiment_tracker.xlsx is open
+~$*.xlsx
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Personal run results: each person's local runs stay on their machine (or their Drive, for phase 6)
+logs/
+experiment_tracker.xlsx
