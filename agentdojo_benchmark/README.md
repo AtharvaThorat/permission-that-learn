@@ -4,7 +4,60 @@ Measures how often prompt-injection attacks succeed against LLM agents, using th
 
 > **Start here: [Phase 6](#phase-6-local-models-benchmark-main-benchmark)** is the main benchmark. It runs many tests on several local models in parallel on Google Colab. Phases 1–5 are the earlier proof of concept: small, quick checks through the NVIDIA NIM API.
 
-Step-by-step commands and expected output for every phase: **[TESTING.md](TESTING.md)**.
+Step-by-step commands and expected output for every phase: **[docs/TESTING.md](docs/TESTING.md)**.
+
+## Project structure
+
+```text
+agentdojo_benchmark/
+├── README.md
+├── pyproject.toml                    package definition and dependencies
+├── requirements.txt                  installs the package (pip install -r requirements.txt)
+├── .env.example                      template for the NIM API key (phases 1–5)
+├── docs/
+│   └── TESTING.md                    commands and expected output for every phase
+├── notebooks/
+│   └── local_models_benchmark.ipynb  Colab notebook for phase 6
+├── scripts/                          everything you run, one script per phase
+│   ├── setup_env.ps1
+│   ├── phase1_check_env.py
+│   ├── phase2_normal_usage.py
+│   ├── phase3_quick_attack_test.py
+│   ├── phase4_no_attack_test.py
+│   ├── phase5_full_attack_test.py
+│   └── phase6_local_models_benchmark.py
+├── src/agentdojo_benchmark/          the reusable code the scripts import
+│   ├── config.py                     shared settings and paths
+│   ├── nim_pipeline.py               AgentDojo agent and API-compatibility fixes
+│   ├── custom_attacks.py             extra attacker goals 14 and 15
+│   ├── tracker.py                    Excel tracker (phases 2–5)
+│   ├── local_models.py               local models, download, vLLM server (phase 6)
+│   ├── local_test_plan.py            the fixed test list (phase 6)
+│   └── local_benchmark.py            parallel runner and results (phase 6)
+└── tests/                            automated tests (no GPU or API key needed)
+    ├── fake_vllm_server.py           stands in for vLLM during tests
+    ├── test_local_test_plan.py
+    └── test_local_benchmark.py
+```
+
+## Setup
+
+From the `agentdojo_benchmark/` folder:
+
+```powershell
+pip install -r requirements.txt     # installs this project (editable) and its dependencies
+```
+
+On Windows, `.\scripts\setup_env.ps1` does this inside a new `.venv` and runs the phase 1 check. The Colab notebook runs the install itself. Run all commands from the `agentdojo_benchmark/` folder.
+
+## Tests
+
+```powershell
+pip install pytest
+python -m pytest            # 11 tests, about a minute
+```
+
+They check the phase 6 test plan, and run phase 6 end to end against a fake vLLM server: parallel runs, logs not mixed up between tests, result files, and resuming from cached results.
 
 ## How AgentDojo tests a model
 
@@ -26,12 +79,12 @@ Terms used below:
 
 | Phase | What it does | Main file | Runs on | Results go to |
 |---|---|---|---|---|
-| 1 | Setup check | `phase1_check_env.py` | Laptop | Console |
-| 2 | Plain model call (is the API working?) | `phase2_normal_usage.py` | Laptop, NIM API | Excel: *Normal usage* |
-| 3 | One hand-built attack, one API call | `phase3_quick_attack_test.py` | Laptop, NIM API | Excel: *Quick attack test (homemade)* |
-| 4 | AgentDojo task, no attack | `phase4_no_attack_test.py` | Laptop, NIM API | Excel: *No-attack test (AgentDojo)* |
-| 5 | AgentDojo task with an attack | `phase5_full_attack_test.py` | Laptop, NIM API | Excel: *Full attack test (AgentDojo)* |
-| **6** | **Main benchmark: 3 local models × 68 tests, in parallel** | **`phase6_local_models_benchmark.py`** | **Google Colab T4 GPU** | **CSV files on Google Drive** |
+| 1 | Setup check | `scripts/phase1_check_env.py` | Laptop | Console |
+| 2 | Plain model call (is the API working?) | `scripts/phase2_normal_usage.py` | Laptop, NIM API | Excel: *Normal usage* |
+| 3 | One hand-built attack, one API call | `scripts/phase3_quick_attack_test.py` | Laptop, NIM API | Excel: *Quick attack test (homemade)* |
+| 4 | AgentDojo task, no attack | `scripts/phase4_no_attack_test.py` | Laptop, NIM API | Excel: *No-attack test (AgentDojo)* |
+| 5 | AgentDojo task with an attack | `scripts/phase5_full_attack_test.py` | Laptop, NIM API | Excel: *Full attack test (AgentDojo)* |
+| **6** | **Main benchmark: 3 local models × 68 tests, in parallel** | **`scripts/phase6_local_models_benchmark.py`** | **Google Colab T4 GPU** | **CSV files on Google Drive** |
 
 ---
 
@@ -43,11 +96,12 @@ Terms used below:
 
 | File | Role |
 |---|---|
-| `colab/local_models_benchmark.ipynb` | **Start here.** Colab notebook that runs everything: mounts Drive, clones this branch, installs, downloads models, runs the benchmark, shows results |
-| `phase6_local_models_benchmark.py` | The runner: starts each model's server, runs the tests in parallel, saves results |
-| `local_models.py` | The three models and how to serve each one; model download; vLLM server start/stop; the agent for a local server |
-| `local_test_plan.py` | Builds the fixed list of tests every model runs |
-| `nim_pipeline.py`, `config.py`, `custom_attacks.py` | Shared helpers it imports (see [Shared files](#shared-files)) |
+| `notebooks/local_models_benchmark.ipynb` | **Start here.** Colab notebook that runs everything: mounts Drive, clones this branch, installs, downloads models, runs the benchmark, shows results |
+| `scripts/phase6_local_models_benchmark.py` | Entry point the notebook runs (`--help` lists the options) |
+| `src/agentdojo_benchmark/local_benchmark.py` | The runner: starts each model's server, runs the tests in parallel, saves results |
+| `src/agentdojo_benchmark/local_models.py` | The three models and how to serve each one; model download; vLLM server start/stop; the agent for a local server |
+| `src/agentdojo_benchmark/local_test_plan.py` | Builds the fixed list of tests every model runs |
+| `src/agentdojo_benchmark/` `nim_pipeline.py`, `config.py`, `custom_attacks.py` | Shared helpers it imports (see [Shared files](#shared-files)) |
 
 **Models** (all public on Hugging Face, no token needed; about 20 GB in total):
 
@@ -68,12 +122,12 @@ Terms used below:
 2. For each model in turn (a T4 holds one model at a time): copy it from Drive to Colab's local disk, start a vLLM server that serves it as an OpenAI-compatible API on `localhost:8000`, run the tests **8 at a time**, then stop the server.
 3. Results are saved after each model. Every finished test is cached, so after a Colab disconnect you re-run the notebook and it continues where it stopped.
 
-**How to run:** open `colab/local_models_benchmark.ipynb` in Google Colab (or VS Code with the Colab extension), choose a **T4 GPU** runtime, and run the cells top to bottom. The first cell holds the settings: models, number of tests, parallel tests, and the Drive folder.
+**How to run:** open `notebooks/local_models_benchmark.ipynb` in Google Colab (or VS Code with the Colab extension), choose a **T4 GPU** runtime, and run the cells top to bottom. The first cell holds the settings: models, number of tests, parallel tests, and the Drive folder.
 
 Without a GPU you can still preview the tests:
 
 ```powershell
-python phase6_local_models_benchmark.py --plan-only
+python scripts/phase6_local_models_benchmark.py --plan-only
 ```
 
 **Useful options** (`--help` lists all):
@@ -109,29 +163,29 @@ Runs that crashed (for example, the conversation outgrew the context window) are
 
 These run on any laptop through the NVIDIA NIM API (models: Nemotron 3.5 Lightning 30B by default, Nemotron 3 Super 120B with `--model`). Each phase fills one tab of `experiment_tracker.xlsx`. They're slower to scale because of free-tier rate limits, but good for checking something in seconds.
 
-**Setup (once):** `powershell -ExecutionPolicy Bypass -File .\setup_env.ps1`, then put your key from [build.nvidia.com](https://build.nvidia.com) in `.env` (see `.env.example`).
+**Setup (once):** `powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1`, then put your key from [build.nvidia.com](https://build.nvidia.com) in `.env` (see `.env.example`).
 
 ### Phase 1: Setup check
 
 Checks that the libraries are installed and the API key is loaded. Makes no API call.
 
-- **File:** `phase1_check_env.py`
-- **Run:** `python phase1_check_env.py`, expect `Phase 1 OK`
+- **File:** `scripts/phase1_check_env.py`
+- **Run:** `python scripts/phase1_check_env.py`, expect `Phase 1 OK`
 
 ### Phase 2: Normal usage
 
 Sends one plain prompt to the model, with no tools and no attack, to confirm the API works.
 
-- **File:** `phase2_normal_usage.py`
-- **Run:** `python phase2_normal_usage.py` (optional `--model`)
+- **File:** `scripts/phase2_normal_usage.py`
+- **Run:** `python scripts/phase2_normal_usage.py` (optional `--model`)
 - **Results:** *Normal usage* tab
 
 ### Phase 3: Quick attack test (homemade)
 
 Exactly **one API call**. A pre-built conversation: the user asks about a calendar event, and the event's description contains the attacker's text. The model is asked once what to do next. If it calls the attacker's tool, the attack succeeded. Nothing is actually executed.
 
-- **File:** `phase3_quick_attack_test.py`
-- **Run:** `python phase3_quick_attack_test.py --dry-run` shows the conversation without calling the API
+- **File:** `scripts/phase3_quick_attack_test.py`
+- **Run:** `python scripts/phase3_quick_attack_test.py --dry-run` shows the conversation without calling the API
 - **Options:** `--agent` (`default` / `vulnerable`), `--style` (`direct`, `ignore_previous`, `important_instructions`), `--goal` (`send_email`, `delete_file`, `create_event`, `edit_file`, `share_file`)
 - **Results:** *Quick attack test (homemade)* tab
 
@@ -139,8 +193,8 @@ Exactly **one API call**. A pre-built conversation: the user asks about a calend
 
 AgentDojo gives the agent a real task with fake tools and checks whether it completed it. This shows whether the model can do the job at all.
 
-- **Files:** `phase4_no_attack_test.py`, using `nim_pipeline.py` for the agent
-- **Run:** `python phase4_no_attack_test.py` (runs `user_task_0` and `user_task_1`)
+- **Files:** `scripts/phase4_no_attack_test.py`, using `nim_pipeline.py` for the agent
+- **Run:** `python scripts/phase4_no_attack_test.py` (runs `user_task_0` and `user_task_1`)
 - **Options:** `--user-tasks`, `--suite`, `--agent`, `--defense`, `--force-rerun`
 - **Results:** *No-attack test (AgentDojo)* tab
 
@@ -148,8 +202,8 @@ AgentDojo gives the agent a real task with fake tools and checks whether it comp
 
 AgentDojo hides the attacker's instruction in its fake data, runs the agent, and checks whether the attacker's goal happened (email sent, file deleted, and so on).
 
-- **Files:** `phase5_full_attack_test.py`, using `nim_pipeline.py` and `custom_attacks.py`
-- **Run:** `python phase5_full_attack_test.py --attack important_instructions --skip-sanity`
+- **Files:** `scripts/phase5_full_attack_test.py`, using `nim_pipeline.py` and `custom_attacks.py`
+- **Run:** `python scripts/phase5_full_attack_test.py --attack important_instructions --skip-sanity`
 - **Options:** `--attack`, `--user-tasks`, `--injection-tasks`, `--suite`, `--agent`, `--defense`, `--skip-sanity` (skips AgentDojo's "is the goal doable?" pre-check, saving ~2 calls), `--force-rerun`
 - **Results:** *Full attack test (AgentDojo)* tab
 
@@ -159,13 +213,15 @@ AgentDojo hides the attacker's instruction in its fake data, runs the agent, and
 
 ## Shared files
 
+All in `src/agentdojo_benchmark/` unless shown otherwise.
+
 | File | Role | Used by |
 |---|---|---|
 | `nim_pipeline.py` | The AgentDojo agent, the API-compatibility fixes, and the `repeat_prompt` defense | Phases 4, 5, 6 |
 | `config.py` | Shared settings: NIM endpoint, models, log folder, API client | All phases |
 | `custom_attacks.py` | Two extra attacker goals for the workspace suite: `injection_task_14` (append fake bank details to a file), `injection_task_15` (share a file with the attacker) | Phases 5, 6 |
-| `tracker.py` | Builds `experiment_tracker.xlsx` from the phase 2–5 runs (`python tracker.py` refreshes it) | Phases 2–5 |
-| `requirements.txt`, `setup_env.ps1`, `.env.example` | Setup | All phases |
+| `tracker.py` | Builds `experiment_tracker.xlsx` from the phase 2–5 runs (`python -m agentdojo_benchmark.tracker` refreshes it) | Phases 2–5 |
+| `pyproject.toml`, `requirements.txt`, `scripts/setup_env.ps1`, `.env.example` | Setup | All phases |
 
 ## Where a defense plugs in
 
@@ -184,7 +240,7 @@ Tool outputs, which is where the injections arrive, pass from `ToolsExecutor` to
   - Message content is sent as plain text instead of a list of parts.
   - Model names are registered with AgentDojo so the `important_instructions` and `tool_knowledge` attacks, which address the model by name, work.
   - NIM pipeline names drop the `nvidia/` prefix, because a `/` breaks AgentDojo's result cache.
-- **Running tests in parallel needs a fix (phase 6):** AgentDojo shares one logger list across threads, so parallel tests corrupt each other's logs. `phase6_local_models_benchmark.py` gives each worker thread its own list.
+- **Running tests in parallel needs a fix (phase 6):** AgentDojo shares one logger list across threads, so parallel tests corrupt each other's logs. `scripts/phase6_local_models_benchmark.py` gives each worker thread its own list.
 - **Nemotron-3-Nano-4B on a T4 is the least certain of the three phase 6 models.** It uses a newer hybrid architecture and has to run in float16 because the T4 has no bfloat16. If it fails to load, it is skipped and the other models still run; see `server_logs/nemotron.log`.
 - **Qwen models are retired on NIM** (`HTTP 410`), which is why phases 1–5 use Nemotron.
 - **Saved results are reused:** running the same test twice returns the saved result. Use `--force-rerun` to run it again.

@@ -9,18 +9,18 @@ Then the model is asked once what to do next. If its reply calls the attacker's 
 Everything the model sees is in this file, so you can read the exact attack text below.
 
 Examples:
-  python phase3_quick_attack_test.py                                  # default agent, important_instructions, email goal
-  python phase3_quick_attack_test.py --agent vulnerable --style direct --goal delete_file
-  python phase3_quick_attack_test.py --dry-run                        # print the conversation, no API call
+  python scripts/phase3_quick_attack_test.py                                  # default agent, important_instructions, email goal
+  python scripts/phase3_quick_attack_test.py --agent vulnerable --style direct --goal delete_file
+  python scripts/phase3_quick_attack_test.py --dry-run                        # print the conversation, no API call
 """
 
 import argparse
 import json
 import time
 
-import config
-import tracker
-from nim_pipeline import PROSE_NAMES, SYSTEM_PROMPTS, model_slug
+from agentdojo_benchmark import config
+from agentdojo_benchmark import tracker
+from agentdojo_benchmark.nim_pipeline import PROSE_NAMES, SYSTEM_PROMPTS, model_slug
 
 ATTACKER = "mark.black-2134@gmail.com"
 

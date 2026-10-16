@@ -12,8 +12,8 @@ The workbook is rebuilt from scratch each time: AgentDojo tabs from the JSON log
 the other two tabs from small .jsonl files in ./logs/tracker. So nothing is lost if the
 workbook is open in Excel during a run; it is simply refreshed on the next run.
 
-Rebuild by hand:  python tracker.py
-Start fresh:      python tracker.py --reset   (moves all past runs to logs_archive/<timestamp>/, nothing is deleted)
+Rebuild by hand:  python -m agentdojo_benchmark.tracker
+Start fresh:      python -m agentdojo_benchmark.tracker --reset   (moves all past runs to logs_archive/<timestamp>/, nothing is deleted)
 Clearing cells in Excel does NOT remove runs: the sheet is rebuilt from ./logs on every run.
 """
 
@@ -27,7 +27,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-import config
+from agentdojo_benchmark import config
 
 WORKBOOK = config.PROJECT_DIR / "experiment_tracker.xlsx"
 EVENTS_DIR = config.LOGDIR / "tracker"
@@ -151,7 +151,7 @@ def _calls(messages: list[dict]) -> str:
 def _agentdojo_rows() -> tuple[list[list], list[list]]:
     from agentdojo.task_suite.load_suites import get_suite
 
-    import custom_attacks  # noqa: F401  (so the custom goals' text can be looked up)
+    from agentdojo_benchmark import custom_attacks  # noqa: F401  (so the custom goals' text can be looked up)
 
     goals: dict[tuple[str, str], str] = {}
 
@@ -203,7 +203,7 @@ def _task_reference() -> list[list]:
     recomputed when AgentDojo or custom_attacks.py changes."""
     import importlib.metadata
 
-    custom = config.PROJECT_DIR / "custom_attacks.py"
+    custom = Path(__file__).with_name("custom_attacks.py")
     key = f"{importlib.metadata.version('agentdojo')}|{config.BENCHMARK_VERSION}|" \
           f"{custom.stat().st_mtime if custom.exists() else 0}"
     try:
@@ -216,7 +216,7 @@ def _task_reference() -> list[list]:
     from agentdojo.attacks.baseline_attacks import DirectAttack
     from agentdojo.task_suite.load_suites import get_suite
 
-    import custom_attacks  # noqa: F401
+    from agentdojo_benchmark import custom_attacks  # noqa: F401
 
     def number(task_id: str) -> int:
         return int(task_id.rsplit("_", 1)[1])
@@ -242,7 +242,7 @@ def _task_reference() -> list[list]:
                          slots, "AgentDojo"])
         for tid in sorted(suite.injection_tasks, key=number):
             task = suite.injection_tasks[tid]
-            source = "custom (custom_attacks.py)" if type(task).__module__ == "custom_attacks" else "AgentDojo"
+            source = "custom (custom_attacks.py)" if type(task).__module__ == custom_attacks.__name__ else "AgentDojo"
             rows.append([name, "Attacker goal", tid, task.GOAL, task.DIFFICULTY.name.lower(), tools(task, env),
                          "", source])
 
@@ -375,8 +375,8 @@ def _write_readme(ws) -> None:
         ("Tools the correct solution uses", "The tool calls that correctly complete the task (AgentDojo's answer key)."),
         ("", ""),
         ("Note", "Close this workbook in Excel before running a script, or that run's refresh is skipped "
-                 "(the data is kept and appears on the next refresh). Rebuild by hand: python tracker.py. "
-                 "Start fresh: python tracker.py --reset (archives past runs; clearing cells in Excel does not)."),
+                 "(the data is kept and appears on the next refresh). Rebuild by hand: python -m agentdojo_benchmark.tracker. "
+                 "Start fresh: python -m agentdojo_benchmark.tracker --reset (archives past runs; clearing cells in Excel does not)."),
     ]
     for row in lines:
         ws.append(list(row))
@@ -409,7 +409,7 @@ def rebuild() -> Path | None:
         print()
         print("!" * 78)
         print(f"[tracker] NOT UPDATED: {WORKBOOK.name} is open in Excel. The run is saved;")
-        print("[tracker] close the workbook (don't save it) and run:  python tracker.py")
+        print("[tracker] close the workbook (don't save it) and run:  python -m agentdojo_benchmark.tracker")
         print("!" * 78)
         return None
     print(f"[tracker] updated {WORKBOOK.name}")

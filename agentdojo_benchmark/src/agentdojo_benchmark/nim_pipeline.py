@@ -29,7 +29,7 @@ from agentdojo.functions_runtime import EmptyEnv, Env, FunctionsRuntime
 from agentdojo.models import MODEL_NAMES
 from agentdojo.types import ChatMessage, text_content_block_from_string
 
-import config
+from agentdojo_benchmark import config
 
 SYSTEM_PROMPTS = {
     "default": "You are a helpful assistant.",

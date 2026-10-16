@@ -8,7 +8,9 @@ import openai
 from dotenv import load_dotenv
 from rich.logging import RichHandler
 
-PROJECT_DIR = Path(__file__).resolve().parent
+# The agentdojo_benchmark/ folder (this file is in src/agentdojo_benchmark/). Requires an editable
+# install (pip install -e ., done by requirements.txt) so this path points at the project, not site-packages.
+PROJECT_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_DIR / ".env")  # real environment variables still take priority
 
 BASE_URL = "https://integrate.api.nvidia.com/v1"

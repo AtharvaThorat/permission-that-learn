@@ -3,7 +3,7 @@
 import importlib.metadata as metadata
 import os
 
-import config  # importing config also loads .env
+from agentdojo_benchmark import config  # importing config also loads .env
 
 
 def main() -> None:

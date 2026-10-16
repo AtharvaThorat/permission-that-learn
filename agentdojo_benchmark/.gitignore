@@ -5,6 +5,9 @@
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+.pytest_cache/
 
 # Archived runs and cached task reference (regenerated automatically)
 logs_archive/

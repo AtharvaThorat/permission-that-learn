@@ -17,10 +17,10 @@ from agentdojo.benchmark import benchmark_suite_with_injections, run_task_with_i
 from agentdojo.logging import OutputLogger
 from agentdojo.task_suite.load_suites import get_suite
 
-import config
-import custom_attacks  # noqa: F401  (registers injection_task_14 edit-file and _15 share-file)
-import tracker
-from nim_pipeline import DEFENSES, SYSTEM_PROMPTS, build_pipeline
+from agentdojo_benchmark import config
+from agentdojo_benchmark import custom_attacks  # noqa: F401  (registers injection_task_14 edit-file and _15 share-file)
+from agentdojo_benchmark import tracker
+from agentdojo_benchmark.nim_pipeline import DEFENSES, SYSTEM_PROMPTS, build_pipeline
 
 ATTACK_CHOICES = sorted(a for a in ATTACKS if a != "manual")  # "manual" needs keyboard input
 

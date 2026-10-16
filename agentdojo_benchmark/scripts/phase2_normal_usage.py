@@ -4,8 +4,8 @@ so a later failure can be blamed on the AgentDojo wiring rather than the key or 
 import argparse
 import time
 
-import config
-import tracker
+from agentdojo_benchmark import config
+from agentdojo_benchmark import tracker
 
 
 def main() -> None:

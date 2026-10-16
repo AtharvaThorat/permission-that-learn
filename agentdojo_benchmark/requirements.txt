@@ -1,5 +1,3 @@
-agentdojo==0.1.35
-openai
-python-dotenv
-openpyxl
-huggingface_hub
+# Installs this project (editable) with the dependencies listed in pyproject.toml.
+# Run from the agentdojo_benchmark/ folder:  pip install -r requirements.txt
+-e .

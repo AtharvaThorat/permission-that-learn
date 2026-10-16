@@ -9,10 +9,10 @@ At the end, write per-test results and a per-model summary as CSV files.
 Results are cached: AgentDojo writes one JSON log per test, and finished tests are skipped
 on the next run. So if Colab disconnects, just run the same command again to continue.
 
-Typical use (see colab/local_models_benchmark.ipynb):
-  python phase6_local_models_benchmark.py --download-only --models-dir /content/drive/MyDrive/agentdojo/models
-  python phase6_local_models_benchmark.py --models-dir ... --output-dir /content/drive/MyDrive/agentdojo/output
-  python phase6_local_models_benchmark.py --plan-only          # just print the tests, no GPU needed
+Typical use (see notebooks/local_models_benchmark.ipynb):
+  python scripts/phase6_local_models_benchmark.py --download-only --models-dir /content/drive/MyDrive/agentdojo/models
+  python scripts/phase6_local_models_benchmark.py --models-dir ... --output-dir /content/drive/MyDrive/agentdojo/output
+  python scripts/phase6_local_models_benchmark.py --plan-only          # just print the tests, no GPU needed
 """
 
 import argparse
@@ -30,8 +30,8 @@ from agentdojo.benchmark import run_task_with_injection_tasks, run_task_without_
 from agentdojo.logging import LOGGER_STACK, OutputLogger
 from agentdojo.task_suite.load_suites import get_suite
 
-import config
-from local_models import (
+from agentdojo_benchmark import config
+from agentdojo_benchmark.local_models import (
     LOCAL_MODELS,
     LocalModel,
     VllmServer,
@@ -40,7 +40,7 @@ from local_models import (
     download_model,
     get_model,
 )
-from local_test_plan import DEFAULT_ATTACKS, DEFAULT_SUITES, PlannedTest, build_test_plan, describe_plan
+from agentdojo_benchmark.local_test_plan import DEFAULT_ATTACKS, DEFAULT_SUITES, PlannedTest, build_test_plan, describe_plan
 
 DEFAULT_OUTPUT_DIR = config.PROJECT_DIR / "local_benchmark_output"
 

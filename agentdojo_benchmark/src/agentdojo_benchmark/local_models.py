@@ -28,7 +28,7 @@ from agentdojo.models import MODEL_NAMES
 from agentdojo.types import ChatMessage
 from openai._types import NOT_GIVEN
 
-from nim_pipeline import SYSTEM_PROMPTS, _to_nim_message
+from agentdojo_benchmark.nim_pipeline import SYSTEM_PROMPTS, _to_nim_message
 
 # A file that marks a finished download, so an interrupted download is retried next time.
 DOWNLOAD_COMPLETE_MARKER = ".download_complete"

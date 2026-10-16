@@ -14,8 +14,8 @@ from dataclasses import asdict, dataclass
 
 from agentdojo.task_suite.load_suites import get_suite
 
-import config
-import custom_attacks  # noqa: F401  (registers the extra workspace goals injection_task_14 and _15)
+from agentdojo_benchmark import config
+from agentdojo_benchmark import custom_attacks  # noqa: F401  (registers the extra workspace goals injection_task_14 and _15)
 
 # Banking is left out on purpose: agents are not realistically trusted with bank accounts.
 DEFAULT_SUITES = ("workspace", "slack", "travel")

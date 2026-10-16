@@ -15,7 +15,7 @@ from agentdojo.base_tasks import BaseInjectionTask, TaskDifficulty
 from agentdojo.functions_runtime import FunctionCall
 from agentdojo.task_suite.load_suites import get_suite
 
-import config
+from agentdojo_benchmark import config
 
 ATTACKER = "mark.black-2134@gmail.com"
 FILE_ID = "13"  # sales-report-Q1-2024.xlsx in AgentDojo's fake cloud drive

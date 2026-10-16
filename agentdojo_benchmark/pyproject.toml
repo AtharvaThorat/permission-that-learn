@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentdojo-benchmark"
+version = "0.1.0"
+description = "Prompt-injection benchmark of LLM agents with AgentDojo: NVIDIA NIM quick checks and a parallel local-model benchmark"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "agentdojo==0.1.35",   # pinned: the pipeline relies on some of its internal helpers
+    "openai",
+    "python-dotenv",
+    "openpyxl",            # Excel tracker (phases 2-5)
+    "huggingface_hub",     # model downloads (phase 6)
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

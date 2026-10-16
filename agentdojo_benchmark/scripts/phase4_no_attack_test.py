@@ -12,9 +12,9 @@ from agentdojo.benchmark import benchmark_suite_without_injections
 from agentdojo.logging import OutputLogger
 from agentdojo.task_suite.load_suites import get_suite
 
-import config
-import tracker
-from nim_pipeline import DEFENSES, SYSTEM_PROMPTS, build_pipeline
+from agentdojo_benchmark import config
+from agentdojo_benchmark import tracker
+from agentdojo_benchmark.nim_pipeline import DEFENSES, SYSTEM_PROMPTS, build_pipeline
 
 
 def run_baseline(
