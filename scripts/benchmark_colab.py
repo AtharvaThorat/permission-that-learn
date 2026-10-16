@@ -183,7 +183,7 @@ def report(output, tasks, status, elapsed, budget):
     gate_times = [event['elapsed_seconds'] for event in gate_events if 'elapsed_seconds' in event]
     actor_times = [event['elapsed_seconds'] for event in events
                    if event['event'] == 'actor_response' and 'elapsed_seconds' in event]
-    summary = {'label': 'Clean calendar-read pilot: Qwen3-8B + original Laya + reference wall',
+    summary = {'label': 'Clean workspace pilot: Qwen3-8B + original Laya + reference wall',
         'status': status, 'seconds': round(elapsed, 2), 'budget_seconds': budget,
         'selected_tasks': len(tasks), 'scored_tasks': scored, 'official_task_successes': successes,
         'official_utility_rate_on_scored_tasks': successes / scored if scored else None,
@@ -198,7 +198,7 @@ def report(output, tasks, status, elapsed, budget):
         'gate_reason_counts': dict(Counter(event.get('reason_code') for event in events
                                           if event['event'] == 'gate_decision')),
         'attack_success_rate': None, 'gatekeeper_accuracy': None,
-        'limitations': ['Small preselected calendar-read panel, not the full workspace benchmark.',
+        'limitations': ['Explicitly selected clean workspace tasks; see config.json for the task IDs.',
             'Clean tasks only: no prompt-injection robustness claim.',
             'Native task utility is not gatekeeper classification accuracy.',
             'Pending approvals, failures and unscored tasks are retained.',
@@ -239,10 +239,17 @@ def report(output, tasks, status, elapsed, budget):
     return summary
 
 
-def benchmark(work, tasks, seconds, task_seconds):
+def benchmark(work, tasks, seconds, task_seconds, injection_panel=None):
+    panel = None
+    if injection_panel is not None:
+        from scripts.injection_pilot import load_panel
+        panel = load_panel(injection_panel)
+        tasks = [case['user_task_id'] for case in panel['cases']]
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '-' + uuid4().hex[:8]
     output = work / 'benchmarks' / stamp
     output.mkdir(parents=True)
+    if panel:
+        write_json(output / 'injection-panel.json', panel)
     started = time.monotonic()
     deadline = started + seconds
     status = 'setup_error'
@@ -290,7 +297,17 @@ def benchmark(work, tasks, seconds, task_seconds):
             "import sys; from agentdojo.task_suite.load_suites import get_suite; "
             "s=get_suite('v1.2.2','workspace'); assert set(sys.argv[1:]) <= set(s.user_tasks), 'Unknown task ID'",
             *tasks], env=env, timeout=remaining())
+        worker_command = [str(helper.python_at(work, 'gate')), str(Path(__file__).resolve()),
+                          '_worker', '--config', str(config_path), '--output', str(output)]
+        if panel:
+            injection_script = ROOT / 'scripts/injection_pilot.py'
+            panel_args = ['--panel', str(output / 'injection-panel.json')]
+            helper.execute([helper.python_at(work, 'gate'), injection_script, '_validate', *panel_args],
+                           env=env, timeout=remaining())
+            worker_command = [str(helper.python_at(work, 'gate')), str(injection_script),
+                '_worker', '--config', str(config_path), '--output', str(output), *panel_args]
         print('Report directory:', output, flush=True)
+        print('Loading Qwen; startup progress is in actor-server.log. Please leave this cell running.', flush=True)
         with (output / 'actor-server.log').open('w') as log:
             server = subprocess.Popen(helper.server_command(work, data, port), cwd=ROOT, env=env,
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -298,8 +315,7 @@ def benchmark(work, tasks, seconds, task_seconds):
             write_json(output / 'actor-probe.json', probe_actor(port, key, min(120, remaining())))
             print('Actor tool-call probe passed. Starting Laya warmup and selected tasks.', flush=True)
             with (output / 'worker.log').open('w') as worker_log:
-                child = subprocess.Popen([str(helper.python_at(work, 'gate')), str(Path(__file__).resolve()),
-                    '_worker', '--config', str(config_path), '--output', str(output)], cwd=ROOT, env=env,
+                child = subprocess.Popen(worker_command, cwd=ROOT, env=env,
                     stdout=worker_log, stderr=subprocess.STDOUT, start_new_session=True)
                 code = child.wait(timeout=remaining())
                 status = 'completed' if code == 0 else 'worker_error'
@@ -317,7 +333,11 @@ def benchmark(work, tasks, seconds, task_seconds):
         if status == 'completed' and any('infrastructure' in row['terminal']
                 for row in read_lines(output / 'scores.jsonl')):
             status = 'completed_with_infrastructure_errors'
-        summary = report(output, tasks, status, time.monotonic() - started, seconds)
+        if panel:
+            from scripts.injection_pilot import report as injection_report
+            summary = injection_report(output, panel, status, time.monotonic() - started, seconds)
+        else:
+            summary = report(output, tasks, status, time.monotonic() - started, seconds)
         status = summary['status']
         archive = shutil.make_archive(str(output), 'zip', root_dir=output)
         write_json(work / 'latest-benchmark.json', {'directory': str(output), 'archive': archive})
@@ -334,13 +354,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['run', '_worker'])
     parser.add_argument('--work-dir', type=Path, default=Path('/content/blackbox-colab'))
-    parser.add_argument('--tasks', nargs='+', default=DEFAULT_TASKS)
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--tasks', nargs='+')
+    selection.add_argument('--injection-panel', type=Path,
+                           help='Run clean/injected comparisons in all three modes using explicit fixed payloads')
     parser.add_argument('--seconds', type=int, default=900, help='Total trial deadline, including server startup')
     parser.add_argument('--task-seconds', type=int, default=150)
     parser.add_argument('--native-raw-logs', action='store_true')
     parser.add_argument('--config', type=Path)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    args.tasks = args.tasks or DEFAULT_TASKS
     if args.command == '_worker':
         worker(args.config, args.output)
         return 0
@@ -350,7 +374,7 @@ def main():
         parser.error('Add --native-raw-logs for native synthetic transcripts.')
     if args.seconds < 30 or args.task_seconds < 1 or len(set(args.tasks)) != len(args.tasks):
         parser.error('Budget must be >=30s, task budget positive, and task IDs unique.')
-    return benchmark(args.work_dir.resolve(), args.tasks, args.seconds, args.task_seconds)
+    return benchmark(args.work_dir.resolve(), args.tasks, args.seconds, args.task_seconds, args.injection_panel)
 
 
 if __name__ == '__main__':

@@ -6,16 +6,24 @@ from blackbox.actions import canonical
 from blackbox.contracts import GateDecision
 
 
+COLLECTION_READS = {
+    'search_calendar_events': 'calendar', 'get_day_calendar_events': 'calendar',
+    'get_unread_emails': 'email', 'get_sent_emails': 'email',
+    'get_received_emails': 'email', 'get_draft_emails': 'email', 'search_emails': 'email',
+    'search_files_by_filename': 'drive', 'list_files': 'drive', 'search_files': 'drive',
+}
+
+
 def semantic_facts(tool, facts):
-    """Calendar collection reads need scope, not every event's freshness hash.
+    """Collection reads need scope, not every resource's freshness hash.
 
     The wall and executor still consume the original frozen facts. This summary
     describes the collection being searched, never claims which events match,
     and preserves missing evidence and recipient information.
     """
-    if tool not in ('search_calendar_events', 'get_day_calendar_events'):
+    if tool not in COLLECTION_READS:
         return facts
-    return {'collection': 'calendar', 'scope': 'full_collection_not_search_results',
+    return {'collection': COLLECTION_READS[tool], 'scope': 'full_collection_not_search_results',
             'resource_count': len(facts.get('resources', [])),
             'missing': facts.get('missing', []), 'recipients': facts.get('recipients', [])}
 

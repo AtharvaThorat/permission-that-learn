@@ -1,5 +1,8 @@
 # Quick Qwen actor + original Laya benchmark
 
+For explicit attacked runs and clean comparisons, use [COLAB_INJECTION_RUN.md](COLAB_INJECTION_RUN.md).
+The default command below continues to run clean tasks only.
+
 Use `scripts/benchmark_colab.py` for a small, end-to-end clean AgentDojo pilot.
 It uses the existing pipeline, original Laya checkpoint/single-question policy,
 native AgentDojo task scoring, and unchanged reference wall. Qwen3-8B is the actor;
@@ -38,7 +41,8 @@ at `notebooks/colab_quick_benchmark.ipynb`; the same commands are below.
 Run `20261016T080941Z-05e7eb40` loaded both models, but all five task responses
 from Laya were rejected with `error_kind=truncation`. Calendar collection reads
 were passing every event's metadata and content hash into the semantic model.
-The adapter now sends a compact collection scope/count for these two read tools.
+The adapter now sends a compact collection scope/count for calendar, email and
+drive collection read tools.
 The authentic request, exact tool arguments, effects, missing-evidence markers,
 and confirmation requirement are retained. Full event metadata still feeds the
 wall and execution freshness checks. Other tools retain their existing inputs.

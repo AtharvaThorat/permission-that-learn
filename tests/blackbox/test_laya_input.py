@@ -7,7 +7,7 @@ import pytest
 from pydantic import BaseModel
 from blackbox.actions import bind
 from blackbox.contracts import Proposal
-from blackbox.permissions.gatekeeper_adapter import ExistingLayaGate, semantic_facts, usage_diagnostics
+from blackbox.permissions.gatekeeper_adapter import COLLECTION_READS, ExistingLayaGate, semantic_facts, usage_diagnostics
 from gatekeeper.laya_adapter import parse_response
 from gatekeeper.policy import Gatekeeper
 from gatekeeper.schemas import Request
@@ -72,7 +72,7 @@ def test_calendar_summary_preserves_action_and_fails_closed_on_real_truncation(t
 def test_projection_keeps_missing_evidence_and_leaves_noncollection_actions_intact():
     facts = {'resources': [{'id': '1', 'participants': ['person@example.com']}],
              'missing': ['event:missing'], 'recipients': ['person@example.com']}
-    for tool in ('search_calendar_events', 'get_day_calendar_events'):
+    for tool in COLLECTION_READS:
         projected = semantic_facts(tool, facts)
         assert projected['missing'] == facts['missing']
         assert projected['recipients'] == facts['recipients']
