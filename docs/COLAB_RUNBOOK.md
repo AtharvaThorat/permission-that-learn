@@ -1,18 +1,23 @@
 # Colab trial
 
+For the corrected Python/dependency setup and a timed five-task pilot, follow
+[COLAB_BENCHMARK.md](COLAB_BENCHMARK.md). It incorporates the executed notebook's
+findings and produces a presentation report and ZIP.
+
 `scripts/colab_blackbox.py` automates setup for one interactive Colab/Linux GPU
 session. This is a proposed deployment profile, not a successful Colab run report.
 The existing Windows CPU suite was reported by the user as 68 passed in 11.23s.
-Colab dependency resolution, downloads, Laya loading, and GPU inference are still
-unverified on Colab. No GPU work or model download was performed while writing
-this helper.
+The supplied Colab notebook subsequently recorded 75 CPU tests passing, asset
+preparation, and actor startup after a Transformers pin correction. Its task
+ended in infrastructure_error before any tool dispatch; successful end-to-end
+task execution remains unverified. No GPU work was performed locally.
 
 ## Before cloning
 
 The new implementation and cleanup are currently local, uncommitted changes.
 Commit and push the reviewed files on `feature/agentdojo-blackbox` first; a clone
-cannot see local changes. Alternatively upload a source ZIP (exclude environments,
-caches, credentials, and model files). No other branch needs to be changed.
+cannot see local changes. Use a Git clone: a ZIP has no source commit for the
+manifest. Do not initialize a synthetic repository to mask that missing provenance.
 
 For a private repository, authenticate using your normal GitHub/Colab secret
 workflow. Do not put an access token in a shared notebook or clone URL.
@@ -26,13 +31,16 @@ Replace the URL if using a fork and clone only after the branch is pushed:
 ```python
 !git clone --branch feature/agentdojo-blackbox --single-branch https://github.com/AtharvaThorat/permission-that-learn-.git /content/permission-that-learn
 %cd /content/permission-that-learn
+!pip -q install uv
+!uv python install 3.12
+!uv venv --seed --python 3.12 /content/py312
 ```
 
 Run the CPU tests first. This installs the test requirements into an isolated
 environment; it needs no GPU or model weights:
 
 ```python
-!python scripts/colab_blackbox.py tests
+!/content/py312/bin/python scripts/colab_blackbox.py tests
 ```
 
 Prepare the full trial. This installs separate actor and gate environments,
@@ -41,7 +49,7 @@ checkpoint once on CPU so its encoder/tokenizer dependencies are downloaded too.
 It then checks that Laya loads in a fresh offline process:
 
 ```python
-!python scripts/colab_blackbox.py prepare
+!/content/py312/bin/python scripts/colab_blackbox.py prepare
 ```
 
 The original Qwen files are around 16.4 GB even though the server quantizes them
@@ -54,14 +62,14 @@ the first prepare resolves and records the commit and later prepares reuse it.
 List real task IDs and prompts:
 
 ```python
-!python scripts/colab_blackbox.py list-tasks
+!/content/py312/bin/python scripts/colab_blackbox.py list-tasks
 ```
 
 Choose one task (prefer a read-only task for the first trial), replace the
 placeholder, and run it:
 
 ```python
-!python scripts/colab_blackbox.py run --task <TASK_ID> --native-raw-logs
+!/content/py312/bin/python scripts/colab_blackbox.py run --task <TASK_ID> --native-raw-logs
 ```
 
 The helper writes a config with that one task, runs preflight, starts a local
@@ -91,7 +99,7 @@ intentionally want to retain the environments/model cache.
 - Qwen3-8B with bitsandbytes 4-bit inflight quantization, FP16 compute, one request
   at a time, 8192 total context tokens, 1024 maximum output tokens, eager execution.
   This is a different precision profile from the original full-precision recipe.
-- Proposed actor dependencies: vLLM 0.11.0 and bitsandbytes >=0.46.1,<0.49. The
+- Actor dependencies: vLLM 0.11.0, Transformers 4.57.6, and bitsandbytes >=0.46.1,<0.49. The
   selected vLLM wheel requires a compatible NVIDIA driver/CUDA environment. The
   GPU check rejects pre-Turing GPUs and GPUs with less than about 14 GiB VRAM;
   passing the check does not guarantee enough host RAM or successful loading.

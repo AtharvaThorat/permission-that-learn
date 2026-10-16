@@ -8,7 +8,8 @@ from pathlib import Path
 def main():
     root = Path(__file__).resolve().parents[1]
     files = [p for name in ('blackbox', 'integrations', 'tests/blackbox') for p in (root / name).rglob('*.py')]
-    files += [root / 'gatekeeper/policy.py', root / 'scripts/colab_blackbox.py', Path(__file__).resolve()]
+    files += [root / 'gatekeeper/policy.py', root / 'scripts/colab_blackbox.py',
+              root / 'scripts/benchmark_colab.py', Path(__file__).resolve()]
     trees = {p: ast.parse(p.read_text(encoding='utf-8-sig'), filename=str(p)) for p in files}
     configs = list((root / 'configs/blackbox').rglob('*.json'))
     for path in configs:

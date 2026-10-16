@@ -2,7 +2,9 @@
 
 This branch prepares an inference and evaluation pipeline for AgentDojo's `workspace` suite. The actor proposes tool calls; the black box validates them, checks a deterministic reference wall, optionally asks the existing Laya gatekeeper, and dispatches only authorized calls through the native AgentDojo runtime. The user reported 68 CPU tests passing on Windows Python 3.12.10. Model inference and benchmark episodes remain unverified.
 
-For Google Colab, follow the [Colab runbook](docs/COLAB_RUNBOOK.md). The helper installs isolated environments, downloads pinned model assets, and can run one selected task with a 4-bit actor profile. Colab GPU execution has not yet been validated.
+For Google Colab, follow the [Colab runbook](docs/COLAB_RUNBOOK.md). The supplied notebook verified asset preparation and actor startup after a dependency fix, but its task ended in an infrastructure error. Successful end-to-end GPU task execution remains unverified.
+
+For a timed five-task trial with a shareable report, use the [quick benchmark instructions](docs/COLAB_BENCHMARK.md) or `notebooks/colab_quick_benchmark.ipynb`. This keeps the Qwen actor, original Laya gatekeeper, and reference wall; setup fixes come from the supplied Colab execution notebook.
 
 The Laya runtime under `gatekeeper/` is intentionally retained because `wall_gatekeeper` mode calls it. The old standalone Laya CLI, synthetic fixture set, benchmark snapshots, and evaluation scripts/tests have been removed from this branch's working tree. They remain recoverable from the earlier Git commit/branch. No other branch was edited. This branch still descends from `feature/laya-gatekeeper`; file cleanup does not rewrite Git history.
 

@@ -5,6 +5,16 @@ not a claim of runtime readiness, safety, utility or performance.
 
 ## Subsequent testing and Colab preparation
 
+Update 2026-10-16: inspected `D:\grids_workspace\Untitled0.ipynb`. It recorded
+75 CPU tests passing on Colab and asset preparation; actor startup required
+Transformers 4.57.6 with vLLM 0.11.0. The task ended with infrastructure_error
+and zero actions, so this is not a successful model benchmark. Added the isolated
+five-task timed pilot `scripts/benchmark_colab.py`, a clean notebook, and
+`docs/COLAB_BENCHMARK.md`; pinned the actor dependency and documented Python 3.12
+and real Git cloning. Core runtime, gate prompts, model pins, and policy were
+not changed. Local updated CPU suite: **84 passed in 7.09s**. The new GPU pilot
+remains for the user to execute; it exports actual results and failure evidence.
+
 The user subsequently supplied Windows Python 3.12.10 pytest output showing
 **68 passed in 11.23s**, with a non-fatal pytest-cache permission warning. This
 supersedes the original implementation-phase NOT RUN status for those CPU tests.

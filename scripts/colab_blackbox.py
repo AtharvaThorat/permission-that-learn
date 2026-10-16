@@ -17,6 +17,8 @@ import urllib.error
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = Path(__file__).resolve()
 VLLM_VERSION = '0.11.0'
+ACTOR_PACKAGES = ['vllm==' + VLLM_VERSION, 'bitsandbytes>=0.46.1,<0.49',
+                  'transformers==4.57.6']
 
 
 def execute(args, **kwargs):
@@ -43,6 +45,7 @@ def gpu_check():
     if float(memory) < 14000 or float(capability) < 7.5:
         raise RuntimeError('This profile needs a T4-class or newer GPU with at least 14 GiB VRAM. Got: ' + info)
     print('GPU:', info.strip(), flush=True)
+    return {'name': name, 'memory_mib': float(memory), 'compute_capability': capability}
 
 
 def install(work, full):
@@ -63,7 +66,7 @@ def install(work, full):
             bootstrap_env['PYTHONPATH'] = str(bootstrap)
             execute([sys.executable, '-m', 'virtualenv', work / name], env=bootstrap_env)
         packages = (['-r', ROOT / 'requirements-blackbox-test.txt'] if name == 'gate'
-                    else ['vllm==' + VLLM_VERSION, 'bitsandbytes>=0.46.1,<0.49'])
+                    else ACTOR_PACKAGES)
         execute([py, '-m', 'pip', 'install', *packages])
         if full and name == 'gate':
             execute([py, '-m', 'pip', 'install', 'torch', '--index-url', 'https://download.pytorch.org/whl/cpu'])
@@ -76,6 +79,26 @@ def install(work, full):
 def tests(work):
     execute([python_at(work, 'gate'), '-m', 'pytest', 'tests/blackbox', '-q',
              '-o', 'cache_dir=' + str(work / 'pytest-cache')])
+
+
+def repair_actor(work):
+    """Apply the notebook's working Transformers pin without downloading weights."""
+    py = python_at(work, 'actor')
+    if not py.exists():
+        raise FileNotFoundError('No actor environment; run prepare first.')
+    execute([py, '-m', 'pip', 'install', *ACTOR_PACKAGES])
+    execute([py, '-m', 'pip', 'check'])
+    with (work / 'actor-freeze.txt').open('w') as out:
+        execute([py, '-m', 'pip', 'freeze'], stdout=out)
+
+
+def require_git():
+    try:
+        execute(['git', 'rev-parse', '--verify', 'HEAD'], stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise RuntimeError('Use a git clone of the pushed branch, not an extracted ZIP; '
+                           'the manifest records the actual source commit.') from exc
 
 
 def assets(work, revision):
@@ -136,30 +159,47 @@ def wait_ready(process, port, key, timeout=900):
     raise TimeoutError('Actor startup timed out; inspect actor-server.log')
 
 
-def run_task(work, task, raw_logs, mode):
-    if not raw_logs:
-        raise ValueError('Add --native-raw-logs to permit native synthetic task transcripts.')
-    gpu_check()
-    data = json.loads((work / 'assets.json').read_text())
-    if data['vllm_version'] != VLLM_VERSION:
-        raise ValueError('Prepared server version differs; rerun prepare.')
-    # Fail on an unknown task before loading the actor.
-    execute([python_at(work, 'gate'), '-c',
-        "import sys; from agentdojo.task_suite.load_suites import get_suite; "
-        "s=get_suite('v1.2.2','workspace'); assert sys.argv[1] in s.user_tasks, 'Unknown task ID'", task])
-    with socket.socket() as sock:
-        sock.bind(('127.0.0.1', 0))
-        port = sock.getsockname()[1]
+def make_config(work, data, tasks, port, mode='wall_gatekeeper'):
     config = json.loads((ROOT / 'configs/blackbox/wall_gatekeeper.json').read_text())
     config['mode'] = mode
     config['actor'].update(model_revision=data['actor_revision'], local_model_path=data['actor_path'],
         template_provenance='Qwen/Qwen3-8B@' + data['actor_revision'], server_version=VLLM_VERSION,
         quantization=data['quantization'], base_url=f'http://127.0.0.1:{port}/v1', max_output_tokens=1024)
     config['gatekeeper'].update(cache_dir=str(work / 'hf'), timeout_seconds=120.0, load_timeout_seconds=600.0)
-    config['agentdojo']['user_task_ids'] = [task]
+    config['agentdojo']['user_task_ids'] = list(tasks)
     for field in ('policy_path', 'metadata_path'):
         config['wall'][field] = str((ROOT / 'configs/blackbox' / config['wall'][field]).resolve())
     config['audit']['output_directory'] = str(work / 'runs')
+    return config
+
+
+def stop_process(process):
+    """Terminate only the helper-owned Linux process group, including workers."""
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+    except ProcessLookupError:
+        process.wait()
+
+
+def run_task(work, task, raw_logs, mode):
+    if not raw_logs:
+        raise ValueError('Add --native-raw-logs to permit native synthetic task transcripts.')
+    gpu_check()
+    require_git()
+    data = json.loads((work / 'assets.json').read_text())
+    if data['vllm_version'] != VLLM_VERSION:
+        raise ValueError('Prepared server version differs; rerun prepare.')
+    execute([python_at(work, 'gate'), '-c',
+        "import sys; from agentdojo.task_suite.load_suites import get_suite; "
+        "s=get_suite('v1.2.2','workspace'); assert sys.argv[1] in s.user_tasks, 'Unknown task ID'", task])
+    with socket.socket() as sock:
+        sock.bind(('127.0.0.1', 0))
+        port = sock.getsockname()[1]
+    config = make_config(work, data, [task], port, mode)
     config_path = work / 'experiment.local.json'
     config_path.write_text(json.dumps(config, indent=2))
     env = environment(work, True)
@@ -175,20 +215,12 @@ def run_task(work, task, raw_logs, mode):
             execute([python_at(work, 'gate'), '-m', 'integrations.agentdojo.runner',
                      '--config', config_path, '--native-raw-logs'], env=env)
         finally:
-            # Own process group only; include worker processes if server crashes.
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-                process.wait(timeout=20)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
-            except ProcessLookupError:
-                process.wait()
+            stop_process(process)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['tests', 'prepare', 'list-tasks', 'run', '_assets'])
+    parser.add_argument('command', choices=['tests', 'prepare', 'repair-actor', 'list-tasks', 'run', '_assets'])
     parser.add_argument('--work-dir', type=Path, default=Path('/content/blackbox-colab'))
     parser.add_argument('--actor-revision', help='Exact Qwen commit; first prepare otherwise resolves and records it')
     parser.add_argument('--task', help='Exactly one real user-task ID from list-tasks')
@@ -196,7 +228,9 @@ def main():
     parser.add_argument('--native-raw-logs', action='store_true')
     args = parser.parse_args()
     if platform.system() != 'Linux' or not (3, 10) <= sys.version_info[:2] <= (3, 12):
-        parser.error('Use Linux/Colab with Python 3.10-3.12 for this proposed profile.')
+        parser.error('Use Linux Python 3.10-3.12. On Colab run: uv python install 3.12; '
+                     'uv venv --seed --python 3.12 /content/py312; '
+                     'then invoke /content/py312/bin/python instead of python.')
     work = args.work_dir.resolve()
     work.mkdir(parents=True, exist_ok=True)
     if args.command == 'tests':
@@ -223,6 +257,8 @@ def main():
         assets(work, args.actor_revision)
     elif args.command == 'list-tasks':
         list_tasks(work)
+    elif args.command == 'repair-actor':
+        repair_actor(work)
     else:
         if not args.task:
             parser.error('run requires --task with one selected ID')
