@@ -5,6 +5,34 @@ from pathlib import Path
 from blackbox.actions import canonical
 from blackbox.contracts import GateDecision
 
+
+def semantic_facts(tool, facts):
+    """Calendar collection reads need scope, not every event's freshness hash.
+
+    The wall and executor still consume the original frozen facts. This summary
+    describes the collection being searched, never claims which events match,
+    and preserves missing evidence and recipient information.
+    """
+    if tool not in ('search_calendar_events', 'get_day_calendar_events'):
+        return facts
+    return {'collection': 'calendar', 'scope': 'full_collection_not_search_results',
+            'resource_count': len(facts.get('resources', [])),
+            'missing': facts.get('missing', []), 'recipients': facts.get('recipients', [])}
+
+
+def usage_diagnostics(raw):
+    """Only numeric/bool diagnostics; never copy model input or free text."""
+    usage = raw.get('usage', {}) if isinstance(raw, dict) else {}
+    if not isinstance(usage, dict):
+        return {}
+    result = {key: usage[key] for key in ('state_tokens', 'state_tokens_used',
+              'state_tokens_dropped', 'truncated') if type(usage.get(key)) in (int, bool)}
+    if isinstance(usage.get('truncated_questions'), list):
+        result['truncated_question_count'] = len(usage['truncated_questions'])
+    result['option_collapse'] = bool(usage.get('options'))
+    return result
+
+
 class ExistingLayaGate:
     def __init__(self, config, max_chars):
         self.config = config
@@ -71,14 +99,15 @@ class ExistingLayaGate:
                               'evaluated_action_id': action.action_id, 'reason_codes': [wall.reason]},
                      'verified_context': {'confirmation_required': wall.confirmation_required,
                          'evidence_complete': action.evidence_complete,
-                         'facts': {'metadata': facts, 'effects': list(action.effects),
+                         'facts': {'metadata': semantic_facts(action.tool, facts), 'effects': list(action.effects),
                                    'provenance': 'native_schema_and_declared_metadata'}}}
             if len(canonical(state)) > self.max_chars:
                 return GateDecision('ASK', 'INCOMPLETE_EVIDENCE', backend='existing_laya')
             result = self.gate.evaluate(state)
             return GateDecision(result.decision, result.reason_code, result.raw_model_decision,
                 result.class_probabilities, 'existing_laya', 'single-v1',
-                self.gate.backend.checkpoint, self.gate.backend.revision, result.error_kind)
+                self.gate.backend.checkpoint, self.gate.backend.revision, result.error_kind,
+                diagnostics=usage_diagnostics(result.raw_model_output))
         except Exception as exc:
             return GateDecision('ASK', 'MODEL_UNAVAILABLE', backend='existing_laya', error_kind=type(exc).__name__)
 

@@ -48,6 +48,7 @@ class GateDecision:
     revision: str | None = None
     error_kind: str | None = None
     calibration: str = 'unknown'
+    diagnostics: dict | None = None
 
 @dataclass(frozen=True)
 class Outcome:

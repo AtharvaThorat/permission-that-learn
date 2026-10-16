@@ -47,7 +47,7 @@ class EpisodeAudit:
                    'probabilities', 'backend', 'checkpoint', 'revision', 'prompt_version',
                    'calibration', 'count', 'terminal', 'content_hash', 'original_hash',
                    'evidence_complete', 'omitted_chars', 'original_id_hash', 'policy_override',
-                   'decision_id_hash', 'authorization_id_hash', 'expires_at_monotonic'}
+                   'decision_id_hash', 'authorization_id_hash', 'expires_at_monotonic', 'diagnostics'}
         if set(fields) - allowed:
             raise AuditFailure('UNSAFE_AUDIT_FIELDS')
         episode = self.episode

@@ -33,6 +33,38 @@ provided until the real run produces them.
 The original notebook is left untouched. A clean executable notebook is provided
 at `notebooks/colab_quick_benchmark.ipynb`; the same commands are below.
 
+## Calendar input fix and rerun
+
+Run `20261016T080941Z-05e7eb40` loaded both models, but all five task responses
+from Laya were rejected with `error_kind=truncation`. Calendar collection reads
+were passing every event's metadata and content hash into the semantic model.
+The adapter now sends a compact collection scope/count for these two read tools.
+The authentic request, exact tool arguments, effects, missing-evidence markers,
+and confirmation requirement are retained. Full event metadata still feeds the
+wall and execution freshness checks. Other tools retain their existing inputs.
+The original Laya checkpoint, questions, token limits, and response validation
+are unchanged; long requests can still fail closed.
+
+Gate events now include numeric token/truncation diagnostics. Reports distinguish
+raw returned predictions from usable accepted predictions and use
+`completed_with_gate_errors` when model responses are rejected. The historical
+JSON field `laya_predictions_returned` continues to count usable predictions.
+Local verification: 89 CPU tests passed; a new Colab model run is still required.
+
+After pushing the fix, reuse the prepared Colab session:
+
+```python
+%cd /content/permission-that-learn-benchmark
+!git pull --ff-only origin feature/agentdojo-blackbox
+!/content/py312/bin/python scripts/benchmark_colab.py run --seconds 900 --task-seconds 150 --native-raw-logs
+```
+
+Verify the pull succeeded before running the benchmark. No dependency repair or
+model download is needed if the same VM still has its prepared assets. Download
+the new ZIP using section 5. Check `gate_error_counts`, usable predictions, task
+scores and tool executions. A valid semantic ASK/BLOCK remains a legitimate
+outcome; the fix does not force permission or promise all tasks succeed.
+
 ## 1. Push, then clone on a GPU runtime
 
 Review and push the local changes on `feature/agentdojo-blackbox` first. In Colab
@@ -131,8 +163,8 @@ predictions is explicitly reported as no task-level gatekeeper evidence. The
 unchanged clean-task `official_security_field=true` is not called attack resistance.
 The report does not infer gatekeeper classification accuracy from task utility.
 
-Exit 0 means the panel finished without infrastructure errors; task utility can
-still be false. Exit 1 means infrastructure errors occurred. Exit 2 indicates
+Exit 0 means the panel finished without infrastructure or gate errors; task utility can
+still be false. Exit 1 means infrastructure or gate errors occurred. Exit 2 indicates
 setup/worker failure, interruption, or deadline expiry. A report is still exported
 for failures after the trial starts. Check `failure.json`, `worker.log`, and
 `actor-server.log` for diagnostics. Safe error chains include exception classes

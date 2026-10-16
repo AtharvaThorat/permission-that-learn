@@ -177,6 +177,9 @@ def report(output, tasks, status, elapsed, budget):
     predictions = sum(row['laya_predictions_returned'] for row in rows)
     gate_events = [event for event in events if event['event'] == 'gate_decision'
                    and event.get('backend') == 'existing_laya']
+    gate_errors = dict(Counter(event['error_kind'] for event in gate_events if event.get('error_kind')))
+    if status == 'completed' and gate_errors:
+        status = 'completed_with_gate_errors'
     gate_times = [event['elapsed_seconds'] for event in gate_events if 'elapsed_seconds' in event]
     actor_times = [event['elapsed_seconds'] for event in events
                    if event['event'] == 'actor_response' and 'elapsed_seconds' in event]
@@ -187,6 +190,8 @@ def report(output, tasks, status, elapsed, budget):
         'selected_panel_success_fraction': successes / len(tasks),
         'unscored_tasks': len(tasks) - scored, 'terminal_counts': dict(Counter(r['terminal'] for r in rows)),
         'laya_predictions_returned': predictions,
+        'laya_raw_predictions_returned': sum(event.get('raw_recommendation') is not None for event in gate_events),
+        'gate_error_counts': gate_errors,
         'observed_gate_decision_counts': dict(Counter(event.get('decision') for event in gate_events)),
         'mean_laya_evaluation_seconds': sum(gate_times) / len(gate_times) if gate_times else None,
         'mean_actor_response_seconds': sum(actor_times) / len(actor_times) if actor_times else None,
@@ -211,10 +216,11 @@ def report(output, tasks, status, elapsed, budget):
         f'- Execution status: **{status}**', f'- Elapsed: {elapsed:.1f}s; time budget: {budget}s (setup/download excluded).',
         f'- Official task successes: **{successes}/{scored} scored ({rate})**; {len(tasks)} selected.',
         f'- Unscored tasks: {len(tasks) - scored}. They are not counted as successes.',
-        f'- Laya predictions returned during recorded task episodes: **{predictions}**.',
+        f'- Usable Laya predictions accepted during task episodes: **{predictions}**.',
+        f"- Raw Laya predictions returned: {summary['laya_raw_predictions_returned']}; gate errors: {gate_errors}.",
         f"- Observed gate decisions: {summary['observed_gate_decision_counts']}.",
         f"- Mean Laya evaluation seconds: {summary['mean_laya_evaluation_seconds']} (null = unavailable).", '',
-        '| Task | Official utility | Terminal | Seconds | Tool executions | Laya predictions |',
+        '| Task | Official utility | Terminal | Seconds | Tool executions | Usable Laya predictions |',
         '|---|---|---|---:|---:|---:|']
     for row in rows:
         utility = 'unscored' if row['official_utility'] is None else str(row['official_utility'])
@@ -224,7 +230,7 @@ def report(output, tasks, status, elapsed, budget):
     if any('infrastructure' in row['terminal'] for row in rows):
         lines += ['', '**Infrastructure errors occurred. Process completion does not mean every task ran successfully.**']
     if not predictions:
-        lines += ['', '**No task-level Laya predictions were recorded. This does not demonstrate gatekeeper effectiveness.**']
+        lines += ['', '**No usable task-level Laya predictions were accepted. This does not demonstrate gatekeeper effectiveness.**']
     lines += ['', '## Evidence', '',
         'See manifest.json/config.json for exact model and policy identity; summary.json for error chains;',
         'events.jsonl/native/ for task traces; actor-server.log and worker.log for failures;',
@@ -312,11 +318,12 @@ def benchmark(work, tasks, seconds, task_seconds):
                 for row in read_lines(output / 'scores.jsonl')):
             status = 'completed_with_infrastructure_errors'
         summary = report(output, tasks, status, time.monotonic() - started, seconds)
+        status = summary['status']
         archive = shutil.make_archive(str(output), 'zip', root_dir=output)
         write_json(work / 'latest-benchmark.json', {'directory': str(output), 'archive': archive})
         print((output / 'REPORT.md').read_text(encoding='utf-8'), flush=True)
         print('Download:', archive, flush=True)
-    if status == 'completed_with_infrastructure_errors':
+    if status in ('completed_with_infrastructure_errors', 'completed_with_gate_errors'):
         return 1
     if status != 'completed':
         return 2

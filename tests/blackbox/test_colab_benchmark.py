@@ -51,6 +51,21 @@ def test_errors_expose_status_not_response_body_or_credentials():
     assert bench.error_details(failure) == [dict(type='RuntimeError'), dict(type='RuntimeError', http_status=400)]
 
 
+def test_report_distinguishes_raw_predictions_from_rejected_predictions(tmp_path):
+    lines(tmp_path / 'scores.jsonl', [dict(task_id='user_task_0', official_utility=False,
+        terminal='pending_approval', seconds=5, episode_id='e0', executed_dispatches=0,
+        evaluated_action_attempts=1, ask_decisions=1)])
+    lines(tmp_path / 'events.jsonl', [dict(event='gate_decision', episode_id='e0',
+        backend='existing_laya', raw_recommendation='ALLOW', error_kind='truncation',
+        reason_code='MODEL_UNAVAILABLE', decision='ASK')])
+    result = bench.report(tmp_path, ['user_task_0'], 'completed', 10, 900)
+    assert result['status'] == 'completed_with_gate_errors'
+    assert result['laya_predictions_returned'] == 0
+    assert result['laya_raw_predictions_returned'] == 1
+    assert result['gate_error_counts'] == {'truncation': 1}
+    assert result['official_task_successes'] == 0
+
+
 def test_interrupted_last_jsonl_write_is_not_a_fabricated_score(tmp_path):
     p = tmp_path / 'scores.jsonl'
     p.write_text('{"official_utility": false}\n{"task_id":')
