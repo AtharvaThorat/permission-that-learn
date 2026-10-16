@@ -14,6 +14,8 @@ dependencies = [
     "python-dotenv",
     "openpyxl",            # Excel tracker (phases 2-5)
     "huggingface_hub",     # model downloads (phase 6)
+    "pandas",              # phase 6 report
+    "matplotlib",          # phase 6 charts
 ]
 
 [project.optional-dependencies]

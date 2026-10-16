@@ -107,6 +107,24 @@ def test_each_log_belongs_to_its_own_test(benchmark_output):
         assert path.stem == (log["injection_task_id"] or "none")
 
 
+def test_report_builds_three_charts_and_a_four_page_pdf(benchmark_output):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from agentdojo_benchmark.report import build_report, outcome_counts, load_results
+
+    results_dir = benchmark_output / "output" / "results"
+    written = build_report(results_dir)
+    assert sorted(written) == ["1_model_comparison.png", "2_attack_outcomes.png", "3_attack_success_heatmap.png",
+                               "benchmark_report.pdf"]
+    assert all(path.stat().st_size > 10_000 for path in written.values())
+    pdf_bytes = written["benchmark_report.pdf"].read_bytes()
+    assert pdf_bytes.count(b"/Type /Page") - pdf_bytes.count(b"/Type /Pages") == 4  # summary page + 3 charts
+    # Every attacked test is counted in exactly one outcome
+    counts = outcome_counts(load_results(results_dir))
+    assert int(counts.sum(axis=1).iloc[0]) == 8
+
+
 def test_rerun_uses_cached_results_without_starting_a_server(benchmark_output, monkeypatch):
     # A vLLM command that fails immediately: if the runner tried to start a server, the model would be skipped.
     failing_vllm = f'"{Path(sys.executable).as_posix()}" -c "raise SystemExit(1)"'

@@ -166,7 +166,10 @@ Runs AgentDojo against four local Hugging Face models instead of NIM, so there a
 - `output/results/model_summary.csv`: per model, baseline utility, utility under attack and attack success rate (percent)
 - `output/results/attack_success_breakdown.csv`: attack success rate per model, by attack style and by suite
 - `output/results/test_results.csv`: one row per test
-- `output/results/charts/`: the notebook's three comparison charts (one color per model)
+- `output/results/benchmark_report.pdf`: report to share (what was run, key results, how to read them, charts)
+- `output/results/charts/`: model comparison, attack outcomes, attack success heatmap
+
+Rebuild the charts and PDF any time:  `python scripts/make_report.py --results-dir <output>/results`
 - `output/logs/`: AgentDojo's JSON log per test (full conversation)
 - `output/server_logs/<model>.log`: vLLM output, to check why a model failed to load
 

@@ -25,7 +25,8 @@ agentdojo_benchmark/
 │   ├── phase3_quick_attack_test.py
 │   ├── phase4_no_attack_test.py
 │   ├── phase5_full_attack_test.py
-│   └── phase6_local_models_benchmark.py
+│   ├── phase6_local_models_benchmark.py
+│   └── make_report.py                charts + PDF report from the phase 6 results
 ├── src/agentdojo_benchmark/          the reusable code the scripts import
 │   ├── config.py                     shared settings and paths
 │   ├── nim_pipeline.py               AgentDojo agent and API-compatibility fixes
@@ -33,7 +34,8 @@ agentdojo_benchmark/
 │   ├── tracker.py                    Excel tracker (phases 2–5)
 │   ├── local_models.py               local models, download, vLLM server (phase 6)
 │   ├── local_test_plan.py            the fixed test list (phase 6)
-│   └── local_benchmark.py            parallel runner and results (phase 6)
+│   ├── local_benchmark.py            parallel runner and results (phase 6)
+│   └── report.py                     charts and PDF report (phase 6)
 └── tests/                            automated tests (no GPU or API key needed)
     ├── fake_vllm_server.py           stands in for vLLM during tests
     ├── test_local_test_plan.py
@@ -54,7 +56,7 @@ On Windows, `.\scripts\setup_env.ps1` does this inside a new `.venv` and runs th
 
 ```powershell
 pip install pytest
-python -m pytest            # 13 tests, about a minute
+python -m pytest            # 14 tests, about a minute
 ```
 
 They check the phase 6 test plan, and run phase 6 end to end against a fake vLLM server: parallel runs, logs not mixed up between tests, the spreadsheet and CSV result files, and resuming from cached results.
@@ -158,6 +160,7 @@ python scripts/phase6_local_models_benchmark.py --plan-only
 | `results/model_summary.csv` | One row per model: `baseline_utility_pct`, `utility_under_attack_pct`, `attack_success_rate_pct`, run counts, `errors` |
 | `results/attack_success_breakdown.csv` | Attack success rate per model, by attack style and by suite |
 | `results/test_results.csv` | One row per test |
+| `results/benchmark_report.pdf` | **Report to share**: page 1 says what was run (models, number of tests, suites, attack styles, GPU), the key results table and how to read them; then the three charts |
 | `results/charts/*.png` | The three charts below |
 | `logs/` | AgentDojo's JSON log for each test: the full conversation, including the injected text and what the agent did next |
 | `server_logs/<model>.log` | vLLM output; read it if a model fails to load |
@@ -165,12 +168,15 @@ python scripts/phase6_local_models_benchmark.py --plan-only
 
 All rates are percentages. Runs that crashed (for example, the conversation outgrew the context window) are counted under `errors` and left out of the percentages.
 
-**Charts** (drawn by the notebook, one color per model, each model keeps its color in every chart):
+**Charts and report** (built by `scripts/make_report.py`, which notebook cell 10 runs; section 11 downloads everything as one zip):
 
-1. `model_comparison.png`: baseline utility, utility under attack, and attack success rate for all models side by side
-2. `attack_success_by_attack.png`: attack success rate for each attack style
-3. `attack_success_by_suite.png`: attack success rate for each suite
+| Chart | Form | Why it is there |
+|---|---|---|
+| `1_model_comparison.png` | Grouped bars | The headline numbers side by side: baseline utility, utility under attack, attack success rate |
+| `2_attack_outcomes.png` | 100% stacked bars | How each attacked test ended: task done or not × attack resisted or succeeded. A low attack success rate only means "safe" if the model also gets tasks done; this chart shows both at once |
+| `3_attack_success_heatmap.png` | Heatmap | Attack success rate for every model × attack style and model × suite, with the number of tests in each cell |
 
+Each model keeps the same color in every chart, and the colors are checked to be distinguishable for colorblind readers.
 For utility, higher is better. For attack success rate, lower is better.
 
 ---
