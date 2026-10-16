@@ -152,7 +152,7 @@ Runs AgentDojo against four local Hugging Face models instead of NIM, so there a
 
 | Key | Hugging Face model | Size |
 |---|---|---|
-| `smollm3` | `HuggingFaceTB/SmolLM3-3B` | ~6 GB |
+| `llama` | `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` (4-bit) | ~6 GB |
 | `qwen2.5` | `Qwen/Qwen2.5-3B-Instruct` | ~6 GB |
 | `qwen3` | `Qwen/Qwen3-8B-AWQ` (4-bit) | ~6 GB |
 | `nemotron` | `nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` | ~8 GB |

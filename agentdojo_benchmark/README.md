@@ -109,10 +109,12 @@ Terms used below:
 
 | Key | Hugging Face model | Size | Notes |
 |---|---|---|---|
-| `smollm3` | `HuggingFaceTB/SmolLM3-3B` | ~6 GB | "Thinking" mode turned off for speed |
+| `llama` | `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` (4-bit) | ~6 GB | Public 4-bit copy of Meta's model (no license form needed); uses vLLM's Llama 3.1 tool-calling template |
 | `qwen2.5` | `Qwen/Qwen2.5-3B-Instruct` | ~6 GB | The chat-tuned version; the base `Qwen/Qwen2.5-3B` can't follow instructions or call tools |
 | `qwen3` | `Qwen/Qwen3-8B-AWQ` (4-bit) | ~6 GB | "Thinking" mode turned off for speed |
 | `nemotron` | `nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` | ~8 GB | "Thinking" mode turned off for speed |
+
+SmolLM3-3B was tried first and replaced by Llama: in a 50-test run it completed none of its tasks (it invented channel and user names and claimed it couldn't use its tools), so its results said nothing about attacks.
 
 To add or change a model, edit `LOCAL_MODELS` in `src/agentdojo_benchmark/local_models.py` (Hugging Face repo, vLLM tool-calling flags) and the `MODELS_TO_TEST` list in the notebook's first cell.
 
@@ -141,7 +143,7 @@ python scripts/phase6_local_models_benchmark.py --plan-only
 
 | Option | Meaning | Default |
 |---|---|---|
-| `--models` | Which models to run | `smollm3 qwen2.5 qwen3 nemotron` |
+| `--models` | Which models to run | `llama qwen2.5 qwen3 nemotron` |
 | `--attacked-tests` | Attacked tests per model | `50` |
 | `--suites` | Suites to draw tests from | `workspace slack travel` |
 | `--attacks` | Attack styles to rotate through | the four above |

@@ -52,15 +52,20 @@ class LocalModel:
 
 
 LOCAL_MODELS: dict[str, LocalModel] = {
-    "smollm3": LocalModel(
-        key="smollm3",
-        hf_repo="HuggingFaceTB/SmolLM3-3B",  # about 6 GB
-        served_name="smollm3-3b",
-        prose_name="SmolLM",
-        # Tool-calling flags from the model card; its chat template turns `tools` into <tool_call> JSON (hermes format).
-        vllm_args=("--enable-auto-tool-choice", "--tool-call-parser", "hermes"),
-        # SmolLM3 "thinks" before answering by default; turning that off keeps runs fast on a T4.
-        request_extras={"chat_template_kwargs": {"enable_thinking": False}},
+    "llama": LocalModel(
+        key="llama",
+        hf_repo="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",  # 4-bit, about 6 GB, not gated
+        served_name="llama-3.1-8b-instruct-awq",
+        prose_name="Llama",
+        vllm_args=(
+            "--enable-auto-tool-choice", "--tool-call-parser", "llama3_json",
+            "--chat-template", "{model_dir}/tool_chat_template_llama3.1_json.jinja",
+        ),
+        # vLLM's recommended chat template for Llama 3.1 tool calling, saved next to the model on download.
+        extra_files={
+            "tool_chat_template_llama3.1_json.jinja":
+                "https://raw.githubusercontent.com/vllm-project/vllm/main/examples/tool_chat_template_llama3.1_json.jinja",
+        },
     ),
     "qwen2.5": LocalModel(
         key="qwen2.5",
