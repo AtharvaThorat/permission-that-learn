@@ -42,7 +42,7 @@ COMMON_VLLM_ARGS = ("--dtype", "half", "--enforce-eager", "--gpu-memory-utilizat
 class LocalModel:
     """One model to test, and everything needed to download and serve it."""
 
-    key: str  # short name used on the command line, e.g. "qwen"
+    key: str  # short name used on the command line, e.g. "qwen3"
     hf_repo: str  # Hugging Face repository to download
     served_name: str  # model name in API requests; also the AgentDojo pipeline name and log folder
     prose_name: str  # how AgentDojo's stronger attacks address the model ("... to you, Qwen")
@@ -52,29 +52,33 @@ class LocalModel:
 
 
 LOCAL_MODELS: dict[str, LocalModel] = {
-    "qwen": LocalModel(
-        key="qwen",
+    "smollm3": LocalModel(
+        key="smollm3",
+        hf_repo="HuggingFaceTB/SmolLM3-3B",  # about 6 GB
+        served_name="smollm3-3b",
+        prose_name="SmolLM",
+        # Tool-calling flags from the model card; its chat template turns `tools` into <tool_call> JSON (hermes format).
+        vllm_args=("--enable-auto-tool-choice", "--tool-call-parser", "hermes"),
+        # SmolLM3 "thinks" before answering by default; turning that off keeps runs fast on a T4.
+        request_extras={"chat_template_kwargs": {"enable_thinking": False}},
+    ),
+    "qwen2.5": LocalModel(
+        key="qwen2.5",
+        # The Instruct (chat-tuned) version: the base Qwen/Qwen2.5-3B is not trained to follow
+        # instructions or call tools, so it would score near zero for reasons unrelated to attacks.
+        hf_repo="Qwen/Qwen2.5-3B-Instruct",  # about 6 GB
+        served_name="qwen2.5-3b-instruct",
+        prose_name="Qwen",
+        vllm_args=("--enable-auto-tool-choice", "--tool-call-parser", "hermes"),
+    ),
+    "qwen3": LocalModel(
+        key="qwen3",
         hf_repo="Qwen/Qwen3-8B-AWQ",  # 4-bit, about 6 GB
         served_name="qwen3-8b-awq",
         prose_name="Qwen",
         vllm_args=("--enable-auto-tool-choice", "--tool-call-parser", "hermes"),
         # Qwen3 "thinks" before answering by default; turning that off keeps runs fast on a T4.
         request_extras={"chat_template_kwargs": {"enable_thinking": False}},
-    ),
-    "llama": LocalModel(
-        key="llama",
-        hf_repo="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",  # 4-bit, about 6 GB, not gated
-        served_name="llama-3.1-8b-instruct-awq",
-        prose_name="Llama",
-        vllm_args=(
-            "--enable-auto-tool-choice", "--tool-call-parser", "llama3_json",
-            "--chat-template", "{model_dir}/tool_chat_template_llama3.1_json.jinja",
-        ),
-        # vLLM's recommended chat template for Llama 3.1 tool calling.
-        extra_files={
-            "tool_chat_template_llama3.1_json.jinja":
-                "https://raw.githubusercontent.com/vllm-project/vllm/main/examples/tool_chat_template_llama3.1_json.jinja",
-        },
     ),
     "nemotron": LocalModel(
         key="nemotron",

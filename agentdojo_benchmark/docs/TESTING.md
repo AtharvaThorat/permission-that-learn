@@ -148,21 +148,25 @@ python scripts/phase5_full_attack_test.py --agent vulnerable --attack direct --i
 
 ## Phase 6: Local models on Colab (`phase6_local_models_benchmark.py`)
 
-Runs AgentDojo against three local Hugging Face models instead of NIM, so there are no API limits. It needs a GPU, so it runs on **Google Colab (T4)** through **`notebooks/local_models_benchmark.ipynb`**. Open the notebook and run its cells top to bottom. No Hugging Face token is needed.
+Runs AgentDojo against four local Hugging Face models instead of NIM, so there are no API limits. It needs a GPU, so it runs on **Google Colab (T4)** through **`notebooks/local_models_benchmark.ipynb`**. Open the notebook and run its cells top to bottom. No Hugging Face token is needed.
 
 | Key | Hugging Face model | Size |
 |---|---|---|
-| `qwen` | `Qwen/Qwen3-8B-AWQ` (4-bit) | ~6 GB |
-| `llama` | `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` (4-bit) | ~6 GB |
+| `smollm3` | `HuggingFaceTB/SmolLM3-3B` | ~6 GB |
+| `qwen2.5` | `Qwen/Qwen2.5-3B-Instruct` | ~6 GB |
+| `qwen3` | `Qwen/Qwen3-8B-AWQ` (4-bit) | ~6 GB |
 | `nemotron` | `nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` | ~8 GB |
 
-**What a run does:** downloads the models to Google Drive once. Then, for each model in turn: starts a vLLM server (an OpenAI-compatible API on `localhost:8000`), runs the test plan with 8 tests at a time, and stops the server. A T4 holds one model at a time, so the models run one after another and the tests within each model run in parallel.
+**What a run does:** downloads the models to Google Drive once (about 27 GB). Then, for each model in turn: starts a vLLM server (an OpenAI-compatible API on `localhost:8000`), runs the test plan with 8 tests at a time, and stops the server. A T4 holds one model at a time, so the models run one after another and the tests within each model run in parallel.
 
 **Test plan** (`local_test_plan.py`, identical for every model): 50 attacked tests spread over workspace, slack and travel (banking is left out), rotating through `important_instructions`, `tool_knowledge`, `ignore_previous` and `direct`, plus each chosen user task once with no attack (18 runs). That's 68 runs per model.
 
 **Output** (in the Drive folder set in the notebook):
-- `output/results/model_summary.csv`: per model, baseline utility, utility under attack, attack success rate, and the success rate by attack and by suite
+- `output/results/benchmark_results.xlsx`: spreadsheet with *Model summary*, *Attack success breakdown* and *Test results* sheets
+- `output/results/model_summary.csv`: per model, baseline utility, utility under attack and attack success rate (percent)
+- `output/results/attack_success_breakdown.csv`: attack success rate per model, by attack style and by suite
 - `output/results/test_results.csv`: one row per test
+- `output/results/charts/`: the notebook's three comparison charts (one color per model)
 - `output/logs/`: AgentDojo's JSON log per test (full conversation)
 - `output/server_logs/<model>.log`: vLLM output, to check why a model failed to load
 

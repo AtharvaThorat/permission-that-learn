@@ -54,10 +54,10 @@ On Windows, `.\scripts\setup_env.ps1` does this inside a new `.venv` and runs th
 
 ```powershell
 pip install pytest
-python -m pytest            # 11 tests, about a minute
+python -m pytest            # 13 tests, about a minute
 ```
 
-They check the phase 6 test plan, and run phase 6 end to end against a fake vLLM server: parallel runs, logs not mixed up between tests, result files, and resuming from cached results.
+They check the phase 6 test plan, and run phase 6 end to end against a fake vLLM server: parallel runs, logs not mixed up between tests, the spreadsheet and CSV result files, and resuming from cached results.
 
 ## How AgentDojo tests a model
 
@@ -84,7 +84,7 @@ Terms used below:
 | 3 | One hand-built attack, one API call | `scripts/phase3_quick_attack_test.py` | Laptop, NIM API | Excel: *Quick attack test (homemade)* |
 | 4 | AgentDojo task, no attack | `scripts/phase4_no_attack_test.py` | Laptop, NIM API | Excel: *No-attack test (AgentDojo)* |
 | 5 | AgentDojo task with an attack | `scripts/phase5_full_attack_test.py` | Laptop, NIM API | Excel: *Full attack test (AgentDojo)* |
-| **6** | **Main benchmark: 3 local models × 68 tests, in parallel** | **`scripts/phase6_local_models_benchmark.py`** | **Google Colab T4 GPU** | **CSV files on Google Drive** |
+| **6** | **Main benchmark: 4 local models × 68 tests, in parallel** | **`scripts/phase6_local_models_benchmark.py`** | **Google Colab T4 GPU** | **Spreadsheet, CSV files and charts on Google Drive** |
 
 ---
 
@@ -96,20 +96,23 @@ Terms used below:
 
 | File | Role |
 |---|---|
-| `notebooks/local_models_benchmark.ipynb` | **Start here.** Colab notebook that runs everything: mounts Drive, clones this branch, installs, downloads models, runs the benchmark, shows results |
+| `notebooks/local_models_benchmark.ipynb` | **Start here.** Colab notebook that runs everything: mounts Drive, clones this branch, installs, downloads models, runs the benchmark, shows the results tables and charts |
 | `scripts/phase6_local_models_benchmark.py` | Entry point the notebook runs (`--help` lists the options) |
-| `src/agentdojo_benchmark/local_benchmark.py` | The runner: starts each model's server, runs the tests in parallel, saves results |
-| `src/agentdojo_benchmark/local_models.py` | The three models and how to serve each one; model download; vLLM server start/stop; the agent for a local server |
+| `src/agentdojo_benchmark/local_benchmark.py` | The runner: starts each model's server, runs the tests in parallel, saves the spreadsheet and CSV files |
+| `src/agentdojo_benchmark/local_models.py` | The four models and how to serve each one; model download; vLLM server start/stop; the agent for a local server |
 | `src/agentdojo_benchmark/local_test_plan.py` | Builds the fixed list of tests every model runs |
 | `src/agentdojo_benchmark/` `nim_pipeline.py`, `config.py`, `custom_attacks.py` | Shared helpers it imports (see [Shared files](#shared-files)) |
 
-**Models** (all public on Hugging Face, no token needed; about 20 GB in total):
+**Models** (all public on Hugging Face, no token needed; about 27 GB in total):
 
-| Key | Hugging Face model | Size |
-|---|---|---|
-| `qwen` | `Qwen/Qwen3-8B-AWQ` (4-bit) | ~6 GB |
-| `llama` | `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` (4-bit) | ~6 GB |
-| `nemotron` | `nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` | ~8 GB |
+| Key | Hugging Face model | Size | Notes |
+|---|---|---|---|
+| `smollm3` | `HuggingFaceTB/SmolLM3-3B` | ~6 GB | "Thinking" mode turned off for speed |
+| `qwen2.5` | `Qwen/Qwen2.5-3B-Instruct` | ~6 GB | The chat-tuned version; the base `Qwen/Qwen2.5-3B` can't follow instructions or call tools |
+| `qwen3` | `Qwen/Qwen3-8B-AWQ` (4-bit) | ~6 GB | "Thinking" mode turned off for speed |
+| `nemotron` | `nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` | ~8 GB | "Thinking" mode turned off for speed |
+
+To add or change a model, edit `LOCAL_MODELS` in `src/agentdojo_benchmark/local_models.py` (Hugging Face repo, vLLM tool-calling flags) and the `MODELS_TO_TEST` list in the notebook's first cell.
 
 **Tests per model:** the same 68 runs for every model, so the results are comparable.
 
@@ -134,7 +137,7 @@ python scripts/phase6_local_models_benchmark.py --plan-only
 
 | Option | Meaning | Default |
 |---|---|---|
-| `--models` | Which models to run | `qwen llama nemotron` |
+| `--models` | Which models to run | `smollm3 qwen2.5 qwen3 nemotron` |
 | `--attacked-tests` | Attacked tests per model | `50` |
 | `--suites` | Suites to draw tests from | `workspace slack travel` |
 | `--attacks` | Attack styles to rotate through | the four above |
@@ -145,17 +148,28 @@ python scripts/phase6_local_models_benchmark.py --plan-only
 | `--force-rerun` | Ignore cached results and run everything again | off |
 | `--download-only` / `--plan-only` | Only download the models / only print the tests | off |
 
-**Output** (in the Drive folder set in the notebook):
+**Output** (in the `output/` folder on Google Drive set in the notebook):
 
 | File | Contents |
 |---|---|
-| `results/model_summary.csv` | Per model: baseline utility, utility under attack, attack success rate, and the success rate by attack and by suite |
+| `results/benchmark_results.xlsx` | **Spreadsheet** with three sheets: *Model summary*, *Attack success breakdown*, *Test results* |
+| `results/model_summary.csv` | One row per model: `baseline_utility_pct`, `utility_under_attack_pct`, `attack_success_rate_pct`, run counts, `errors` |
+| `results/attack_success_breakdown.csv` | Attack success rate per model, by attack style and by suite |
 | `results/test_results.csv` | One row per test |
+| `results/charts/*.png` | The three charts below |
 | `logs/` | AgentDojo's JSON log for each test: the full conversation, including the injected text and what the agent did next |
 | `server_logs/<model>.log` | vLLM output; read it if a model fails to load |
 | `test_plan.json` | The exact tests that were run |
 
-Runs that crashed (for example, the conversation outgrew the context window) are counted under `errors` and left out of the percentages.
+All rates are percentages. Runs that crashed (for example, the conversation outgrew the context window) are counted under `errors` and left out of the percentages.
+
+**Charts** (drawn by the notebook, one color per model, each model keeps its color in every chart):
+
+1. `model_comparison.png`: baseline utility, utility under attack, and attack success rate for all models side by side
+2. `attack_success_by_attack.png`: attack success rate for each attack style
+3. `attack_success_by_suite.png`: attack success rate for each suite
+
+For utility, higher is better. For attack success rate, lower is better.
 
 ---
 
@@ -241,7 +255,7 @@ Tool outputs, which is where the injections arrive, pass from `ToolsExecutor` to
   - Model names are registered with AgentDojo so the `important_instructions` and `tool_knowledge` attacks, which address the model by name, work.
   - NIM pipeline names drop the `nvidia/` prefix, because a `/` breaks AgentDojo's result cache.
 - **Running tests in parallel needs a fix (phase 6):** AgentDojo shares one logger list across threads, so parallel tests corrupt each other's logs. `scripts/phase6_local_models_benchmark.py` gives each worker thread its own list.
-- **Nemotron-3-Nano-4B on a T4 is the least certain of the three phase 6 models.** It uses a newer hybrid architecture and has to run in float16 because the T4 has no bfloat16. If it fails to load, it is skipped and the other models still run; see `server_logs/nemotron.log`.
+- **Nemotron-3-Nano-4B on a T4 is the least certain of the four phase 6 models.** It uses a newer hybrid architecture and has to run in float16 because the T4 has no bfloat16. If it fails to load, it is skipped and the other models still run; see `server_logs/nemotron.log`.
 - **Qwen models are retired on NIM** (`HTTP 410`), which is why phases 1–5 use Nemotron.
 - **Saved results are reused:** running the same test twice returns the saved result. Use `--force-rerun` to run it again.
 - **Personal results are not committed:** `logs/` and `experiment_tracker.xlsx` are git-ignored, so everyone's runs stay on their own machine or Drive.

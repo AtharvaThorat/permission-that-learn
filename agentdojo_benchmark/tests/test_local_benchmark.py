@@ -28,10 +28,10 @@ def free_port() -> int:
 
 def run_benchmark(monkeypatch, tmp_path: Path, vllm_command: str) -> None:
     models_dir = tmp_path / "models"
-    (models_dir / "qwen").mkdir(parents=True, exist_ok=True)
-    (models_dir / "qwen" / ".download_complete").write_text("fake")  # skip the real download
+    (models_dir / "qwen3").mkdir(parents=True, exist_ok=True)
+    (models_dir / "qwen3" / ".download_complete").write_text("fake")  # skip the real download
     monkeypatch.setattr(sys, "argv", [
-        "phase6", "--models", "qwen", "--attacked-tests", "8", "--workers", str(PARALLEL_TESTS),
+        "phase6", "--models", "qwen3", "--attacked-tests", "8", "--workers", str(PARALLEL_TESTS),
         "--models-dir", str(models_dir), "--output-dir", str(tmp_path / "output"),
         "--port", str(free_port()), "--vllm-command", vllm_command,
     ])
@@ -64,13 +64,32 @@ def test_every_planned_test_has_a_result_and_none_crashed(benchmark_output):
     assert all(row["error"] == "" for row in rows)
 
 
-def test_summary_has_one_row_for_the_model(benchmark_output):
+def test_summary_has_one_row_for_the_model_with_numeric_percentages(benchmark_output):
     summary = read_csv(benchmark_output / "output" / "results" / "model_summary.csv")
     assert [row["model"] for row in summary] == ["qwen3-8b-awq"]
+    for column in ("baseline_utility_pct", "utility_under_attack_pct", "attack_success_rate_pct"):
+        assert 0.0 <= float(summary[0][column]) <= 100.0
+
+
+def test_breakdown_covers_every_attack_style_and_suite(benchmark_output):
+    breakdown = read_csv(benchmark_output / "output" / "results" / "attack_success_breakdown.csv")
+    planned = json.loads((benchmark_output / "output" / "test_plan.json").read_text())
+    attacked = [test for test in planned if test["attack"]]
+    assert {row["group"] for row in breakdown if row["group_by"] == "attack"} == {t["attack"] for t in attacked}
+    assert {row["group"] for row in breakdown if row["group_by"] == "suite"} == {t["suite"] for t in attacked}
+
+
+def test_workbook_has_the_three_result_sheets(benchmark_output):
+    from openpyxl import load_workbook
+
+    workbook = load_workbook(benchmark_output / "output" / "results" / "benchmark_results.xlsx")
+    assert workbook.sheetnames == ["Model summary", "Attack success breakdown", "Test results"]
+    planned = json.loads((benchmark_output / "output" / "test_plan.json").read_text())
+    assert workbook["Test results"].max_row == len(planned) + 1  # + header row
 
 
 def test_tests_really_ran_in_parallel(benchmark_output):
-    server_log = (benchmark_output / "output" / "server_logs" / "qwen.log").read_text()
+    server_log = (benchmark_output / "output" / "server_logs" / "qwen3.log").read_text()
     most_at_once = max(int(line.split("=")[1]) for line in server_log.splitlines() if "most_requests_at_once" in line)
     assert most_at_once > 1
 

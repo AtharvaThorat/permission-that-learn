@@ -193,35 +193,48 @@ def benchmark_model(model: LocalModel, plan: list[PlannedTest], args: argparse.N
 
 # ---------- reporting ----------
 
-def percent(values: list[bool]) -> str:
-    return f"{100 * sum(values) / len(values):.1f}%" if values else "-"
+def percent(values: list[bool]) -> float | None:
+    """Share of True values as a percentage (e.g. 12.5), or None when there are no values."""
+    return round(100 * sum(values) / len(values), 1) if values else None
 
 
 def summarize(results: list[TestResult]) -> list[dict]:
-    """One summary row per model: baseline utility, utility under attack, attack success rate,
-    plus the attack success rate per attack style and per suite."""
+    """One row per model: baseline utility, utility under attack and attack success rate (percentages).
+    Crashed runs are counted in `errors` and left out of the percentages."""
     summary_rows = []
-    attacks = sorted({r.test.attack for r in results if r.test.attack})
-    suites = sorted({r.test.suite for r in results})
     for model in dict.fromkeys(r.model for r in results):  # keeps the order models were run in
         model_results = [r for r in results if r.model == model and not r.error]
         baseline = [r.utility for r in model_results if r.test.is_baseline]
         attacked = [r for r in model_results if not r.test.is_baseline]
-        row = {
+        summary_rows.append({
             "model": model,
-            "baseline_utility": percent(baseline),
-            "utility_under_attack": percent([r.utility for r in attacked]),
-            "attack_success_rate": percent([r.attack_success for r in attacked]),
-            "attacked_runs": len(attacked),
+            "baseline_utility_pct": percent(baseline),
+            "utility_under_attack_pct": percent([r.utility for r in attacked]),
+            "attack_success_rate_pct": percent([r.attack_success for r in attacked]),
             "baseline_runs": len(baseline),
+            "attacked_runs": len(attacked),
             "errors": sum(1 for r in results if r.model == model and r.error),
-        }
-        for attack in attacks:
-            row[f"ASR {attack}"] = percent([r.attack_success for r in attacked if r.test.attack == attack])
-        for suite in suites:
-            row[f"ASR {suite}"] = percent([r.attack_success for r in attacked if r.test.suite == suite])
-        summary_rows.append(row)
+        })
     return summary_rows
+
+
+def attack_success_breakdown(results: list[TestResult]) -> list[dict]:
+    """Attack success rate per model, split by attack style and by suite (one row per model and group)."""
+    breakdown_rows = []
+    attacked = [r for r in results if not r.test.is_baseline and not r.error]
+    for model in dict.fromkeys(r.model for r in results):
+        model_attacked = [r for r in attacked if r.model == model]
+        for group_by in ("attack", "suite"):
+            for group_value in sorted({getattr(r.test, group_by) for r in model_attacked}):
+                group = [r for r in model_attacked if getattr(r.test, group_by) == group_value]
+                breakdown_rows.append({
+                    "model": model,
+                    "group_by": group_by,
+                    "group": group_value,
+                    "attacked_runs": len(group),
+                    "attack_success_rate_pct": percent([r.attack_success for r in group]),
+                })
+    return breakdown_rows
 
 
 def write_csv(path: Path, rows: list[dict]) -> None:
@@ -234,7 +247,34 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
+def write_workbook(path: Path, sheets: dict[str, list[dict]]) -> None:
+    """Save the result tables as one Excel workbook, one sheet per table."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    from openpyxl.utils import get_column_letter
+
+    workbook = Workbook()
+    workbook.remove(workbook.active)  # drop the default empty sheet
+    for sheet_name, rows in sheets.items():
+        sheet = workbook.create_sheet(sheet_name)
+        if not rows:
+            continue
+        headers = list(rows[0])
+        sheet.append(headers)
+        for row in rows:
+            sheet.append([row[header] for header in headers])
+        for cell in sheet[1]:
+            cell.font = Font(bold=True)
+        sheet.freeze_panes = "A2"  # keep the header visible while scrolling
+        for column_number, header in enumerate(headers, start=1):
+            longest = max(len(str(header)), *(len(str(row[header])) for row in rows[:200]))
+            sheet.column_dimensions[get_column_letter(column_number)].width = min(longest + 2, 60)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    workbook.save(path)
+
+
 def save_results(results: list[TestResult], output_dir: Path) -> list[dict]:
+    """Write the results as CSV files and as one Excel workbook in <output_dir>/results/."""
     results_dir = output_dir / "results"
     test_rows = [
         {
@@ -246,18 +286,30 @@ def save_results(results: list[TestResult], output_dir: Path) -> list[dict]:
         for r in sorted(results, key=lambda r: (r.model, r.test.suite, r.test.attack or "", r.test.user_task))
     ]
     summary_rows = summarize(results)
-    write_csv(results_dir / "test_results.csv", test_rows)
+    breakdown_rows = attack_success_breakdown(results)
+
     write_csv(results_dir / "model_summary.csv", summary_rows)
-    print(f"\nSaved {results_dir / 'test_results.csv'} and {results_dir / 'model_summary.csv'}")
+    write_csv(results_dir / "attack_success_breakdown.csv", breakdown_rows)
+    write_csv(results_dir / "test_results.csv", test_rows)
+    write_workbook(results_dir / "benchmark_results.xlsx", {
+        "Model summary": summary_rows,
+        "Attack success breakdown": breakdown_rows,
+        "Test results": test_rows,
+    })
+    print(f"\nSaved results to {results_dir} (benchmark_results.xlsx and CSV files)")
     return summary_rows
 
 
 def print_summary(summary_rows: list[dict]) -> None:
+    def as_text(value: float | None) -> str:
+        return "-" if value is None else f"{value:.1f}%"
+
     print("\n=== Model comparison (errors excluded) ===")
     print(f"{'model':<28} {'baseline utility':>16} {'utility@attack':>15} {'attack success':>15} {'errors':>7}")
     for row in summary_rows:
-        print(f"{row['model']:<28} {row['baseline_utility']:>16} {row['utility_under_attack']:>15} "
-              f"{row['attack_success_rate']:>15} {row['errors']:>7}")
+        print(f"{row['model']:<28} {as_text(row['baseline_utility_pct']):>16} "
+              f"{as_text(row['utility_under_attack_pct']):>15} {as_text(row['attack_success_rate_pct']):>15} "
+              f"{row['errors']:>7}")
 
 
 # ---------- command line ----------
