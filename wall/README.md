@@ -28,7 +28,7 @@ a tool call          │              (labels)   (frozen snapshot)    check    �
 | **Scope** | AgentDojo Workspace suite (email, calendar, cloud drive): all 24 tools hand-labeled |
 | **Output** | `PASS`, `DENY`, or `UNKNOWN`, with readable reasons and stable reason codes |
 | **Dependencies** | `pydantic`, `pyyaml`. No model, no network |
-| **Tests** | 96 unit, contract and property tests (Python 3.11 and 3.13) |
+| **Tests** | 107 unit, contract and property tests (Python 3.11 and 3.13), plus an end-to-end check inside the AgentDojo harness |
 | **Owner** | Atharva (Wall). Gatekeeper: Siddharth. AgentDojo harness: Kaustubh |
 
 ---
@@ -138,13 +138,25 @@ check each claim.
 |---|---|
 | **What** | Seven guarantees checked on 3,000 seeded random cases each, and again under Hypothesis: deny by default, `unknown` never allowed, a weaker policy never allows more, allowed means every target was granted, deterministic results, `revalidate` never looser than `evaluate`, verdict matches codes |
 | **CI** | `.github/workflows/wall-ci.yml` runs `ruff check .` and `pytest -q` on Python 3.11 for every change under `wall/` |
-| **Count** | 96 tests: `test_wall.py` 21, `test_decision.py` 23, `test_integration_contract.py` 22, `test_context.py` 8, `test_from_text.py` 8, `test_properties.py` 7, `test_properties_hypothesis.py` 7 |
+| **Count** | 107 tests: `test_wall.py` 21, `test_decision.py` 23, `test_integration_contract.py` 22, `test_harness.py` 11 (one runs only where the harness is installed), `test_context.py` 8, `test_from_text.py` 8, `test_properties.py` 7, `test_properties_hypothesis.py` 7 |
+
+### 11. Adapter for the AgentDojo harness
+
+| | |
+|---|---|
+| **What** | `HarnessWall` plugs the Wall into the AgentDojo black-box harness (branch `feature/agentdojo-blackbox`) in place of its stand-in `ReferenceWall`. It implements the harness's `Wall` protocol: a `version` property and `evaluate(BoundAction) -> WallVerdict` |
+| **Mapping** | PASS to `PASS` (reason `WALL_PASS`); DENY to `DENY`; UNKNOWN to `UNRESOLVED` (the harness's name for it), with the codes in `missing`. The reason string is the Wall's codes joined by `;`, and the agent sees it as `PermissionError: <codes>`. An action bound under another wall version is `DENY` with `WALL_VERSION_CHANGED` |
+| **Snapshot** | `HarnessWall.for_agentdojo_workspace(policy)` takes the trust snapshot once from AgentDojo's clean default Workspace environment. Every Workspace task starts from that same state (injection tasks only change text), so one snapshot is correct for all of them, and its fingerprint matches the replay labels (`e874a3bafdaf87b7.fe26418d8c589b4b`) |
+| **Confirmation** | `confirm_capabilities` (empty by default) marks PASS actions that still need the user, which the harness turns into ASK |
+| **Where** | `harness.py` (imports no harness code at load time), `scripts/check_in_harness.py` |
+| **Verified by** | `test_harness.py` (11 tests, against stand-ins with the harness's field layout, plus one against the real `blackbox.contracts`). `scripts/check_in_harness.py` runs the Wall inside the real harness pipeline on real AgentDojo v1.2.2 tools with a scripted agent: **8 of 8 scenarios as expected**. Reads and an email to a colleague run; exfiltration to the attacker, delete, cancel, and `rw` sharing are `DENY`; no or malformed recipient is `UNRESOLVED`; and no blocked call changed the environment. The harness's own 75 tests also pass at that branch |
 
 ### What is not built or not verified yet
 
 | Item | Status |
 |---|---|
-| Running inside a live agent loop | Not yet. The harness (AgentDojo runner) is separate work; every result above uses replayed reference calls, not a real agent's choices |
+| Running with a real acting model | Not yet. The Wall now runs inside the harness pipeline (item 11), but only with a scripted agent. No real model's choices have gone through it yet |
+| Harness using the Wall by default | Not yet. The harness still defaults to its `ReferenceWall`; it needs `Dependencies(wall=HarnessWall...)` or a config option, on the harness side |
 | A real proposed call from the team's acting model | Not yet run through `evaluate`; planned for the Oct 17 checkpoint |
 | Gatekeeper handling `UNKNOWN` end to end | The gatekeeper's schema accepts it; its decision logic for `UNKNOWN` is not yet confirmed |
 | AgentDojo tool names in the gatekeeper | The gatekeeper's fixtures use mock names (`email.send`); the live pipeline needs AgentDojo names (`send_email`) |
@@ -161,7 +173,7 @@ check each claim.
 cd wall
 uv venv --python 3.11 && source .venv/bin/activate      # or: python -m venv .venv
 uv pip install -e ".[dev]"                               # or: pip install -e ".[dev]"
-pytest -q                                                # 96 tests, includes Hypothesis properties
+pytest -q                                                # 107 tests, includes Hypothesis properties
 python examples/demo.py                                  # the pitch examples, live
 ```
 
@@ -279,6 +291,23 @@ if check.allowed:
     run_tool(call)
 # Otherwise check.codes says why: ACTION_CHANGED, WALL_VERSION_CHANGED, NOT_PREVIOUSLY_PASSED
 ```
+
+**In the AgentDojo harness** (branch `feature/agentdojo-blackbox`), pass the Wall in through the
+harness's dependencies instead of its stand-in `ReferenceWall`:
+
+```python
+from blackbox.contracts import Dependencies
+from blackbox.factory import build_agentdojo_pipeline
+from ptl.wall import STRICT_WORKSPACE
+from ptl.wall.harness import HarnessWall
+
+wall = HarnessWall.for_agentdojo_workspace(STRICT_WORKSPACE)      # one clean snapshot, all tasks
+pipeline = build_agentdojo_pipeline("configs/blackbox/wall_only.json", Dependencies(wall=wall))
+```
+
+The harness then binds each call, asks the Wall, stops anything that is not `PASS`, and rechecks
+the Wall before execution. `python scripts/check_in_harness.py` (with the harness on
+`PYTHONPATH`) runs the 8-scenario end-to-end check.
 
 **The gatekeeper object** (`to_gatekeeper`) matches the strict `Wall` schema in the gatekeeper
 (`gatekeeper/schemas.py`, contract v0.1). No extra fields:
@@ -468,7 +497,8 @@ results are deterministic and leave the policy unchanged; `revalidate` is never 
   snapshot it is given; a curated contact list would be stricter.
 - **Only the Workspace suite is labeled.** Banking (a `pay` capability with amount limits) is a
   stretch goal.
-- **Not yet run in a live agent loop.** All results above come from replayed reference calls.
+- **Not yet run with a real acting model.** Results above come from replayed reference calls and a
+  scripted agent inside the harness.
 
 ---
 
@@ -485,9 +515,11 @@ wall/
 │   ├── wall.py               Wall.evaluate() / revalidate(), WallResult.to_gatekeeper(), action_digest()
 │   ├── versioning.py         PolicyHistory: append-only, user-confirmed policy versions
 │   ├── from_text.py          plain English to a draft policy via an LLM, validated
-│   └── presets.py            STRICT_WORKSPACE, WORKSPACE_RELAXED, READ_ONLY, ALLOW_ALL
+│   ├── presets.py            STRICT_WORKSPACE, WORKSPACE_RELAXED, READ_ONLY, ALLOW_ALL
+│   └── harness.py            HarnessWall: the Wall behind the AgentDojo harness's Wall protocol
 ├── scripts/
 │   ├── replay_agentdojo.py   replay AgentDojo reference calls through the Wall (needs agentdojo)
+│   ├── check_in_harness.py   run the Wall inside the harness on real tools (needs the harness branch)
 │   └── check_draft_policy.py test plain-English drafting with a real LLM (needs openai and a key)
 ├── benchmarks/               replay output: labeled wall verdicts for every Workspace task
 ├── tests/                    unit, contract, and property tests (+ gatekeeper fixtures in tests/data/)
@@ -509,5 +541,6 @@ change under `wall/`.
    it through `evaluate` (Oct 17 checkpoint).
 2. Confirm with the gatekeeper that `UNKNOWN` is accepted end to end and that AgentDojo tool names
    are supported.
-3. Call `evaluate` and `revalidate` from the live harness, then re-run the replay on real agent traces.
+3. Have the harness use `HarnessWall` by default (a `Dependencies(wall=...)` call or a config
+   option on the harness side), then run real tasks with the acting model and compare with the replay.
 4. Run `scripts/check_draft_policy.py` with a real model and record the result.
