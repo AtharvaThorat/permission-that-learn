@@ -8,6 +8,7 @@ class OpenAICompatibleActor:
         self.config = config
         self.client = None
         self.closed = False
+        self.last_metadata = {}
 
     def respond(self, messages, tools, timeout):
         if self.closed:
@@ -21,8 +22,12 @@ class OpenAICompatibleActor:
         body = {'model': self.config.served_model_name, 'messages': messages,
                 'tools': tools, 'tool_choice': 'auto', 'stream': False,
                 'temperature': self.config.temperature, 'top_p': self.config.top_p,
-                'max_tokens': self.config.max_output_tokens,
-                'chat_template_kwargs': {'enable_thinking': False}}
+                'max_tokens': self.config.max_output_tokens}
+        if self.config.thinking_enabled is not None:
+            body['chat_template_kwargs'] = {'enable_thinking': self.config.thinking_enabled}
+        if self.config.seed is not None:
+            body['seed'] = self.config.seed
+        self.last_metadata = {}
         deadline = time.monotonic() + min(timeout, self.config.timeout_seconds)
         for attempt in range(self.config.max_retries + 1):
             remaining = deadline - time.monotonic()
@@ -40,6 +45,8 @@ class OpenAICompatibleActor:
                             raise TimeoutError('ACTOR_RESPONSE_BUDGET')
                         chunks.append(chunk)
                 parsed = parse_json(b''.join(chunks).decode('utf-8'))
+                self.last_metadata = {'usage': parsed.get('usage'), 'model': parsed.get('model'),
+                                      'system_fingerprint': parsed.get('system_fingerprint')}
                 choices = parsed['choices']
                 if len(choices) != 1 or choices[0].get('finish_reason') not in ('stop', 'tool_calls'):
                     raise ValueError('ACTOR_INCOMPLETE_RESPONSE')

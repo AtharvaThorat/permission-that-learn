@@ -47,6 +47,8 @@ class ExistingLayaGate:
         self.max_chars = max_chars
         self.gate = None
         self.closed = False
+        self.recorder = None
+        self.backend_override = None
 
     def initialize(self):
         if self.closed:
@@ -85,7 +87,7 @@ class ExistingLayaGate:
             except ValueError:
                 return None, 'INVALID_REQUEST'
 
-        self.gate = Gatekeeper(LayaBackend(checkpoint=checkpoint, revision=revision,
+        self.gate = Gatekeeper(self.backend_override or LayaBackend(checkpoint=checkpoint, revision=revision,
             cache_dir=str(cache), timeout=self.config.timeout_seconds,
             load_timeout=self.config.load_timeout_seconds, question_mode='single'),
             request_validator=native_request)
@@ -107,11 +109,22 @@ class ExistingLayaGate:
                               'evaluated_action_id': action.action_id, 'reason_codes': [wall.reason]},
                      'verified_context': {'confirmation_required': wall.confirmation_required,
                          'evidence_complete': action.evidence_complete,
-                         'facts': {'metadata': semantic_facts(action.tool, facts), 'effects': list(action.effects),
+                         'facts': {'metadata': (facts if self.config and self.config.input_profile == 'full_evidence'
+                                               else semantic_facts(action.tool, facts)), 'effects': list(action.effects),
                                    'provenance': 'native_schema_and_declared_metadata'}}}
+            if self.config and self.config.input_profile == 'full_evidence':
+                state['verified_context']['facts']['omitted_evidence'] = []
             if len(canonical(state)) > self.max_chars:
-                return GateDecision('ASK', 'INCOMPLETE_EVIDENCE', backend='existing_laya')
+                if self.recorder:
+                    self.recorder('gate_input', {'action_id': action.action_id, 'input': state,
+                                  'raw_output': None, 'error_kind': 'application_character_budget'})
+                return GateDecision('ASK', 'APPLICATION_CHARACTER_BUDGET', backend='existing_laya',
+                                    error_kind='application_character_budget')
             result = self.gate.evaluate(state)
+            if self.recorder:
+                self.recorder('gate_input', {'action_id': action.action_id, 'input': state,
+                    'raw_output': result.raw_model_output, 'error_kind': result.error_kind,
+                    'final_decision': result.decision, 'reason': result.reason_code})
             return GateDecision(result.decision, result.reason_code, result.raw_model_decision,
                 result.class_probabilities, 'existing_laya', 'single-v1',
                 self.gate.backend.checkpoint, self.gate.backend.revision, result.error_kind,

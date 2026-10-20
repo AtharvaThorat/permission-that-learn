@@ -25,7 +25,8 @@ class GuardedAgentDojoPipeline(BasePipelineElement):
         self.name = 'blackbox-' + config.mode
         self.run_id = dependencies.run_id or uuid4().hex
         self.actor = dependencies.actor if dependencies.actor is not None else OpenAICompatibleActor(config.actor)
-        self.wall = dependencies.wall if dependencies.wall is not None else ReferenceWall.from_file(config.wall.policy_path)
+        from blackbox.permissions.ptl_adapter import build_wall
+        self.wall = dependencies.wall if dependencies.wall is not None else build_wall(config.wall)
         self.facts = dependencies.facts if dependencies.facts is not None else (
             UnprotectedFacts() if config.mode == 'unprotected' else WorkspaceFacts.from_file(config.wall.metadata_path))
         self.gate = dependencies.gatekeeper if dependencies.gatekeeper is not None else (
@@ -36,6 +37,7 @@ class GuardedAgentDojoPipeline(BasePipelineElement):
             Path(config.audit.output_directory) / self.run_id / 'events.jsonl')
         self.metadata = {k: v for k, v in dependencies.metadata.items() if k in ('suite', 'task_id', 'injection_task_id')}
         self.last_episode = None
+        self.last_history = None
         self.closed = False
 
     def query(self, query, runtime, env=None, messages=None, extra_args=None):
@@ -49,12 +51,17 @@ class GuardedAgentDojoPipeline(BasePipelineElement):
         # Authorization state is fresh for every top-level query. No prompt-based
         # resume or ledger reuse; real persistence/continuation is deferred.
         executor = self.dependencies.executor if self.dependencies.executor is not None else GuardedExecutor()
-        if isinstance(self.gate, ExistingLayaGate):
+        if hasattr(self.gate, 'set_native_schemas'):
             self.gate.set_native_schemas(runtime)
+        if self.dependencies.trace:
+            self.dependencies.trace('environment_initial', {'state': env.model_dump(mode='json')})
         controller = Controller(self.config, self.actor, self.wall, self.gate, self.facts,
-                                self.approvals, executor, self.clock, self.audit, NativeCodec())
+                                self.approvals, executor, self.clock, self.audit, NativeCodec(), self.dependencies.trace)
         history = controller.run(episode, runtime, env, messages, NativeTools(runtime, self.config.mode != 'unprotected'))
         self.last_episode = episode
+        self.last_history = history
+        if self.dependencies.trace:
+            self.dependencies.trace('environment_final', {'state': env.model_dump(mode='json')})
         if self.config.audit.record_raw_content:
             from agentdojo.logging import Logger
             try:

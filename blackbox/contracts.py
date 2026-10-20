@@ -83,3 +83,4 @@ class Dependencies:
     audit: Any = None
     run_id: str | None = None
     metadata: dict = field(default_factory=dict)
+    trace: Any = None

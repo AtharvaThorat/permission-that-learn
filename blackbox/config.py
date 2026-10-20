@@ -12,7 +12,7 @@ class Strict(BaseModel):
 
 class ActorConfig(Strict):
     backend: Literal['openai_compatible'] = 'openai_compatible'
-    model_id: Literal['Qwen/Qwen3-8B'] = 'Qwen/Qwen3-8B'
+    model_id: str = Field(default='Qwen/Qwen3-8B', min_length=1)
     served_model_name: str = Field(default='Qwen3-8B', min_length=1)
     model_revision: str | None = None
     local_model_path: str | None = None
@@ -27,9 +27,12 @@ class ActorConfig(Strict):
     top_p: float = Field(default=0.8, gt=0, le=1)
     max_output_tokens: int = Field(default=2048, gt=0)
     max_response_bytes: int = Field(default=1048576, gt=0)
-    thinking_enabled: Literal[False] = False
+    thinking_enabled: bool | None = False
     stream: Literal[False] = False
-    provider: Literal['vllm_qwen3'] = 'vllm_qwen3'
+    provider: Literal['vllm_qwen3', 'openai_compatible'] = 'vllm_qwen3'
+    dtype: str | None = None
+    context_limit: int = Field(default=8192, gt=0)
+    seed: int | None = None
 
     @model_validator(mode='after')
     def endpoint(self):
@@ -48,6 +51,7 @@ class GateConfig(Strict):
     load_timeout_seconds: float = Field(default=300.0, gt=0)
     allow_downloads: Literal[False] = False
     device: Literal['cpu'] = 'cpu'
+    input_profile: Literal['legacy_collection_summary', 'full_evidence'] = 'legacy_collection_summary'
 
 class RuntimeConfig(Strict):
     max_actor_turns: int = Field(default=15, gt=0)
@@ -88,7 +92,9 @@ class BenchmarkConfig(Strict):
         return self
 
 class WallConfig(Strict):
-    implementation: Literal['reference'] = 'reference'
+    implementation: Literal['reference', 'ptl'] = 'reference'
+    ptl_preset: Literal['STRICT_WORKSPACE', 'WORKSPACE_RELAXED'] = 'STRICT_WORKSPACE'
+    confirm_capabilities: list[str] = Field(default_factory=list)
     policy_path: str = Field(default_factory=lambda: str(Path(__file__).resolve().parents[1] / 'configs/blackbox/policies/workspace_example.json'))
     metadata_path: str = Field(default_factory=lambda: str(Path(__file__).resolve().parents[1] / 'configs/blackbox/policies/workspace_metadata.json'))
 

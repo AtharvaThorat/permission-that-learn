@@ -8,12 +8,15 @@ from blackbox.permissions.approvals import ApprovalEvent, pending_record
 from blackbox.permissions.bindings import Binding
 
 class Controller:
-    def __init__(self, config, actor, wall, gate, facts, approvals, executor, clock, sink, codec):
+    def __init__(self, config, actor, wall, gate, facts, approvals, executor, clock, sink, codec, trace=None):
         self.config, self.actor, self.wall, self.gate = config, actor, wall, gate
         self.facts, self.approvals, self.executor = facts, approvals, executor
         self.clock, self.sink, self.codec = clock, sink, codec
+        self.trace = trace
 
     def mediate(self, episode, proposal, action_id, tools, runtime, env, audit):
+        if self.trace and self.trace.cancelled():
+            return Outcome(False, 'CANCELLED', 'BLOCK', error='PermissionError: cancelled', terminal='cancelled')
         budget = self.config.runtime
         started = self.clock.monotonic()
         try:
@@ -23,6 +26,8 @@ class Controller:
             return Outcome(False, 'INVALID_ACTION', 'BLOCK', error='PermissionError: invalid tool, arguments, or facts')
         audit.emit('proposed_action', action=action, original_hash=digest(json.loads(action.original_json)),
                    original_id_hash=digest(proposal.original_call_id), evidence_complete=action.evidence_complete)
+        if self.trace:
+            self.trace('bound_action', {'task': episode.task, 'action': asdict(action)})
         if action_id in self.executor.ledger.outcomes:
             try:
                 return self.executor.ledger.replay(episode, action)
@@ -34,6 +39,8 @@ class Controller:
         except Exception:
             return Outcome(False, 'WALL_FAILURE', 'BLOCK', error='PermissionError: wall unavailable')
         if wall is not None:
+            if self.trace:
+                self.trace('wall', {'action_id': action.action_id, 'verdict': asdict(wall)})
             audit.emit('wall_verdict', action=action, reason=wall.reason, decision=wall.verdict,
                        elapsed_seconds=self.clock.monotonic() - started)
             if wall.verdict != 'PASS':
@@ -44,7 +51,9 @@ class Controller:
             # Preserve exact task and action. Refuse oversized evidence rather than
             # truncate it and incorrectly label the remaining state complete.
             if len(episode.task) + len(action.arguments_json) + len(action.facts_json) > budget.max_gate_chars:
-                decision = GateDecision('ASK', 'INCOMPLETE_EVIDENCE')
+                decision = GateDecision('ASK', 'APPLICATION_CHARACTER_BUDGET',
+                    backend='existing_laya' if episode.mode == 'wall_gatekeeper' else 'rules_only',
+                    error_kind='application_character_budget')
             else:
                 try:
                     decision = self.gate.evaluate(episode, action, wall)
@@ -56,6 +65,9 @@ class Controller:
             decision = GateDecision('ALLOW', 'EXPLICIT_MODE_BYPASS')
         audit.emit('gate_decision', action=action, **asdict(decision),
                    elapsed_seconds=self.clock.monotonic() - gate_started)
+        if self.trace:
+            self.trace('decision', {'action_id': action.action_id, 'decision_id': action.action_id + ':decision',
+                       'decision': asdict(decision)})
         if decision.decision == 'BLOCK':
             return Outcome(False, decision.reason, 'BLOCK', error='PermissionError: ' + decision.reason)
         # Mandatory confirmation and incomplete evidence are explicit enforcement
@@ -100,6 +112,9 @@ class Controller:
             audit.emit('episode_started', content_hash=digest(episode.task))
             history = self.codec.initialize(episode.task, history, episode)
             for turn in range(budget.max_actor_turns):
+                if self.trace and getattr(self.trace, 'cancelled', lambda: False)():
+                    episode.terminal = 'cancelled'
+                    break
                 remaining = episode.deadline - self.clock.monotonic()
                 if remaining <= 0:
                     episode.terminal = 'budget_exceeded'
