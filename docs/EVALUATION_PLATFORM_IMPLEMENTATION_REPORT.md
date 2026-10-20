@@ -4,7 +4,7 @@
 
 - Integration branch: `integration/evaluation-platform-20261020`
 - Implementation commit: `f4697fb`
-- Local `main`: still at `be8a7bd` before the safe fast-forward/merge step.
+- Local `main`: fast-forwarded to the integration tip after verification.
 - Nothing has been pushed.
 
 ## Implemented surface
