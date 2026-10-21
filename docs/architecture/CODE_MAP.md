@@ -41,4 +41,4 @@ The guarded path is: AgentDojo supplies a task and tool runtime → the actor pr
 
 The old root-level `tests/test_*.py`, standalone `gatekeeper/__main__.py`, prototype evaluation scripts, fixtures, and benchmark snapshots were removed at the user's request. They are still present in the earlier Laya commit. The retained `gatekeeper/` runtime is a required dependency of `wall_gatekeeper`.
 
-For actual setup and the order of future checks, see [the runbook](BLACKBOX_RUNBOOK.md). For trust boundaries and known limits, see [the architecture](BLACKBOX_ARCHITECTURE.md) and [contracts](BLACKBOX_CONTRACTS.md).
+For actual setup and the order of future checks, see [the runbook](../operations/BLACKBOX_RUNBOOK.md). For trust boundaries and known limits, see [the architecture](BLACKBOX_ARCHITECTURE.md) and [contracts](BLACKBOX_CONTRACTS.md).

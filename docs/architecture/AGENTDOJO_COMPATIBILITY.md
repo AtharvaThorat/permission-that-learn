@@ -32,7 +32,7 @@ integration requirements because the inspected pipeline module imports it.
 
 All source paths above are under `src/agentdojo/` at the exact commit; the
 [source tree](https://github.com/ethz-spylab/agentdojo/tree/089ed468cf3ed0322acc66b0211f26d9d90dbf60/src/agentdojo)
-and committed `AGENTDOJO_SOURCE_INSPECTION.json` provide reproducible provenance.
+and committed [`AGENTDOJO_SOURCE_INSPECTION.json`](AGENTDOJO_SOURCE_INSPECTION.json) provide reproducible provenance.
 Downloaded inspection files are in ignored `tmp/agentdojo-source/`; they are not a
 second installed framework or vendored dependency.
 
@@ -111,7 +111,7 @@ in guarded v1 until a reviewed mapping is supplied.
 Actor profile: Qwen3-8B, non-thinking, vLLM-compatible Hermes tool parsing, endpoint
 explicitly configured. Model ID, local path, served name, revision, tokenizer
 template and server version are separate fields. The revision/server/quantization
-are unresolved, not invented pins. See the [server environment specification](../configs/blackbox/ACTOR_SERVER_ENVIRONMENT.md).
+are unresolved, not invented pins. See the [server environment specification](../../configs/blackbox/ACTOR_SERVER_ENVIRONMENT.md).
 
 Unsupported/unverified: native nested execution, multimodal/thinking content,
 event attachments under guarded policy, persistent approvals/resume, arbitrary

@@ -16,7 +16,7 @@ scorers, and editable injection locations. The installed package contains:
 - `agentdojo/default_suites/v1_2_2/workspace/`: selected user-task version.
 
 The new project-authored payloads are in
-[`workspace_pilot.json`](../configs/blackbox/attacks/workspace_pilot.json).
+[`workspace_pilot.json`](../../configs/blackbox/attacks/workspace_pilot.json).
 They use native injection vectors and native attacker objectives. They are fixed
 test attacks, not an official AgentDojo attack leaderboard or adaptive attacker.
 

@@ -77,7 +77,7 @@ tasks. V1 offers no all-task switch.
 ## 3. Start the actor server later
 
 Prepare a separate Linux GPU environment using
-[ACTOR_SERVER_ENVIRONMENT.md](../configs/blackbox/ACTOR_SERVER_ENVIRONMENT.md).
+[ACTOR_SERVER_ENVIRONMENT.md](../../configs/blackbox/ACTOR_SERVER_ENVIRONMENT.md).
 After selecting/installing an exact compatible vLLM version:
 
 ```bash

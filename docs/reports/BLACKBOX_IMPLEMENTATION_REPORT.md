@@ -10,7 +10,7 @@ Update 2026-10-16: inspected `D:\grids_workspace\Untitled0.ipynb`. It recorded
 Transformers 4.57.6 with vLLM 0.11.0. The task ended with infrastructure_error
 and zero actions, so this is not a successful model benchmark. Added the isolated
 five-task timed pilot `scripts/benchmark_colab.py`, a clean notebook, and
-`docs/COLAB_BENCHMARK.md`; pinned the actor dependency and documented Python 3.12
+`docs/operations/COLAB_BENCHMARK.md`; pinned the actor dependency and documented Python 3.12
 and real Git cloning. Core runtime, gate prompts, model pins, and policy were
 not changed. Local updated CPU suite: **84 passed in 7.09s**. The new GPU pilot
 remains for the user to execute; it exports actual results and failure evidence.
@@ -23,7 +23,7 @@ locally; they mock subprocess/GPU behavior and cover resource rejection, bound
 server flags, explicit raw-log selection, and server cleanup on startup failure.
 The helper's Colab package installation, asset downloads, and real-model execution
 have not been performed here. The original phase records below remain historical.
-See `docs/COLAB_RUNBOOK.md` for the separate Linux dependency profile and limits.
+See `docs/operations/COLAB_RUNBOOK.md` for the separate Linux dependency profile and limits.
 
 ## Current branch cleanup
 
@@ -33,7 +33,7 @@ the `examples/read-file.json` demo, `gatekeeper/__main__.py`, seven old evaluati
 scripts, `scripts/__init__.py`, and five old root-level tests. The `gatekeeper/`
 runtime core, model manifest, prompts, dependency pins, and AgentDojo integration
 remain. The root README now describes the current black box and its code areas;
-`docs/CODE_MAP.md` gives a file-level guide.
+`docs/architecture/CODE_MAP.md` gives a file-level guide.
 No other branch, commit, or Git history was altered. The deleted artifacts remain
 available at the earlier `feature/laya-gatekeeper` commit. The inventory and
 checks below describe the original implementation phase except where updated.
@@ -182,13 +182,13 @@ assert successful imports or behavioral tests.
 | `configs/blackbox/wall_gatekeeper.json` | Explicit mode, policy, metadata or future server configuration | Created | IMPLEMENTED; NOT RUN |
 | `configs/blackbox/wall_only.json` | Explicit mode, policy, metadata or future server configuration | Created | IMPLEMENTED; NOT RUN |
 | `configs/blackbox/wall_rules.json` | Explicit mode, policy, metadata or future server configuration | Created | IMPLEMENTED; NOT RUN |
-| `docs/AGENTDOJO_COMPATIBILITY.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
-| `docs/AGENTDOJO_SOURCE_INSPECTION.json` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
-| `docs/BLACKBOX_ARCHITECTURE.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
-| `docs/BLACKBOX_CONTRACTS.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
-| `docs/CODE_MAP.md` | File-level guide to retained runtime and new integration | Created during branch cleanup | STATICALLY REVIEWED |
-| `docs/BLACKBOX_IMPLEMENTATION_REPORT.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
-| `docs/BLACKBOX_RUNBOOK.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
+| `docs/architecture/AGENTDOJO_COMPATIBILITY.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
+| `docs/architecture/AGENTDOJO_SOURCE_INSPECTION.json` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
+| `docs/architecture/BLACKBOX_ARCHITECTURE.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
+| `docs/architecture/BLACKBOX_CONTRACTS.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
+| `docs/architecture/CODE_MAP.md` | File-level guide to retained runtime and new integration | Created during branch cleanup | STATICALLY REVIEWED |
+| `docs/reports/BLACKBOX_IMPLEMENTATION_REPORT.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
+| `docs/operations/BLACKBOX_RUNBOOK.md` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
 | `docs/schemas/run_manifest.schema.json` | Implementation handoff, contracts, compatibility or provenance | Created | STATICALLY REVIEWED |
 | `gatekeeper/policy.py` | Optional native request-validation seam; default semantics retained | Modified existing | IMPLEMENTED; STATICALLY REVIEWED |
 | `integrations/__init__.py` | Native pipeline, message codec, workspace mapping or benchmark runner | Created | IMPLEMENTED; STATICALLY REVIEWED |
@@ -305,7 +305,7 @@ compatibility, runtime safety and utility all remain unverified.
 ## I. Exact next commands (later user execution only)
 
 Replace every placeholder first. The detailed asset/config/policy commands are in
-`BLACKBOX_RUNBOOK.md`. These commands match implemented entry points; no run-all
+`docs/operations/BLACKBOX_RUNBOOK.md`. These commands match implemented entry points; no run-all
 command is provided.
 
 1. Install the prepared CPU dependencies in a fresh environment:
