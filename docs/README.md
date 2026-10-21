@@ -1,5 +1,11 @@
 # Documentation index
 
+## Contributor guidance
+
+- [Project development guidelines](PROJECT_GUIDELINES.md) — branching,
+  coding style, directory ownership, documentation updates, testing, and
+  review expectations for contributors and coding agents.
+
 ## Architecture and reference
 
 - [Code map](architecture/CODE_MAP.md)
