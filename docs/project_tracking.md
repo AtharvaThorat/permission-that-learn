@@ -263,6 +263,29 @@ credentials, and—only for `wall_gatekeeper`—a validated local Laya runtime a
 checkpoint cache. No paid endpoint, external inference call, model download,
 or GPU execution was performed.
 
+## 2026-10-21 local vLLM handoff
+
+- [x] **Task 1: Add local vLLM startup script.** Added
+  `scripts/colab_vllm_start.sh` for an already-downloaded
+  `Qwen/Qwen2.5-7B-Instruct` directory. It validates local files, requires a
+  local credential, enables Hermes tool parsing, binds to loopback, and
+  disables downloads.
+- [x] **Task 2: Validate one local model tool-call response.** Added
+  `scripts/validate_model_tool_call.py`. It sends one local-only
+  `/v1/chat/completions` request with a calendar tool schema and rejects
+  responses without a valid JSON `tool_calls` entry. Execution evidence is
+  pending until a local vLLM server is available.
+- [x] **Task 3: Save sanitized local response proof.** Saved
+  `handoff/validation_response.json`. It honestly records `not_run` because
+  `127.0.0.1:8000` was unavailable; no model response was fabricated. The
+  validator will overwrite this file with a passed, sanitized tool-call proof
+  when a local vLLM server is running.
+- [x] **Task 4: Prepare Person 2/3 setup and execution handoff.** Added
+  `SETUP_HANDOFF.md` and `handoff/EXECUTION_COMMANDS.sh` with local/Colab
+  startup, clean reset, unprotected baseline, protected-mode execution,
+  aggregation, and comparison commands. The handoff explicitly requires
+  separate resets and prohibits paid endpoints.
+
 
 ---
 
