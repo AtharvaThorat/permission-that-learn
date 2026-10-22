@@ -290,6 +290,22 @@ or GPU execution was performed.
 - No model endpoint, GPU, paid service, model download, or AgentDojo real
   episode was executed.
 
+  ## 2026-10-22 Laya offline checkpoint loading
+
+  - [x] **Resolve the pinned local snapshot.** `gatekeeper/laya_adapter.py`
+    now maps the registered repository ID and exact revision to the local
+    Hugging Face snapshot under `HF_HOME/hub`, without contacting Hugging Face.
+  - [x] **Validate local assets.** Initialization fails closed with explicit
+    `LOCAL_LAYA_SNAPSHOT_MISSING` or `LOCAL_LAYA_SNAPSHOT_INVALID` errors when
+    the snapshot, model weights, tokenizer, or encoder/processor assets are
+    absent.
+  - [x] **Load by local path while preserving provenance.** Laya receives the
+    verified absolute snapshot path; result metadata continues to record the
+    selected repository ID and requested revision, plus the resolved snapshot.
+  - [x] **Regression evidence.** Valid, missing-revision, and invalid-asset
+    resolver tests passed. Full CPU suite: **224 passed**. Focused wall/Laya
+    suite: **141 passed**. No real Laya inference was run in this environment.
+
 ## 2026-10-21 local vLLM handoff
 
 - [x] **Task 1: Add local vLLM startup script.** Added
