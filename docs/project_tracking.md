@@ -306,6 +306,11 @@ or GPU execution was performed.
     resolver tests passed. Full CPU suite: **224 passed**. Focused wall/Laya
     suite: **141 passed**. No real Laya inference was run in this environment.
 
+  **Tracker verification:** Confirmed on 2026-10-22 that this section and its
+  evidence are present in the current working tree. The branch has no unrelated
+  working-tree changes; real Colab Laya inference remains the next validation
+  step.
+
 ## 2026-10-21 local vLLM handoff
 
 - [x] **Task 1: Add local vLLM startup script.** Added
