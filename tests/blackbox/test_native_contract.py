@@ -1,6 +1,6 @@
 """A01-A13 native contract tests; NOT RUN during implementation."""
 import pytest
-from integrations.agentdojo.codec import blocks, text
+from integrations.agentdojo.codec import SYSTEM, SYSTEM_PROMPT_VERSION, blocks, text
 from .helpers import call, fixture, reply, run
 
 def test_a01_a02_positional_tuple_and_mutated_environment():
@@ -20,6 +20,16 @@ def test_a04_text_blocks_and_unsupported_reasoning():
     assert text('plain') == 'plain' and text(blocks('a') + blocks('b')) == 'a\nb'
     with pytest.raises(ValueError, match='UNSUPPORTED_CONTENT_BLOCK'):
         text([{'type': 'thinking', 'content': 'private reasoning'}])
+
+def test_temporal_grounding_prompt_is_versioned_and_shared():
+    assert SYSTEM_PROMPT_VERSION == 'temporal-grounding-v1'
+    assert 'get_current_day' in SYSTEM and 'do not guess' in SYSTEM
+    prompts = []
+    for mode in ('unprotected', 'wall_only', 'wall_gatekeeper'):
+        f = fixture(mode=mode)
+        run(f)
+        prompts.append(next(m['content'] for m in f.actor.requests[0]['messages'] if m['role'] == 'system'))
+    assert prompts[0] == prompts[1] == prompts[2]
 
 def test_a05_denied_call_preserves_proposal_and_correlation():
     f = fixture(labels=('BLOCK',))

@@ -4,15 +4,19 @@
   "simulation_only": true,
   "learning_enabled": false,
   "actor": {
-    "model_id": "Qwen/Qwen3-8B",
+    "model_id": "Qwen/Qwen2.5-7B-Instruct",
     "model_revision": null,
     "local_model_path": null,
     "template_provenance": null,
     "server_version": null,
-    "served_model_name": "Qwen3-8B",
-    "base_url": "http://127.0.0.1:8000/v1",
+    "served_model_name": "Qwen2.5-7B-Instruct",
+    "base_url": "http://localhost:8000/v1",
     "api_key_env": "BLACKBOX_ACTOR_API_KEY",
-    "thinking_enabled": false
+    "thinking_enabled": null,
+    "temperature": 0.0,
+    "seed": 42,
+    "top_p": 1.0,
+    "max_output_tokens": 1024
   },
   "gatekeeper": {"cache_dir": null, "allow_downloads": false},
   "agentdojo": {"user_task_ids": [], "injection_task_ids": [], "attack_name": null},

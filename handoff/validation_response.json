@@ -1,0 +1,10 @@
+{
+  "validation": "not_run",
+  "endpoint_scope": "local_only",
+  "endpoint": "http://127.0.0.1:8000/v1",
+  "model": "Qwen2.5-7B-Instruct",
+  "reason": "No local vLLM server was listening during validation.",
+  "sanitized": true,
+  "tool_call_proof": null,
+  "next_command": "python scripts/validate_model_tool_call.py"
+}

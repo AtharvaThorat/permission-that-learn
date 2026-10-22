@@ -2,6 +2,17 @@
   "schema_version": 1,
   "mode": "unprotected",
   "simulation_only": true,
+  "actor": {
+    "model_id": "Qwen/Qwen2.5-7B-Instruct",
+    "served_model_name": "Qwen2.5-7B-Instruct",
+    "base_url": "http://localhost:8000/v1",
+    "api_key_env": "BLACKBOX_ACTOR_API_KEY",
+    "thinking_enabled": null,
+    "temperature": 0.0,
+    "seed": 42,
+    "top_p": 1.0,
+    "max_output_tokens": 1024
+  },
   "wall": {"implementation": "reference", "policy_path": "policies/workspace_example.json", "metadata_path": "policies/workspace_metadata.json"},
   "agentdojo": {"user_task_ids": []}
 }

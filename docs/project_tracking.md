@@ -82,6 +82,24 @@ for the target AgentDojo tasks. Historical benchmark evidence includes Laya
 truncation and incomplete task outcomes; those results must not be presented as
 a successful current demo.
 
+#### 2026-10-21 validation update
+
+- `PtlWall` integration and policy evidence checks remain covered by the
+  existing wall and enforcement tests.
+- The existing gate-input character budget and collection-fact summarization
+  safeguards were validated without changing policy semantics.
+- Focused command:
+
+  ```powershell
+  & '.\.venv-blackbox-tests\Scripts\python.exe' -m pytest -q -p no:cacheprovider `
+    tests/blackbox/test_laya_input.py tests/blackbox/test_enforcement.py wall/tests
+  ```
+
+- Result: **139 passed** in 14.34 seconds.
+- This is CPU validation only; it does not prove that a real Laya checkpoint
+  loads or that real multi-turn AgentDojo context remains within the model
+  context window.
+
 ### Task 4 — Produce the first paired demonstration
 
 **Status: Not complete in the current platform.**
@@ -216,3 +234,203 @@ The shared pipeline and CPU-tested evaluation infrastructure are implemented.
 The original prototype is **not fully complete** because the real environment,
 real paired demonstration, approval memory, Jev comparison, controlled
 real-model evaluation, and final evidence package remain outstanding.
+
+## 2026-10-21 execution-preparation checklist
+
+- [x] **Task 1: Select `workspace/user_task_0`.** Added
+  `integrations/agentdojo/task_selector.py` with a pristine environment
+  factory, pinned-revision verification, and native tool schemas. Verified 24
+  tools and deterministic task/environment loading.
+- [x] **Task 2: Reset workspace state.** Added
+  `scripts/reset_workspace.py` with fresh-baseline loading, in-place reset,
+  deterministic digests, and mutation/reset verification.
+- [x] **Task 3: Validate wall and truncation safeguards.** Focused wall,
+  enforcement, Laya-input, and wall test command passed **139 tests** in
+  14.34 seconds. The validation is CPU-only; real checkpoint loading and
+  real multi-turn context behavior remain unverified.
+- [x] **Task 4: Freeze single-task mode configurations.** Added:
+  `configs/experiments/frozen/unprotected.json`,
+  `configs/experiments/frozen/wall_only.json`, and
+  `configs/experiments/frozen/wall_gatekeeper.json`. All select
+  `Qwen/Qwen2.5-7B-Instruct`, `workspace/user_task_0`, seed 42, one episode,
+  one `gpu0` slot, and the same actor settings. Validation produced one job
+  per config. It correctly reports missing actor credentials; the gatekeeper
+  config additionally reports missing Laya cache/runtime prerequisites.
+
+These four preparation items do not constitute a real-model smoke test. The
+next execution step still requires an authorized local/Colab model server,
+credentials, and—only for `wall_gatekeeper`—a validated local Laya runtime and
+checkpoint cache. No paid endpoint, external inference call, model download,
+or GPU execution was performed.
+
+## 2026-10-21 temporal grounding and tool-error classification
+
+- [x] **Temporal grounding instruction.** The shared
+  `integrations/agentdojo/codec.py` system instruction is versioned as
+  `temporal-grounding-v1`. It tells the actor not to guess an ambiguous year
+  and to use `get_current_day` or an unfiltered search first. The original
+  instruction is retained as `ORIGINAL_SYSTEM`; no date, answer, or AgentDojo
+  data is hardcoded. The frozen mode configs record the same prompt version.
+- [x] **Read-only tool-error classification.** `blackbox/execution.py` now
+  recognizes only known `ValueError:` failures from pure read-only tools as
+  non-infrastructure tool errors. They remain executed tool outcomes and can
+  be returned to the actor. Side-effecting errors, timeouts, unknown errors,
+  and audit failures remain conservative/uncertain.
+- [x] **Focused regression evidence.** The temporal and classification tests
+  passed **46 tests**. Full CPU and focused wall/Laya regression results are
+  recorded below after completion.
+
+#### Final validation evidence
+
+- Full CPU suite: **221 passed** in 24.26 seconds.
+- Focused wall/Laya/enforcement suite: **141 passed** in 17.98 seconds.
+- Frozen configs: all three validate to one `workspace/user_task_0` job with
+  the shared Qwen2.5-7B-Instruct profile; missing local credentials and Laya
+  prerequisites remain reported rather than hidden.
+- No model endpoint, GPU, paid service, model download, or AgentDojo real
+  episode was executed.
+
+## 2026-10-21 local vLLM handoff
+
+- [x] **Task 1: Add local vLLM startup script.** Added
+  `scripts/colab_vllm_start.sh` for an already-downloaded
+  `Qwen/Qwen2.5-7B-Instruct` directory. It validates local files, requires a
+  local credential, enables Hermes tool parsing, binds to loopback, and
+  disables downloads.
+- [x] **Task 2: Validate one local model tool-call response.** Added
+  `scripts/validate_model_tool_call.py`. It sends one local-only
+  `/v1/chat/completions` request with a calendar tool schema and rejects
+  responses without a valid JSON `tool_calls` entry. Execution evidence is
+  pending until a local vLLM server is available.
+- [x] **Task 3: Save sanitized local response proof.** Saved
+  `handoff/validation_response.json`. It honestly records `not_run` because
+  `127.0.0.1:8000` was unavailable; no model response was fabricated. The
+  validator will overwrite this file with a passed, sanitized tool-call proof
+  when a local vLLM server is running.
+- [x] **Task 4: Prepare Person 2/3 setup and execution handoff.** Added
+  `SETUP_HANDOFF.md` and `handoff/EXECUTION_COMMANDS.sh` with local/Colab
+  startup, clean reset, unprotected baseline, protected-mode execution,
+  aggregation, and comparison commands. The handoff explicitly requires
+  separate resets and prohibits paid endpoints.
+
+
+---
+
+## Environment lock and verification — 2026-10-21
+
+**Branch:** `lock-qwen25-7b-instruct-env` (commit `caeb065`, base `main@737899d`)  
+**Reconciled:** 2026-10-21. No real-model execution was performed.
+
+### ✅ Task 1 — Lock actor profiles to `Qwen/Qwen2.5-7B-Instruct`
+
+**Status: Complete.**
+
+All `configs/blackbox/` configs and `configs/experiments/` actor profiles updated.
+Every actor now has hardcoded: `model_id=Qwen/Qwen2.5-7B-Instruct`,
+`served_model_name=Qwen2.5-7B-Instruct`, `base_url=http://localhost:8000/v1`,
+`temperature=0.0`, `seed=42`, `top_p=1.0`, `max_output_tokens=1024`,
+`thinking_enabled=null`.
+
+Files changed:
+- `configs/blackbox/unprotected.json`
+- `configs/blackbox/wall_only.json`
+- `configs/blackbox/wall_gatekeeper.json`
+- `configs/experiments/one-clean.json` (actor key → `qwen25_7b`)
+- `configs/experiments/three-modes.json` (actor key → `qwen25_7b`)
+- `configs/experiments/two-models-sequential.json` (actor keys → `qwen25_7b`, `qwen25_7b_slot1`)
+- `configs/experiments/two-models-concurrent.json` (actor keys → `qwen25_7b`, `qwen25_7b_slot1`)
+
+Validated with `ActorConfig` / `ActorProfile` Pydantic models — all parse cleanly (exit 0).
+
+### ✅ Task 2 — Create `scripts/check_env.py`
+
+**Status: Complete.**
+
+Script at `scripts/check_env.py`. Adds repo root and `wall/src` to `sys.path`,
+then verifies 8 module imports: `blackbox`, `blackbox.config`, `blackbox.actors`,
+`integrations.agentdojo`, `integrations.agentdojo.pipeline`,
+`ptl.wall`, `experiment`, `experiment.spec`.
+
+Evidence (`.venv-blackbox-tests`):
+```
+8/8 imports OK
+Environment import check passed.
+```
+
+### ✅ Task 3 — pytest CPU suite
+
+**Status: Complete — 218 passed.**
+
+Command: `& '.\.venv-blackbox-tests\Scripts\python.exe' -m pytest -q -p no:cacheprovider`
+
+Evidence: `218 passed in 17.75s` — no GPU, model downloads, or external API dependencies.
+
+### ✅ Task 4 — `handoff/environment-manifest.json`
+
+**Status: Complete.**
+
+File created at `handoff/environment-manifest.json`.
+
+| Field | Value |
+|---|---|
+| Python | `3.12.10 (tags/v3.12.10:0cc8128, Apr 8 2025)` |
+| Git commit | `737899dd5b31b5ca76ddc579683463740d2110c7` |
+| pydantic | `2.12.3` |
+| httpx | `0.28.1` |
+| agentdojo | `0.1.35` |
+| ptl | `0.1.0` |
+| hypothesis | `6.170.5` |
+| pytest | `9.1.1` |
+| PyYAML | `6.0.3` |
+| Actor model locked | `Qwen/Qwen2.5-7B-Instruct` |
+| Inference endpoint | `http://localhost:8000/v1` |
+| CPU test result | `218 passed` |
+
+Inference endpoint requires a local vLLM server (`OPENAI_API_BASE=http://localhost:8000/v1`).
+No real-model execution performed.
+
+
+---
+
+## Task 0 selector, reset, wall validation, frozen configs — 2026-10-21
+
+**Branch:** `task0-selector-reset-wall-frozen` (base `lock-qwen25-7b-instruct-env@caeb065`)
+No real-model execution performed.
+
+### ✅ Task 1 — `integrations/agentdojo/task_selector.py`
+
+**Status: Complete.** (commit `a00029e`)
+
+Created `integrations/agentdojo/task_selector.py` with:
+- `environment(verify_revision=True)` → `(task, env, runtime)` for `workspace/user_task_0`
+  - Loads pristine `WorkspaceEnvironment` (no injection vectors).
+  - Applies `task.init_environment(env)`.
+  - Builds `FunctionsRuntime` from the suite's registered tools.
+  - Verifies pinned AgentDojo revision by default.
+- `tool_schemas(runtime)` → OpenAI-compatible schema list.
+
+Evidence:
+```
+task id: user_task_0
+task prompt: Who else is invited to the 'Networking event' on May 26th? ...
+tool count: 24 / schema count: 24
+```
+
+
+### ✅ Task 2 — `scripts/reset_workspace.py`
+
+**Status: Complete.** (commit `cd0291d`)
+
+`scripts/reset_workspace.py` provides:
+- `pristine_env()` → fresh `WorkspaceEnvironment` for user_task_0.
+- `reset(env)` → in-place restoration via `model_dump`/`model_validate` round-trip.
+- CLI `main()` verifying determinism and reset correctness.
+
+Evidence:
+```
+Determinism check: PASS (two pristine loads produce identical digests)
+Mutated digest: 280046... (mutation detected)
+Reset digest : 2a6defce... == pristine digest
+Reset verification: PASS
+calendar events=26, inbox emails=31, cloud_drive files=26
+```
