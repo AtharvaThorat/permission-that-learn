@@ -52,6 +52,15 @@ def test_example_native_pairs(path):
     assert plan(load(path))['job_count']>0
 
 
+def test_frozen_configs_share_gatekeeper_and_pair_identity():
+    specs = [load(Path('configs/experiments/frozen') / f'{mode}.json')
+             for mode in ('unprotected', 'wall_only', 'wall_gatekeeper')]
+    assert specs[0].gatekeeper.cache_dir == '/content/laya-cache'
+    assert all(s.gatekeeper == specs[0].gatekeeper for s in specs)
+    jobs = [plan(s, native=False)['jobs'][0] for s in specs]
+    assert len({job['pair_id'] for job in jobs}) == 1
+
+
 def test_claim_races_stale_and_crash_recovery(tmp_path):
     s=spec(); directory=create_run(s,tmp_path); job=plan(s)['jobs'][0]; a,b=Index(directory),Index(directory)
     try:
