@@ -19,6 +19,32 @@ from functools import wraps
 CHECKPOINT = 'convaiinnovations/laya'
 
 
+def resolve_local_snapshot(checkpoint, revision, cache_dir):
+    """Resolve and validate one pinned Hugging Face snapshot without network access."""
+    cache = Path(cache_dir).expanduser().resolve()
+    snapshot = cache / 'hub' / ('models--' + checkpoint.replace('/', '--')) / 'snapshots' / revision
+    if not snapshot.is_dir():
+        raise FileNotFoundError(f'LOCAL_LAYA_SNAPSHOT_MISSING: {snapshot}')
+    required = ('config.json', 'tokenizer_config.json')
+    missing = [name for name in required if not (snapshot / name).is_file()]
+    model_assets = list(snapshot.glob('*.safetensors')) + list(snapshot.glob('*.bin'))
+    tokenizer_assets = [name for name in ('tokenizer.json', 'tokenizer.model', 'vocab.json')
+                        if (snapshot / name).is_file()]
+    encoder_assets = list(snapshot.glob('*encoder*')) + [
+        snapshot / name for name in ('preprocessor_config.json', 'feature_extractor.json',
+                                     'processor_config.json') if (snapshot / name).is_file()]
+    if not model_assets:
+        missing.append('model weights (*.safetensors or *.bin)')
+    if not tokenizer_assets:
+        missing.append('tokenizer asset (tokenizer.json, tokenizer.model, or vocab.json)')
+    if not encoder_assets:
+        missing.append('encoder asset (*encoder* or processor configuration)')
+    if missing:
+        raise FileNotFoundError(
+            f'LOCAL_LAYA_SNAPSHOT_INVALID: {snapshot}; missing ' + ', '.join(missing))
+    return snapshot
+
+
 @dataclass
 class Prediction:
     decision: str | None = None
@@ -133,7 +159,7 @@ def synchronized(method):
     return wrapped
 
 
-def _worker(pipe, checkpoint, revision, cache, question_mode):
+def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode):
     os.environ['HF_HOME'] = cache
     os.environ['HF_HUB_CACHE'] = str(Path(cache) / 'hub')
     os.environ['LAYA_CPU_AMP'] = '0'
@@ -150,12 +176,12 @@ def _worker(pipe, checkpoint, revision, cache, question_mode):
         try:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter('always')
-                agent = Agent(model_id_or_path=checkpoint, revision=revision, device='cpu',
+                agent = Agent(model_id_or_path=local_snapshot, revision=revision, device='cpu',
                               fast=False, compile=False, backend='eager')
         finally:
             record_warnings(caught)
         torch = sys.modules.get('torch')
-        pipe.send({'ready': True, 'actual_checkpoint': agent.model_id,
+        pipe.send({'ready': True, 'actual_checkpoint': checkpoint, 'local_snapshot': local_snapshot,
                    'revision': agent.revision, 'device': str(agent.device),
                    'config': agent.cfg, 'load_warnings': load_warnings,
                    'checkpoint_download_and_load_seconds': perf_counter() - load_started,
@@ -189,6 +215,7 @@ class LayaBackend:
         self.checkpoint, self.revision = checkpoint, revision
         self.timeout, self.load_timeout = timeout, load_timeout
         self.process = self.pipe = None
+        self.local_snapshot = None
         self.error = None
         self.initialized = False
         self.metadata = {'selected_checkpoint': checkpoint, 'requested_revision': revision,
@@ -219,9 +246,12 @@ class LayaBackend:
         try:
             if importlib.util.find_spec('laya') is None:
                 raise ModuleNotFoundError("No module named 'laya'; dependency installation is required")
+            self.local_snapshot = resolve_local_snapshot(self.checkpoint, self.revision, self.cache_dir)
+            self.metadata['local_snapshot'] = str(self.local_snapshot)
             context = mp.get_context('spawn')
             self.pipe, child = context.Pipe()
             self.process = context.Process(target=_worker, args=(child, self.checkpoint, self.revision,
+                                               str(self.local_snapshot),
                                                self.cache_dir, self.question_mode), daemon=True)
             try:
                 self.process.start()

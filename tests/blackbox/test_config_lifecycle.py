@@ -49,6 +49,32 @@ def test_missing_local_assets_fails_without_backend(monkeypatch, tmp_path):
     with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_MISSING'):
         gate.initialize()
 
+def _snapshot(tmp_path, *, encoder=True):
+    snapshot = tmp_path / 'hub' / 'models--convaiinnovations--laya' / 'snapshots' / ('7b' * 20)
+    snapshot.mkdir(parents=True)
+    for name in ('config.json', 'tokenizer_config.json', 'tokenizer.json', 'model.safetensors'):
+        (snapshot / name).write_text('{}')
+    if encoder:
+        (snapshot / 'encoder_config.json').write_text('{}')
+    return tmp_path, snapshot
+
+def test_local_laya_snapshot_resolves_pinned_assets(tmp_path):
+    from gatekeeper.laya_adapter import resolve_local_snapshot
+    cache, snapshot = _snapshot(tmp_path)
+    assert resolve_local_snapshot('convaiinnovations/laya', '7b' * 20, cache) == snapshot
+
+def test_local_laya_snapshot_rejects_missing_assets(tmp_path):
+    from gatekeeper.laya_adapter import resolve_local_snapshot
+    cache, snapshot = _snapshot(tmp_path, encoder=False)
+    with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_INVALID'):
+        resolve_local_snapshot('convaiinnovations/laya', '7b' * 20, cache)
+
+def test_local_laya_snapshot_rejects_unknown_revision(tmp_path):
+    from gatekeeper.laya_adapter import resolve_local_snapshot
+    _snapshot(tmp_path)
+    with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_MISSING'):
+        resolve_local_snapshot('convaiinnovations/laya', '8b' * 20, tmp_path)
+
 def test_cleanup_on_error_and_close_idempotent():
     f = fixture([{'role': 'invalid'}])
     with f.pipeline:
