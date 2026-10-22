@@ -82,6 +82,24 @@ for the target AgentDojo tasks. Historical benchmark evidence includes Laya
 truncation and incomplete task outcomes; those results must not be presented as
 a successful current demo.
 
+#### 2026-10-21 validation update
+
+- `PtlWall` integration and policy evidence checks remain covered by the
+  existing wall and enforcement tests.
+- The existing gate-input character budget and collection-fact summarization
+  safeguards were validated without changing policy semantics.
+- Focused command:
+
+  ```powershell
+  & '.\.venv-blackbox-tests\Scripts\python.exe' -m pytest -q -p no:cacheprovider `
+    tests/blackbox/test_laya_input.py tests/blackbox/test_enforcement.py wall/tests
+  ```
+
+- Result: **139 passed** in 14.34 seconds.
+- This is CPU validation only; it does not prove that a real Laya checkpoint
+  loads or that real multi-turn AgentDojo context remains within the model
+  context window.
+
 ### Task 4 — Produce the first paired demonstration
 
 **Status: Not complete in the current platform.**
@@ -217,6 +235,34 @@ The original prototype is **not fully complete** because the real environment,
 real paired demonstration, approval memory, Jev comparison, controlled
 real-model evaluation, and final evidence package remain outstanding.
 
+## 2026-10-21 execution-preparation checklist
+
+- [x] **Task 1: Select `workspace/user_task_0`.** Added
+  `integrations/agentdojo/task_selector.py` with a pristine environment
+  factory, pinned-revision verification, and native tool schemas. Verified 24
+  tools and deterministic task/environment loading.
+- [x] **Task 2: Reset workspace state.** Added
+  `scripts/reset_workspace.py` with fresh-baseline loading, in-place reset,
+  deterministic digests, and mutation/reset verification.
+- [x] **Task 3: Validate wall and truncation safeguards.** Focused wall,
+  enforcement, Laya-input, and wall test command passed **139 tests** in
+  14.34 seconds. The validation is CPU-only; real checkpoint loading and
+  real multi-turn context behavior remain unverified.
+- [x] **Task 4: Freeze single-task mode configurations.** Added:
+  `configs/experiments/frozen/unprotected.json`,
+  `configs/experiments/frozen/wall_only.json`, and
+  `configs/experiments/frozen/wall_gatekeeper.json`. All select
+  `Qwen/Qwen2.5-7B-Instruct`, `workspace/user_task_0`, seed 42, one episode,
+  one `gpu0` slot, and the same actor settings. Validation produced one job
+  per config. It correctly reports missing actor credentials; the gatekeeper
+  config additionally reports missing Laya cache/runtime prerequisites.
+
+These four preparation items do not constitute a real-model smoke test. The
+next execution step still requires an authorized local/Colab model server,
+credentials, and—only for `wall_gatekeeper`—a validated local Laya runtime and
+checkpoint cache. No paid endpoint, external inference call, model download,
+or GPU execution was performed.
+
 
 ---
 
@@ -292,3 +338,49 @@ File created at `handoff/environment-manifest.json`.
 
 Inference endpoint requires a local vLLM server (`OPENAI_API_BASE=http://localhost:8000/v1`).
 No real-model execution performed.
+
+
+---
+
+## Task 0 selector, reset, wall validation, frozen configs — 2026-10-21
+
+**Branch:** `task0-selector-reset-wall-frozen` (base `lock-qwen25-7b-instruct-env@caeb065`)
+No real-model execution performed.
+
+### ✅ Task 1 — `integrations/agentdojo/task_selector.py`
+
+**Status: Complete.** (commit `a00029e`)
+
+Created `integrations/agentdojo/task_selector.py` with:
+- `environment(verify_revision=True)` → `(task, env, runtime)` for `workspace/user_task_0`
+  - Loads pristine `WorkspaceEnvironment` (no injection vectors).
+  - Applies `task.init_environment(env)`.
+  - Builds `FunctionsRuntime` from the suite's registered tools.
+  - Verifies pinned AgentDojo revision by default.
+- `tool_schemas(runtime)` → OpenAI-compatible schema list.
+
+Evidence:
+```
+task id: user_task_0
+task prompt: Who else is invited to the 'Networking event' on May 26th? ...
+tool count: 24 / schema count: 24
+```
+
+
+### ✅ Task 2 — `scripts/reset_workspace.py`
+
+**Status: Complete.** (commit `cd0291d`)
+
+`scripts/reset_workspace.py` provides:
+- `pristine_env()` → fresh `WorkspaceEnvironment` for user_task_0.
+- `reset(env)` → in-place restoration via `model_dump`/`model_validate` round-trip.
+- CLI `main()` verifying determinism and reset correctness.
+
+Evidence:
+```
+Determinism check: PASS (two pristine loads produce identical digests)
+Mutated digest: 280046... (mutation detected)
+Reset digest : 2a6defce... == pristine digest
+Reset verification: PASS
+calendar events=26, inbox emails=31, cloud_drive files=26
+```

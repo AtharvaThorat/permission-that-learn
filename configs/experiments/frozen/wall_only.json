@@ -1,0 +1,36 @@
+{
+  "name": "frozen-user-task-0-wall-only",
+  "actors": {
+    "qwen25_7b": {
+      "settings": {
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "served_model_name": "Qwen2.5-7B-Instruct",
+        "base_url": "http://localhost:8000/v1",
+        "model_revision": null,
+        "server_version": null,
+        "template_provenance": null,
+        "quantization": null,
+        "dtype": null,
+        "thinking_enabled": null,
+        "temperature": 0.0,
+        "seed": 42,
+        "top_p": 1.0,
+        "max_output_tokens": 1024
+      },
+      "resource_group": "gpu0",
+      "max_concurrent_requests": 1
+    }
+  },
+  "modes": ["wall_only"],
+  "clean_tasks": ["user_task_0"],
+  "seeds": [42],
+  "limits": {
+    "global_episodes": 1,
+    "resource_groups": {"gpu0": 1},
+    "gatekeeper_workers": 1,
+    "pending_queue": 1,
+    "lease_seconds": 120,
+    "sequential_models": true,
+    "run_seconds": 3600
+  }
+}
