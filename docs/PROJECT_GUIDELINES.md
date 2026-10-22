@@ -52,6 +52,10 @@ task explicitly requires them.
   formatting changes.
 - Never commit credentials, tokens, model weights, private endpoints, or other
   secrets.
+- Anything hashed into an identity, fingerprint, digest, or `pair_id` must
+  serialize deterministically. Sort sets and frozensets before dumping; never
+  depend on `PYTHONHASHSEED` or set iteration order. Test such values across
+  separate processes, not only within one.
 
 Before adding a helper or abstraction, search for existing prior art. Reuse
 shared contracts and utilities where possible.
@@ -125,6 +129,11 @@ removed, or replaced by a more complete test. Before removing it, search for
 references and confirm that it is not used by CI, scripts, packaging, or
 documentation.
 
+Fixtures that stand in for external assets (model snapshots, AgentDojo data,
+endpoint responses) must mirror the real layout and format. Check the fixture
+against the real asset listing once and note the source in the test. A
+validator that only passes on a hand-made fixture is not verified.
+
 Do not commit `__pycache__`, `.pytest_cache`, logs, model artifacts, generated
 results, or temporary files.
 
@@ -146,6 +155,12 @@ Result handling must:
 - write machine-readable JSON and tabular CSV where the existing workflow
   expects both;
 - keep replay output separate from source artifacts.
+
+The acting-model server and the experiment runner use separate Python
+environments: vLLM 0.11.0 needs `transformers==4.57.1`, while the runner hosts
+the Laya worker and needs the pinned Laya stack (`torch==2.14.1`,
+`transformers==5.19.0`). They communicate only over the local HTTP endpoint.
+`notebooks/person3_protected_smoke_test.ipynb` shows the working Colab setup.
 
 Do not run real models or external inference as part of ordinary unit-test
 validation. Real-model execution requires explicit authorization, a documented
