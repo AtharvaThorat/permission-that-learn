@@ -105,6 +105,7 @@ def implementation():
 
 
 def identities(spec):
+    from integrations.agentdojo.codec import SYSTEM_PROMPT_VERSION, SYSTEM
     from ptl.wall import presets
     from ptl.wall.models import Capability
     for capability in spec.wall.confirm_capabilities:
@@ -114,6 +115,8 @@ def identities(spec):
             'gatekeeper': spec.gatekeeper.model_dump(),
             'checkpoint': json.loads((ROOT / 'gatekeeper/model_manifest.json').read_text())['baseline'],
             'question_hash': digest((ROOT / 'gatekeeper/questions.py').read_text()),
+            'actor_system_prompt_version': SYSTEM_PROMPT_VERSION,
+            'actor_system_prompt_hash': digest(SYSTEM),
             'implementation': implementation()}
 
 

@@ -134,6 +134,22 @@ def test_e17_native_error_after_side_effect_never_retries():
     assert len(f.runtime.calls) == 1 and f.env['mutations'] == 1
     assert f.pipeline.last_episode.terminal == 'uncertain_execution'
 
+def test_read_only_value_error_is_reported_without_infrastructure_failure():
+    f = fixture([reply(call()), reply(content='No matching events.')])
+    f.runtime.run_function = lambda env, name, args: ('', 'ValueError: No events found')
+    run(f)
+    assert f.pipeline.last_episode.terminal == 'completed'
+    tool_result = next(m for m in f.pipeline.last_history if m['role'] == 'tool')
+    assert tool_result['error'] == 'ValueError: No events found'
+
+def test_write_error_remains_uncertain():
+    f = fixture([reply(call('send_email', {
+        'recipients': ['known@example.com'], 'subject': 'Meeting', 'body': 'Body'
+    }))])
+    f.runtime.run_function = lambda env, name, args: ('', 'ValueError: write failed')
+    run(f)
+    assert f.pipeline.last_episode.terminal == 'uncertain_execution'
+
 def test_e18_repeated_denials_terminate():
     f = fixture([reply(call(id='one')), reply(call(id='two')), reply(call(id='three'))], labels=('BLOCK', 'BLOCK'))
     run(f)

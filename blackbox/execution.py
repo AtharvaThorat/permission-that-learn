@@ -5,6 +5,17 @@ from blackbox.audit import AuditFailure
 from blackbox.contracts import Outcome, Proposal
 from blackbox.permissions.bindings import AuthorizationLedger
 
+
+def _expected_read_only_error(action, error):
+    """Recognize native lookup misses without treating writes as recoverable."""
+    return (
+        bool(error)
+        and action.effects == ('read',)
+        and isinstance(error, str)
+        and error.startswith('ValueError:')
+    )
+
+
 class GuardedExecutor:
     def __init__(self, ledger=None):
         self.ledger = ledger if ledger is not None else AuthorizationLedger()
@@ -57,14 +68,25 @@ class GuardedExecutor:
             result, error = runtime.run_function(env, action.tool, json.loads(action.arguments_json))
             elapsed = clock.monotonic() - dispatch_started
             timeout = elapsed > budgets.tool_timeout_seconds or clock.monotonic() >= episode.deadline
-            outcome = Outcome(True, 'TOOL_TIMEOUT_UNCERTAIN' if timeout else ('TOOL_ERROR' if error else 'EXECUTED'),
-                              'ALLOW', result, error,
-                              'uncertain_execution' if error or timeout else None)
+            expected_error = _expected_read_only_error(action, error)
+            outcome = Outcome(
+                True,
+                'TOOL_TIMEOUT_UNCERTAIN' if timeout else (
+                    'READ_ONLY_TOOL_ERROR' if expected_error else ('TOOL_ERROR' if error else 'EXECUTED')),
+                'ALLOW',
+                result,
+                error,
+                'uncertain_execution' if timeout or (error and not expected_error) else None)
         except Exception as exc:
             episode.error_context = exc
-            outcome = Outcome(True, 'TOOL_EXCEPTION_UNCERTAIN', 'ALLOW',
-                              error='ToolError: execution raised; side effects may have occurred',
-                              terminal='uncertain_execution')
+            expected_error = isinstance(exc, ValueError) and action.effects == ('read',)
+            outcome = Outcome(
+                True,
+                'READ_ONLY_TOOL_ERROR' if expected_error else 'TOOL_EXCEPTION_UNCERTAIN',
+                'ALLOW',
+                error='ToolError: read-only lookup failed' if expected_error
+                else 'ToolError: execution raised; side effects may have occurred',
+                terminal=None if expected_error else 'uncertain_execution')
         episode.executed += 1
         self.ledger.outcomes[action.action_id] = outcome
         try:

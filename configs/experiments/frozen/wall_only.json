@@ -8,7 +8,7 @@
         "base_url": "http://localhost:8000/v1",
         "model_revision": null,
         "server_version": null,
-        "template_provenance": null,
+        "template_provenance": "agentdojo-system-prompt:temporal-grounding-v1",
         "quantization": null,
         "dtype": null,
         "thinking_enabled": null,

@@ -263,6 +263,33 @@ credentials, and—only for `wall_gatekeeper`—a validated local Laya runtime a
 checkpoint cache. No paid endpoint, external inference call, model download,
 or GPU execution was performed.
 
+## 2026-10-21 temporal grounding and tool-error classification
+
+- [x] **Temporal grounding instruction.** The shared
+  `integrations/agentdojo/codec.py` system instruction is versioned as
+  `temporal-grounding-v1`. It tells the actor not to guess an ambiguous year
+  and to use `get_current_day` or an unfiltered search first. The original
+  instruction is retained as `ORIGINAL_SYSTEM`; no date, answer, or AgentDojo
+  data is hardcoded. The frozen mode configs record the same prompt version.
+- [x] **Read-only tool-error classification.** `blackbox/execution.py` now
+  recognizes only known `ValueError:` failures from pure read-only tools as
+  non-infrastructure tool errors. They remain executed tool outcomes and can
+  be returned to the actor. Side-effecting errors, timeouts, unknown errors,
+  and audit failures remain conservative/uncertain.
+- [x] **Focused regression evidence.** The temporal and classification tests
+  passed **46 tests**. Full CPU and focused wall/Laya regression results are
+  recorded below after completion.
+
+#### Final validation evidence
+
+- Full CPU suite: **221 passed** in 24.26 seconds.
+- Focused wall/Laya/enforcement suite: **141 passed** in 17.98 seconds.
+- Frozen configs: all three validate to one `workspace/user_task_0` job with
+  the shared Qwen2.5-7B-Instruct profile; missing local credentials and Laya
+  prerequisites remain reported rather than hidden.
+- No model endpoint, GPU, paid service, model download, or AgentDojo real
+  episode was executed.
+
 ## 2026-10-21 local vLLM handoff
 
 - [x] **Task 1: Add local vLLM startup script.** Added
