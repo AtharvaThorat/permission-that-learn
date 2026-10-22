@@ -145,11 +145,24 @@ were denied by the wall with 0 gate calls. Raw artifacts for this session are sa
 | D4 | Environment/dependency | Laya needs `torch==2.14.1` and `transformers==5.19.0`; vLLM 0.11.0 needs `transformers==4.57.1`. The Laya worker is a subprocess of the runner, so the runner environment must hold the Laya stack. | `requirements.txt`, validation report section 11.5. | Person 1 | Notebook uses two environments (vLLM server env plus runner/Laya env). This combination is untested until the notebook runs. |
 | D5 | Model/actor failure | Qwen2.5-7B consistently queries `2023-05-26` for "May 26th", so `user_task_0` utility is 0.0 even unprotected. | Seven recorded runs in the validation report. | Person 1 | Open. Utility cannot show a protection effect on this task; enforcement and pending behaviour are the measurable outcomes. |
 | D6 | Test design limitation | `user_task_0` only needs calendar reads, which the STRICT_WORKSPACE wall always passes, and `confirm_capabilities` is empty. The frozen task cannot produce a block or a confirmation. | Wall verdict on the search: PASS. | Team | Covered by controlled cases 02 to 11 without changing the frozen task. |
-| D8 | Gatekeeper/Laya failure (code) | `resolve_local_snapshot` (commit `a586e17`) requires `tokenizer_config.json` and a tokenizer file at the snapshot root. The pinned Laya snapshot keeps them in `tokenizer/` (root has `config.json`, `model.safetensors`, `encoder/`, `tokenizer/`, ...). Every real snapshot is rejected as `LOCAL_LAYA_SNAPSHOT_INVALID` before the worker starts. The unit test passed only because its fake snapshot puts the files at the root. | Real Colab runs: `download_or_load_failure` after 0.017 s. Reproduced on CPU with the real file layout: `missing tokenizer_config.json, tokenizer asset`. Layout checked against the Hugging Face file tree at revision `7b928d8`. | Person 1 | **Open, blocks all Laya evidence.** Fix the validator to accept `tokenizer/` and add a test using the real layout. |
-| D9 | Artifact/output (observability) | When the Laya worker fails to initialize, the run artifacts record only `error_kind=download_or_load_failure`. The actual message (`LayaBackend.metadata['initialization_error']`, here `LOCAL_LAYA_SNAPSHOT_INVALID ... missing tokenizer_config.json`) is not written to `events.jsonl`, `decisions.jsonl` or `result.json`. D8 had to be diagnosed by reproduction. | No `LOCAL_LAYA` text anywhere in the second session's artifacts. | Person 1 | Open. Persist the initialization error (redacted path is fine) with the gate decision. |
+| D8 | Gatekeeper/Laya failure (code) | The old resolver required tokenizer files at the snapshot root, rejecting the pinned snapshot's `tokenizer/` layout before worker startup. | Reproduced with a CPU fixture checked against the Hugging Face file tree at revision `7b928d8`. | Person 1 | **Code fixed; real-model rerun pending.** Resolver accepts complete nested or root tokenizers; tests cover the real layout and missing assets. |
+| D9 | Artifact/output (observability) | Earlier runs recorded only `error_kind=download_or_load_failure`, dropping the backend's initialization message. | No `LOCAL_LAYA` text in the second session's artifacts; new CPU regression verifies the exact backend message in `events.jsonl` and zero tool executions. | Person 1 | **Code fixed.** Gate decisions carry `initialization_error` into audit events and decision traces. Historical artifacts remain unchanged. |
 | D7 | Artifact/output | `handoff/validation_response.json` still says `not_run`, and `handoff/environment-manifest.json` describes a Windows CPU environment at commit `737899d`, with no GPU, vLLM or Laya versions. The real values exist only in the validation report. | Files on `main@b9f9628`. | Person 1 | Notebook regenerates both on the run machine (`validation_response.json`, `environment-manifest.json`, `model_assets.json`). |
 
 ## 6. Deliverable checklist
+
+D8/D9 CPU validation: **9 targeted regressions passed; full suite 233 passed**.
+The original `.venv-blackbox-tests` points to a missing Python 3.12 executable,
+so validation used an isolated Python 3.13 environment in `tmp/d8-testenv`
+with `requirements-blackbox-test.txt` and `hypothesis` installed:
+
+```powershell
+$env:PYTHONPATH = (Join-Path (Get-Location) 'wall/src')
+& '.\tmp\d8-testenv\Scripts\python.exe' -m pytest -q -p no:cacheprovider --basetemp tmp/d8-full --tb=short
+```
+
+No model weights were downloaded and no real models were executed. These tests
+verify snapshot validation and error propagation, not real Laya loading or utility.
 
 | Deliverable | Status |
 |---|---|

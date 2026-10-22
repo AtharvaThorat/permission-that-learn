@@ -43,6 +43,15 @@ this Hugging Face cache layout, plus all required encoder/tokenizer dependencies
 Missing assets later fail offline. The first real gate evaluation initializes and
 warms up the existing persistent worker; this has not happened in this branch.
 
+The pinned snapshot stores `config.json` and `model.safetensors` at its root,
+`encoder/config.json` under `encoder/`, and `tokenizer_config.json` plus
+`tokenizer.json` under `tokenizer/`. The offline resolver accepts this layout
+and complete root-level tokenizers. Missing required assets still fail closed.
+Gate-decision events include the backend's `initialization_error` message
+(null when absent), alongside `error_kind`; the decision trace carries it too.
+These diagnostic messages can contain local cache paths. No action arguments
+or model input are added to the audit log.
+
 The three `configs/experiments/frozen/` profiles share
 `gatekeeper.cache_dir: /content/laya-cache`, matching the protected-smoke Colab
 notebook. Provision the pinned snapshot under that directory's `hub/` layout

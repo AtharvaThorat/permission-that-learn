@@ -49,25 +49,81 @@ def test_missing_local_assets_fails_without_backend(monkeypatch, tmp_path):
     with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_MISSING'):
         gate.initialize()
 
-def _snapshot(tmp_path, *, encoder=True):
-    snapshot = tmp_path / 'hub' / 'models--convaiinnovations--laya' / 'snapshots' / ('7b' * 20)
+LAYA_REVISION = '7b928d828b7b0e022f929d9bd2e44165aa270148'
+
+
+def _snapshot(tmp_path, *, encoder=True, nested=True):
+    # File layout verified against the pinned Hugging Face tree:
+    # https://huggingface.co/convaiinnovations/laya/tree/7b928d828b7b0e022f929d9bd2e44165aa270148
+    snapshot = tmp_path / 'hub' / 'models--convaiinnovations--laya' / 'snapshots' / LAYA_REVISION
     snapshot.mkdir(parents=True)
-    for name in ('config.json', 'tokenizer_config.json', 'tokenizer.json', 'model.safetensors'):
+    for name in ('config.json', 'model.safetensors'):
         (snapshot / name).write_text('{}')
+    tokenizer = snapshot / 'tokenizer' if nested else snapshot
+    tokenizer.mkdir(exist_ok=True)
+    for name in ('tokenizer_config.json', 'tokenizer.json'):
+        (tokenizer / name).write_text('{}')
     if encoder:
-        (snapshot / 'encoder_config.json').write_text('{}')
+        (snapshot / 'encoder').mkdir()
+        (snapshot / 'encoder' / 'config.json').write_text('{}')
     return tmp_path, snapshot
 
-def test_local_laya_snapshot_resolves_pinned_assets(tmp_path):
+@pytest.mark.parametrize('nested', [True, False])
+def test_local_laya_snapshot_resolves_pinned_assets(tmp_path, nested):
     from gatekeeper.laya_adapter import resolve_local_snapshot
-    cache, snapshot = _snapshot(tmp_path)
-    assert resolve_local_snapshot('convaiinnovations/laya', '7b' * 20, cache) == snapshot
+    cache, snapshot = _snapshot(tmp_path, nested=nested)
+    assert resolve_local_snapshot('convaiinnovations/laya', LAYA_REVISION, cache) == snapshot
 
 def test_local_laya_snapshot_rejects_missing_assets(tmp_path):
     from gatekeeper.laya_adapter import resolve_local_snapshot
     cache, snapshot = _snapshot(tmp_path, encoder=False)
     with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_INVALID'):
-        resolve_local_snapshot('convaiinnovations/laya', '7b' * 20, cache)
+        resolve_local_snapshot('convaiinnovations/laya', LAYA_REVISION, cache)
+
+
+@pytest.mark.parametrize('missing', ['config.json', 'model.safetensors',
+                                   'tokenizer/tokenizer_config.json', 'tokenizer/tokenizer.json'])
+def test_local_laya_snapshot_rejects_incomplete_real_layout(tmp_path, missing):
+    from gatekeeper.laya_adapter import resolve_local_snapshot
+    cache, snapshot = _snapshot(tmp_path)
+    (snapshot / missing).unlink()
+    with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_INVALID'):
+        resolve_local_snapshot('convaiinnovations/laya', LAYA_REVISION, cache)
+
+
+def test_gate_initialization_error_persisted_in_decision_event(tmp_path):
+    from blackbox.audit import JsonlAudit
+    from gatekeeper.policy import Gatekeeper
+    from gatekeeper.schemas import Request
+    from gatekeeper.laya_adapter import Prediction
+
+    error = 'RuntimeError: LOCAL_LAYA_SNAPSHOT_INVALID: missing tokenizer_config.json'
+
+    class Backend:
+        checkpoint, revision = 'convaiinnovations/laya', LAYA_REVISION
+        def __init__(self):
+            self.metadata = {}
+
+        def predict(self, request):
+            self.metadata['initialization_error'] = error
+            return Prediction(error=error, error_kind='download_or_load_failure')
+
+        def close(self):
+            pass
+
+    path = tmp_path / 'events.jsonl'
+    f = fixture(audit=JsonlAudit(path))
+    adapter = ExistingLayaGate(f.pipeline.config.gatekeeper, 24000)
+    adapter.gate = Gatekeeper(Backend(), request_validator=lambda raw: (Request.model_validate(raw), None))
+    f.pipeline.gate = adapter
+    with f.pipeline:
+        run(f)
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    decision = next(event for event in events if event['event'] == 'gate_decision')
+    assert decision['initialization_error'] == error
+    assert decision['error_kind'] == 'download_or_load_failure'
+    assert decision['decision'] == 'ASK' and decision['reason_code'] == 'MODEL_UNAVAILABLE'
+    assert not f.runtime.calls
 
 def test_local_laya_snapshot_rejects_unknown_revision(tmp_path):
     from gatekeeper.laya_adapter import resolve_local_snapshot

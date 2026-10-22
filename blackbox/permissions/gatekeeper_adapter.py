@@ -128,7 +128,8 @@ class ExistingLayaGate:
             return GateDecision(result.decision, result.reason_code, result.raw_model_decision,
                 result.class_probabilities, 'existing_laya', 'single-v1',
                 self.gate.backend.checkpoint, self.gate.backend.revision, result.error_kind,
-                diagnostics=usage_diagnostics(result.raw_model_output))
+                diagnostics=usage_diagnostics(result.raw_model_output),
+                initialization_error=getattr(self.gate.backend, 'metadata', {}).get('initialization_error'))
         except Exception as exc:
             return GateDecision('ASK', 'MODEL_UNAVAILABLE', backend='existing_laya', error_kind=type(exc).__name__)
 

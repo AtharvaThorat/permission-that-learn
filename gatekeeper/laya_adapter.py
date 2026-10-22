@@ -25,18 +25,24 @@ def resolve_local_snapshot(checkpoint, revision, cache_dir):
     snapshot = cache / 'hub' / ('models--' + checkpoint.replace('/', '--')) / 'snapshots' / revision
     if not snapshot.is_dir():
         raise FileNotFoundError(f'LOCAL_LAYA_SNAPSHOT_MISSING: {snapshot}')
-    required = ('config.json', 'tokenizer_config.json')
+    required = ('config.json',)
     missing = [name for name in required if not (snapshot / name).is_file()]
     model_assets = list(snapshot.glob('*.safetensors')) + list(snapshot.glob('*.bin'))
-    tokenizer_assets = [name for name in ('tokenizer.json', 'tokenizer.model', 'vocab.json')
-                        if (snapshot / name).is_file()]
+    # The pinned Laya checkpoint stores its tokenizer in tokenizer/.
+    # Retain support for complete root-level tokenizers in older local caches.
+    tokenizer_dirs = (snapshot / 'tokenizer', snapshot)
+    tokenizer_assets = any(
+        (directory / 'tokenizer_config.json').is_file()
+        and any((directory / name).is_file()
+                for name in ('tokenizer.json', 'tokenizer.model', 'vocab.json'))
+        for directory in tokenizer_dirs)
     encoder_assets = list(snapshot.glob('*encoder*')) + [
         snapshot / name for name in ('preprocessor_config.json', 'feature_extractor.json',
                                      'processor_config.json') if (snapshot / name).is_file()]
     if not model_assets:
         missing.append('model weights (*.safetensors or *.bin)')
     if not tokenizer_assets:
-        missing.append('tokenizer asset (tokenizer.json, tokenizer.model, or vocab.json)')
+        missing.append('tokenizer_config.json and tokenizer asset in tokenizer/ or snapshot root')
     if not encoder_assets:
         missing.append('encoder asset (*encoder* or processor configuration)')
     if missing:

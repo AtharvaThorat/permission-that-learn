@@ -1,4 +1,4 @@
-"""Default events contain hashes and fixed categories, never argument/body text."""
+"""Events omit argument/body text; backend initialization errors are diagnostic text."""
 import json
 import os
 from datetime import datetime, timezone
@@ -47,7 +47,8 @@ class EpisodeAudit:
                    'probabilities', 'backend', 'checkpoint', 'revision', 'prompt_version',
                    'calibration', 'count', 'terminal', 'content_hash', 'original_hash',
                    'evidence_complete', 'omitted_chars', 'original_id_hash', 'policy_override',
-                   'decision_id_hash', 'authorization_id_hash', 'expires_at_monotonic', 'diagnostics'}
+                   'decision_id_hash', 'authorization_id_hash', 'expires_at_monotonic', 'diagnostics',
+                   'initialization_error'}
         if set(fields) - allowed:
             raise AuditFailure('UNSAFE_AUDIT_FIELDS')
         episode = self.episode
