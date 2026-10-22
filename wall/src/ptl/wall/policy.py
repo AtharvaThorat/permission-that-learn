@@ -13,7 +13,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from .models import Action, Capability, TargetClass, Verdict
 
@@ -41,6 +41,11 @@ class Grant(BaseModel):
             raise ValueError("a grant must list at least one target class")
         return v
 
+    @field_serializer("targets")
+    def _sorted_targets(self, v: frozenset[TargetClass]) -> list[TargetClass]:
+        # Set iteration order changes with PYTHONHASHSEED; dumps must be identical across processes.
+        return sorted(v, key=lambda t: t.value)
+
 
 class WallPolicy(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -52,6 +57,10 @@ class WallPolicy(BaseModel):
     attachments_allowed_to: frozenset[TargetClass] = frozenset()
     max_recipients: int | None = Field(default=None, ge=1)
     max_share_permission: Literal["r", "rw"] = "r"
+
+    @field_serializer("forbidden_tools", "attachments_allowed_to")
+    def _sorted_sets(self, v: frozenset) -> list:
+        return sorted(v, key=lambda x: getattr(x, "value", x))
 
     @model_validator(mode="after")
     def _validate(self) -> "WallPolicy":
