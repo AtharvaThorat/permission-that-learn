@@ -27,7 +27,7 @@
   "gatekeeper": {
     "backend": "existing_laya",
     "profile": "original_single",
-    "cache_dir": null,
+    "cache_dir": "/content/laya-cache",
     "timeout_seconds": 30.0,
     "load_timeout_seconds": 300.0,
     "allow_downloads": false,

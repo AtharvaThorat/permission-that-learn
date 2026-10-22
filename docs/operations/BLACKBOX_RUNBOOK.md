@@ -43,6 +43,13 @@ this Hugging Face cache layout, plus all required encoder/tokenizer dependencies
 Missing assets later fail offline. The first real gate evaluation initializes and
 warms up the existing persistent worker; this has not happened in this branch.
 
+The three `configs/experiments/frozen/` profiles share
+`gatekeeper.cache_dir: /content/laya-cache`, matching the protected-smoke Colab
+notebook. Provision the pinned snapshot under that directory's `hub/` layout
+before running `wall_gatekeeper`. For another environment, change the cache
+directory in all three profiles together to preserve matched comparison identities.
+Setting this path does not download assets or verify real Laya inference.
+
 ```powershell
 Copy-Item configs\blackbox\wall_gatekeeper.json configs\blackbox\experiment.local.json
 $ConfigPath = 'configs\blackbox\experiment.local.json'

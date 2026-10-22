@@ -24,6 +24,10 @@
   "modes": ["unprotected"],
   "clean_tasks": ["user_task_0"],
   "seeds": [42],
+  "gatekeeper": {
+    "cache_dir": "/content/laya-cache",
+    "input_profile": "full_evidence"
+  },
   "limits": {
     "global_episodes": 1,
     "resource_groups": {"gpu0": 1},
