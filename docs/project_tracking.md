@@ -216,3 +216,79 @@ The shared pipeline and CPU-tested evaluation infrastructure are implemented.
 The original prototype is **not fully complete** because the real environment,
 real paired demonstration, approval memory, Jev comparison, controlled
 real-model evaluation, and final evidence package remain outstanding.
+
+
+---
+
+## Environment lock and verification — 2026-10-21
+
+**Branch:** `lock-qwen25-7b-instruct-env` (commit `caeb065`, base `main@737899d`)  
+**Reconciled:** 2026-10-21. No real-model execution was performed.
+
+### ✅ Task 1 — Lock actor profiles to `Qwen/Qwen2.5-7B-Instruct`
+
+**Status: Complete.**
+
+All `configs/blackbox/` configs and `configs/experiments/` actor profiles updated.
+Every actor now has hardcoded: `model_id=Qwen/Qwen2.5-7B-Instruct`,
+`served_model_name=Qwen2.5-7B-Instruct`, `base_url=http://localhost:8000/v1`,
+`temperature=0.0`, `seed=42`, `top_p=1.0`, `max_output_tokens=1024`,
+`thinking_enabled=null`.
+
+Files changed:
+- `configs/blackbox/unprotected.json`
+- `configs/blackbox/wall_only.json`
+- `configs/blackbox/wall_gatekeeper.json`
+- `configs/experiments/one-clean.json` (actor key → `qwen25_7b`)
+- `configs/experiments/three-modes.json` (actor key → `qwen25_7b`)
+- `configs/experiments/two-models-sequential.json` (actor keys → `qwen25_7b`, `qwen25_7b_slot1`)
+- `configs/experiments/two-models-concurrent.json` (actor keys → `qwen25_7b`, `qwen25_7b_slot1`)
+
+Validated with `ActorConfig` / `ActorProfile` Pydantic models — all parse cleanly (exit 0).
+
+### ✅ Task 2 — Create `scripts/check_env.py`
+
+**Status: Complete.**
+
+Script at `scripts/check_env.py`. Adds repo root and `wall/src` to `sys.path`,
+then verifies 8 module imports: `blackbox`, `blackbox.config`, `blackbox.actors`,
+`integrations.agentdojo`, `integrations.agentdojo.pipeline`,
+`ptl.wall`, `experiment`, `experiment.spec`.
+
+Evidence (`.venv-blackbox-tests`):
+```
+8/8 imports OK
+Environment import check passed.
+```
+
+### ✅ Task 3 — pytest CPU suite
+
+**Status: Complete — 218 passed.**
+
+Command: `& '.\.venv-blackbox-tests\Scripts\python.exe' -m pytest -q -p no:cacheprovider`
+
+Evidence: `218 passed in 17.75s` — no GPU, model downloads, or external API dependencies.
+
+### ✅ Task 4 — `handoff/environment-manifest.json`
+
+**Status: Complete.**
+
+File created at `handoff/environment-manifest.json`.
+
+| Field | Value |
+|---|---|
+| Python | `3.12.10 (tags/v3.12.10:0cc8128, Apr 8 2025)` |
+| Git commit | `737899dd5b31b5ca76ddc579683463740d2110c7` |
+| pydantic | `2.12.3` |
+| httpx | `0.28.1` |
+| agentdojo | `0.1.35` |
+| ptl | `0.1.0` |
+| hypothesis | `6.170.5` |
+| pytest | `9.1.1` |
+| PyYAML | `6.0.3` |
+| Actor model locked | `Qwen/Qwen2.5-7B-Instruct` |
+| Inference endpoint | `http://localhost:8000/v1` |
+| CPU test result | `218 passed` |
+
+Inference endpoint requires a local vLLM server (`OPENAI_API_BASE=http://localhost:8000/v1`).
+No real-model execution performed.
