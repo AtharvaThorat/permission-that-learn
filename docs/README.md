@@ -26,6 +26,7 @@
 
 - [Black-box implementation report](reports/BLACKBOX_IMPLEMENTATION_REPORT.md)
 - [Evaluation platform implementation report](reports/EVALUATION_PLATFORM_IMPLEMENTATION_REPORT.md)
+- [Person 3 protected-mode smoke test report](reports/PERSON3_PROTECTED_SMOKE_REPORT.md)
 - [Colab pilot results](benchmark-results/COLAB_PILOT_RESULTS.md)
 - [Colab 40-task results](benchmark-results/COLAB_40_TASK_RESULTS.md)
 
