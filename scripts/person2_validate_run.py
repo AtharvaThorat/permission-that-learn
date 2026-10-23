@@ -27,7 +27,8 @@ from experiment.spec import load, plan  # noqa: E402
 
 FROZEN_BASELINE = ROOT / 'configs/experiments/frozen/unprotected.json'
 ATTACK_PANELS = [ROOT / 'configs/blackbox/attacks/workspace_pilot.json',
-                 ROOT / 'configs/blackbox/attacks/workspace_baseline_extension.json']
+                 ROOT / 'configs/blackbox/attacks/workspace_baseline_extension.json',
+                 ROOT / 'configs/blackbox/attacks/workspace_hard_tasks.json']
 
 
 class Checks:

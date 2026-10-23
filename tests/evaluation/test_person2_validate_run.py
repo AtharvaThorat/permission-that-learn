@@ -84,7 +84,8 @@ def statuses(checks):
     return {item['check']: item['status'] for item in checks.items}
 
 
-@pytest.mark.parametrize('config', [PANEL, ROOT / 'configs/experiments/panel-15/unprotected.json'])
+@pytest.mark.parametrize('config', [PANEL, ROOT / 'configs/experiments/panel-15/unprotected.json',
+                                    ROOT / 'configs/experiments/hard-tasks/unprotected.json'])
 def test_preflight_passes_for_the_committed_panels(config, monkeypatch):
     monkeypatch.setenv('BLACKBOX_ACTOR_API_KEY', 'local-test')
     checks = validate.preflight(config)
