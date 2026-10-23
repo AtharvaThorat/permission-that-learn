@@ -51,11 +51,14 @@ Record the printed `run_dir`. Do not modify the frozen configuration or reuse
 the environment for a protected run. Preserve actor requests/responses, tool
 calls, task outcome, timing, token usage, errors, and generated JSON/CSV files.
 
-On a Colab T4, `person2_unprotected_baseline.ipynb` runs these commands with the
-frozen configuration unchanged and loads Qwen2.5-7B 4-bit (bitsandbytes) to fit
-the GPU; it records that precision. It can also run other local models on
-copies of the frozen configuration that change only the actor. Those runs are
-extra context, not part of the matched three-mode comparison. Its report
+On a Colab T4, `person2_unprotected_baseline.ipynb` runs Qwen2.5-7B with the
+frozen actor settings on `configs/experiments/pilot-panel/unprotected.json`: the
+five `workspace_pilot.json` cases, each clean and attacked (10 episodes). Its
+clean `user_task_0` episode has the same identity as the frozen single-task
+baseline. Qwen is loaded 4-bit (bitsandbytes) on a T4 and BF16 on 30 GB+ GPUs;
+the precision is recorded. `scripts/person2_validate_run.py` checks the
+configuration before the run (`preflight`) and every result after it
+(`check-run`); the notebook stops on failed checks. The report
 (`scripts/person2_baseline_report.py`) writes an Excel workbook, CSVs and charts
 without modifying the run folders.
 

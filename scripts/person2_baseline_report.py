@@ -1,13 +1,13 @@
 """Build the Person 2 unprotected-baseline report from experiment run folders.
 
-Reads a registry written by `person2_unprotected_baseline.ipynb` (one entry per model, with its
-run folder or the reason it has none) and writes, without modifying any run folder:
+Reads a registry written by `person2_unprotected_baseline.ipynb` (one entry per model, with its run folder
+and validation report, or the reason it has none) and writes, without modifying any run folder:
 
-  unprotected_baseline_results.xlsx   sheets: Summary, Episodes, Run info
+  unprotected_baseline_results.xlsx   sheets: Summary, Episodes, Validation, Run info
   summary.csv, episodes.csv           the same tables as CSV
-  charts/1_task_utility.png           utility per model
-  charts/2_model_activity.png         actor requests, tool calls proposed and executed
-  charts/3_run_cost.png               tokens and episode duration per model
+  charts/1_headline_results.png       task utility (clean and attacked) and attack success rate
+  charts/2_results_per_case.png       per test case: task done, attacker goal achieved, injection reached
+  charts/3_cost_per_episode.png       tokens and duration of every episode
 
 Metrics that a run did not produce stay empty; they are never replaced with zero.
 Needs only the standard library, openpyxl and matplotlib (both preinstalled on Colab).
@@ -20,9 +20,11 @@ import csv
 import json
 from pathlib import Path
 
-# Colorblind-safe categorical palette, assigned by registry order so a model keeps its color.
-SERIES_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
-SURFACE, TEXT, MUTED_TEXT, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e4e3df"
+# Colorblind-safe palette (validated); categorical slots in fixed order.
+BLUE, ORANGE = "#2a78d6", "#eb6834"
+SERIES_COLORS = [BLUE, ORANGE, "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
+SURFACE, TEXT, MUTED_TEXT, GRID, NEUTRAL = "#fcfcfb", "#0b0b0b", "#52514e", "#e4e3df", "#f0efec"
+GOOD, BAD = "#cde2fb", "#f6c1c0"   # light fills behind Yes/No text; meaning is always also written
 
 
 def read_json(path: Path):
@@ -36,8 +38,12 @@ def text_of(content) -> str:
     return "".join(block.get("content") or "" for block in content)
 
 
+def percent(value):
+    return None if value is None else round(100 * value, 1)
+
+
 def episode_rows(entry: dict) -> list[dict]:
-    """One row per episode attempt in the entry's run folder."""
+    """One row per finished episode attempt in the entry's run folder."""
     rows = []
     run_dir = Path(entry["run_dir"])
     for result_path in sorted(run_dir.glob("episodes/*/*/result.json")):
@@ -51,16 +57,19 @@ def episode_rows(entry: dict) -> list[dict]:
                          if m.get("role") == "assistant" and not m.get("tool_calls")]
         usage = result.get("actor_usage") or {}
         counts = result.get("counts") or {}
+        attack = result.get("attack")
         rows.append({
             "Model": entry["label"],
             "Task": result["task"],
+            "Attack": attack["id"] if attack else "none (clean)",
+            "Attacker goal": attack["objective"] if attack else "",
             "Lifecycle": result["lifecycle"],
-            "Utility": result["utility"],
+            "Task done (utility)": result["utility"],
+            "Attacker goal achieved": result["attack_success"] if attack else None,
+            "Injection reached model": result["attack_exposed"] if attack else None,
             "Actor requests": counts.get("actor_requests"),
             "Tool calls proposed": counts.get("tool_proposals"),
             "Tool calls executed": counts.get("dispatches"),
-            "Prompt tokens": usage.get("prompt_tokens"),
-            "Completion tokens": usage.get("completion_tokens"),
             "Total tokens": usage.get("total_tokens"),
             "Episode seconds": (result.get("timings_seconds") or {}).get("episode_total"),
             "Tool calls made": "\n".join(tool_calls),
@@ -70,27 +79,24 @@ def episode_rows(entry: dict) -> list[dict]:
             "Attempt ID": result["attempt_id"],
             "Run folder": run_dir.name,
         })
-    return rows
+    return sorted(rows, key=lambda row: (row["Attack"] != "none (clean)", row["Task"]))
 
 
-def percent(value):
-    return None if value is None else round(100 * value, 1)
-
-
-def summary_row(entry: dict, episodes: list[dict]) -> dict:
+def summary_row(entry: dict, episodes: list[dict], validation: dict | None) -> dict:
     """One row per model. Models without a run keep every metric empty."""
+    attacked = [e for e in episodes if e["Attack"] != "none (clean)"]
     row = {
         "Model": entry["label"],
-        "Source": entry["source"],
-        "Hugging Face repo / endpoint model": entry["model_id"],
-        "Frozen team config": "yes" if entry["frozen"] else "no (only the actor changed)",
+        "Hugging Face repo": entry["model_id"],
         "Quantization": entry.get("quantization") or "",
         "vLLM version": entry.get("vllm_version") or "",
         "Tool-call check": entry.get("tool_call_check") or "",
         "Status": entry["status"],
-        "Episodes planned": None, "Completed": None, "Infrastructure errors": None,
-        "Utility (%)": None, "Actor requests": None, "Tool calls proposed": None,
-        "Tool calls executed": None, "Total tokens": None, "Mean episode seconds": None,
+        "Validation": validation["overall"] if validation else "not run",
+        "Episodes planned": None, "Completed": None,
+        "Clean utility (%)": None, "Utility under attack (%)": None, "Attack success rate (%)": None,
+        "Attacked episodes where injection reached model": None,
+        "Total tokens": None, "Mean episode seconds": None,
         "Code identity": "", "Problem": entry.get("error") or "",
     }
     if not entry.get("run_dir"):
@@ -100,19 +106,14 @@ def summary_row(entry: dict, episodes: list[dict]) -> dict:
     if len(metrics) != 1:
         raise ValueError(f"Expected one actor/mode group in {run_dir}, found {len(metrics)}")
     metric = metrics[0]
-
-    def total(column):
-        values = [e[column] for e in episodes if e[column] is not None]
-        return sum(values) if values else None
-
     row.update({
         "Episodes planned": metric["planned"],
         "Completed": metric["completed"],
-        "Infrastructure errors": metric["infrastructure_error"],
-        "Utility (%)": percent(metric["clean_utility_value"]),
-        "Actor requests": total("Actor requests"),
-        "Tool calls proposed": total("Tool calls proposed"),
-        "Tool calls executed": metric["dispatches"],
+        "Clean utility (%)": percent(metric["clean_utility_value"]),
+        "Utility under attack (%)": percent(metric["attacked_utility_value"]),
+        "Attack success rate (%)": percent(metric["attack_success_value"]),
+        "Attacked episodes where injection reached model":
+            f"{sum(e['Injection reached model'] is True for e in attacked)} of {len(attacked)}" if attacked else None,
         "Total tokens": metric["reported_total_tokens"],
         "Mean episode seconds": None if metric["mean_episode_seconds"] is None
         else round(metric["mean_episode_seconds"], 1),
@@ -153,110 +154,168 @@ def write_workbook(path: Path, sheets: dict[str, list[dict]]) -> None:
     workbook.save(path)
 
 
-def bar_chart(axis, labels, values, colors, unit, value_format, whole_numbers=False):
-    """Bars with the value printed on each; missing values are labeled n/a, not drawn as zero."""
-    from matplotlib.ticker import MaxNLocator
-
-    axis.yaxis.set_major_locator(MaxNLocator(integer=whole_numbers))
-    positions = range(len(labels))
-    bars = axis.bar(positions, [0 if v is None else v for v in values], width=0.6, color=colors, zorder=3)
-    top = max([v for v in values if v is not None] or [0]) or 1  # all-zero or all-missing still gets an axis
-    for bar, value in zip(bars, values):
-        axis.annotate("n/a" if value is None else value_format.format(value) + unit,
-                      (bar.get_x() + bar.get_width() / 2, bar.get_height()), xytext=(0, 3),
-                      textcoords="offset points", ha="center", fontsize=8.5, color=MUTED_TEXT)
-    axis.set_xticks(list(positions), labels, fontsize=8.5, color=TEXT, rotation=20, ha="right")
-    axis.set_ylim(0, top * 1.2)
-    axis.grid(axis="y", color=GRID, linewidth=1, zorder=0)
+def style_axis(axis, value_axis="y"):
+    axis.set_facecolor(SURFACE)
+    axis.grid(axis=value_axis, color=GRID, linewidth=1, zorder=0)
     axis.tick_params(length=0, colors=MUTED_TEXT)
     for side in ("top", "right", "left"):
         axis.spines[side].set_visible(False)
     axis.spines["bottom"].set_color(GRID)
 
 
-def titled_figure(width, height, title, subtitle, columns=1):
+def label_bars(axis, bars, values, value_format):
+    """Print each value on its bar; a missing value is labeled n/a, never drawn as zero."""
+    for bar, value in zip(bars, values):
+        axis.annotate("n/a" if value is None else value_format(value),
+                      (bar.get_x() + bar.get_width() / 2, bar.get_height()), xytext=(0, 3),
+                      textcoords="offset points", ha="center", fontsize=8.5, color=MUTED_TEXT)
+
+
+def new_figure(width, height, title, subtitle, columns=1):
     import matplotlib.pyplot as plt
 
     figure, axes = plt.subplots(1, columns, figsize=(width, height), facecolor=SURFACE, squeeze=False)
-    for axis in axes[0]:
-        axis.set_facecolor(SURFACE)
     figure.suptitle(title, x=0.02, ha="left", fontsize=13, fontweight="bold", color=TEXT)
     figure.text(0.02, 0.885, subtitle, fontsize=9, color=MUTED_TEXT)
     return figure, axes[0]
 
 
-def write_charts(directory: Path, summary: list[dict], tasks: str) -> list[Path]:
+def chart_headline(summary):
+    metrics = ["Clean utility (%)", "Utility under attack (%)", "Attack success rate (%)"]
+    names = ["Task done\n(clean)", "Task done\n(under attack)", "Attacker goal\nachieved"]
+    figure, (axis,) = new_figure(8, 4.6, "1. Headline results without protection",
+                                 "Utility: higher is better. Attack success rate: lower is better. "
+                                 "Percent of scored episodes.")
+    style_axis(axis)
+    slot = 0.8 / len(summary)
+    for index, row in enumerate(summary):
+        positions = [group + (index - (len(summary) - 1) / 2) * slot for group in range(len(metrics))]
+        values = [row[m] for m in metrics]
+        bars = axis.bar(positions, [0 if v is None else v for v in values], width=slot * 0.85,
+                        color=SERIES_COLORS[index % len(SERIES_COLORS)], label=row["Model"], zorder=3)
+        label_bars(axis, bars, values, lambda v: f"{v:.0f}%")
+    axis.set_xticks(range(len(metrics)), names, color=TEXT)
+    axis.set_ylim(0, 110)
+    axis.set_yticks(range(0, 101, 25), [f"{tick}%" for tick in range(0, 101, 25)])
+    if len(summary) > 1:
+        axis.legend(frameon=False, ncol=len(summary), loc="lower left", bbox_to_anchor=(0, 1.0), fontsize=9)
+    figure.subplots_adjust(top=0.8, bottom=0.16)
+    return figure
+
+
+def chart_cases(episodes):
+    """A table-like grid: one row per test case, Yes/No written in every cell."""
+    from matplotlib.patches import Rectangle
+
+    models = list(dict.fromkeys(e["Model"] for e in episodes))
+    cases = list(dict.fromkeys((e["Model"], e["Task"]) for e in episodes))
+    columns = ["Task done\n(clean)", "Task done\n(under attack)", "Attacker goal\nachieved", "Injection\nreached model"]
+
+    def cell(model, task, attacked, field):
+        match = [e for e in episodes if e["Model"] == model and e["Task"] == task
+                 and (e["Attack"] != "none (clean)") == attacked]
+        return match[0][field] if match else None
+
+    figure, (axis,) = new_figure(9, 1.9 + 0.55 * len(cases), "2. Results per test case",
+                                 "Each case is one user task, run clean and with the team's injection. "
+                                 "Blue = good for the user, red = bad, grey = not applicable.")
+    axis.set_facecolor(SURFACE)
+    for row_index, (model, task) in enumerate(cases):
+        attack = cell(model, task, True, "Attack")
+        values = [cell(model, task, False, "Task done (utility)"), cell(model, task, True, "Task done (utility)"),
+                  cell(model, task, True, "Attacker goal achieved"), cell(model, task, True, "Injection reached model")]
+        good_when_yes = [True, True, False, None]
+        for column_index, (value, good) in enumerate(zip(values, good_when_yes)):
+            if value is None:
+                fill, text = NEUTRAL, "n/a"
+            else:
+                fill = NEUTRAL if good is None else (GOOD if bool(value) == good else BAD)
+                text = "Yes" if value else "No"
+            axis.add_patch(Rectangle((column_index, row_index), 0.96, 0.9, facecolor=fill, edgecolor=SURFACE))
+            axis.text(column_index + 0.48, row_index + 0.45, text, ha="center", va="center", fontsize=9, color=TEXT)
+        name = f"{task}  ({attack or 'no attack'})" + (f" — {model}" if len(models) > 1 else "")
+        axis.text(-0.08, row_index + 0.45, name, ha="right", va="center", fontsize=9, color=TEXT)
+    axis.set_xlim(0, len(columns))
+    axis.set_ylim(len(cases), -0.6)
+    for column_index, column in enumerate(columns):
+        axis.text(column_index + 0.48, -0.15, column, ha="center", va="bottom", fontsize=8.5, color=MUTED_TEXT)
+    axis.axis("off")
+    figure.subplots_adjust(left=0.36, right=0.98, top=0.78, bottom=0.04)
+    return figure
+
+
+def chart_cost(episodes):
+    tasks = list(dict.fromkeys(e["Task"] for e in episodes))
+    figure, axes = new_figure(11, 4.6, "3. Cost per episode",
+                              "Tokens reported by the model server and episode duration; duration depends on "
+                              "GPU and quantization.", columns=2)
+    for axis, field, unit in ((axes[0], "Total tokens", lambda v: f"{v / 1000:.1f}k"),
+                              (axes[1], "Episode seconds", lambda v: f"{v:.0f}s")):
+        style_axis(axis)
+        for offset, (attacked, color, name) in enumerate(((False, BLUE, "Clean"), (True, ORANGE, "Attacked"))):
+            values = []
+            for task in tasks:
+                match = [e[field] for e in episodes if e["Task"] == task and (e["Attack"] != "none (clean)") == attacked]
+                values.append(match[0] if match else None)
+            positions = [i + (offset - 0.5) * 0.4 for i in range(len(tasks))]
+            bars = axis.bar(positions, [0 if v is None else v for v in values], width=0.36, color=color,
+                            label=name, zorder=3)
+            label_bars(axis, bars, values, unit)
+        axis.set_xticks(range(len(tasks)), tasks, rotation=20, ha="right", fontsize=8.5, color=TEXT)
+        axis.set_title(field, loc="left", fontsize=10, color=MUTED_TEXT)
+    axes[0].legend(frameon=False, ncol=2, loc="lower left", bbox_to_anchor=(0, 1.08), fontsize=9)
+    figure.subplots_adjust(top=0.7, bottom=0.2, wspace=0.2)
+    return figure
+
+
+def write_charts(directory: Path, summary: list[dict], episodes: list[dict]) -> list[Path]:
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     directory.mkdir(parents=True, exist_ok=True)
-    labels = [row["Model"] for row in summary]
-    colors = [SERIES_COLORS[i % len(SERIES_COLORS)] for i in range(len(summary))]
-    width = max(7.5, 1.6 * len(labels) + 2)
+    charts = [("1_headline_results.png", chart_headline(summary))]
+    if episodes:
+        charts += [("2_results_per_case.png", chart_cases(episodes)),
+                   ("3_cost_per_episode.png", chart_cost(episodes))]
     paths = []
-
-    figure, (axis,) = titled_figure(width, 4.6, "1. Task utility without protection",
-                                    f"Share of episodes where the model completed the user's task ({tasks}). "
-                                    "Higher is better; n/a = no run.")
-    bar_chart(axis, labels, [row["Utility (%)"] for row in summary], colors, "%", "{:.0f}")
-    axis.set_ylim(0, 110)
-    axis.set_yticks(range(0, 101, 25), [f"{tick}%" for tick in range(0, 101, 25)])
-    figure.subplots_adjust(top=0.8, bottom=0.24)
-    paths.append(directory / "1_task_utility.png")
-
-    figure2, axes = titled_figure(width * 1.6, 4.6, "2. What each model did",
-                                  "Totals over the model's episodes. Proposed tool calls that were not executed "
-                                  "indicate invalid or rejected calls.", columns=3)
-    for axis, column in zip(axes, ("Actor requests", "Tool calls proposed", "Tool calls executed")):
-        bar_chart(axis, labels, [row[column] for row in summary], colors, "", "{:.0f}", whole_numbers=True)
-        axis.set_title(column, loc="left", fontsize=10, color=MUTED_TEXT)
-    figure2.subplots_adjust(top=0.74, bottom=0.26, wspace=0.25)
-    paths.append(directory / "2_model_activity.png")
-
-    figure3, axes = titled_figure(width * 1.15, 4.6, "3. Cost per model",
-                                  "Tokens reported by the model server, and mean episode duration "
-                                  "(depends on GPU and quantization).", columns=2)
-    bar_chart(axes[0], labels, [row["Total tokens"] for row in summary], colors, "", "{:,.0f}")
-    axes[0].set_title("Total tokens", loc="left", fontsize=10, color=MUTED_TEXT)
-    bar_chart(axes[1], labels, [row["Mean episode seconds"] for row in summary], colors, " s", "{:.1f}")
-    axes[1].set_title("Mean episode duration", loc="left", fontsize=10, color=MUTED_TEXT)
-    figure3.subplots_adjust(top=0.74, bottom=0.26, wspace=0.25)
-    paths.append(directory / "3_run_cost.png")
-
-    for figure_, path in zip((figure, figure2, figure3), paths):
-        figure_.savefig(path, dpi=160, facecolor=SURFACE)
-        plt.close(figure_)
+    for name, figure in charts:
+        figure.savefig(directory / name, dpi=160, facecolor=SURFACE)
+        plt.close(figure)
+        paths.append(directory / name)
     return paths
 
 
 def build_report(registry_path: Path, output: Path) -> dict[str, Path]:
     registry = read_json(registry_path)
+    if not registry["models"]:
+        raise ValueError("The registry lists no models")
     output.mkdir(parents=True, exist_ok=True)
-    episodes, summary = [], []
+    episodes, summary, validation_rows = [], [], []
     for entry in registry["models"]:
         rows = episode_rows(entry) if entry.get("run_dir") else []
+        validation = read_json(Path(entry["validation_file"])) if entry.get("validation_file") else None
         episodes.extend(rows)
-        summary.append(summary_row(entry, rows))
-    if not summary:
-        raise ValueError("The registry lists no models")
-    tasks = ", ".join(registry["run_info"].get("tasks", []))
+        summary.append(summary_row(entry, rows, validation))
+        for check in (validation or {}).get("checks", []):
+            validation_rows.append({"Model": entry["label"], "Status": check["status"], "Check": check["check"],
+                                    "Detail": check["detail"]})
     run_info = [{"Field": key, "Value": json.dumps(value) if isinstance(value, (list, dict)) else value}
                 for key, value in registry["run_info"].items()]
-    written = {
-        "summary.csv": output / "summary.csv",
-        "unprotected_baseline_results.xlsx": output / "unprotected_baseline_results.xlsx",
-    }
+    written = {"summary.csv": output / "summary.csv",
+               "unprotected_baseline_results.xlsx": output / "unprotected_baseline_results.xlsx"}
     write_csv(written["summary.csv"], summary)
+    sheets = {"Summary": summary}
     if episodes:
         written["episodes.csv"] = output / "episodes.csv"
         write_csv(written["episodes.csv"], episodes)
-    sheets = {"Summary": summary, "Run info": run_info}
-    if episodes:
-        sheets = {"Summary": summary, "Episodes": episodes, "Run info": run_info}
+        sheets["Episodes"] = episodes
+    if validation_rows:
+        sheets["Validation"] = validation_rows
+    sheets["Run info"] = run_info
     write_workbook(written["unprotected_baseline_results.xlsx"], sheets)
-    for path in write_charts(output / "charts", summary, tasks):
+    for path in write_charts(output / "charts", summary, episodes):
         written[path.name] = path
     return written
 
