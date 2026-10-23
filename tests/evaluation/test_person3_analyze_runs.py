@@ -2,6 +2,10 @@
 
 No model, no AgentDojo run: each attempt is a hand-written result.json and events.jsonl in the layout the
 experiment runtime writes (<run>/episodes/<episode>/<attempt>/{manifest,result}.json, events.jsonl).
+Layout, field names and event order were checked against Kaustubh's real panel-15 unprotected run
+(panel-15-unprotected-df0505e87cf64624, 2026-10-23) and blackbox/controller.py: a wall verdict other than
+PASS returns before any gate_decision; a Laya failure is gate_decision ASK with reason MODEL_UNAVAILABLE and an
+error_kind; unprotected and wall_only emit an EXPLICIT_MODE_BYPASS gate_decision.
 """
 import hashlib
 import importlib.util
@@ -25,7 +29,8 @@ def pair_id(task, attack):
 
 
 def write_attempt(run_dir, mode, task, attack, *, utility=True, attack_success=False, exposed=True,
-                  seed=42, implementation='81f4bf1f13fd' + '0' * 52, wall='PASS', gate='ALLOW'):
+                  seed=42, implementation='81f4bf1f13fd' + '0' * 52, wall='PASS', gate='ALLOW',
+                  gate_error=None):
     attempt = f'{mode}-{task}-{attack or "clean"}'
     directory = run_dir / 'episodes' / attempt[:16] / attempt
     directory.mkdir(parents=True)
@@ -45,13 +50,19 @@ def write_attempt(run_dir, mode, task, attack, *, utility=True, attack_success=F
     events = [{'event': 'proposed_action', 'action_id': 'a1', 'tool': 'get_day_calendar_events'}]
     if mode != 'unprotected':
         events.append({'event': 'wall_verdict', 'action_id': 'a1', 'decision': wall, 'reason_code': 'X'})
-    if mode == 'wall_gatekeeper' and wall == 'PASS':
+    if wall != 'PASS':
+        pass  # the controller stops at a non-PASS wall verdict; no gate decision follows
+    elif mode == 'wall_gatekeeper' and gate_error:
+        events.append({'event': 'gate_decision', 'action_id': 'a1', 'decision': 'ASK',
+                       'reason_code': 'MODEL_UNAVAILABLE', 'backend': 'existing_laya', 'error_kind': gate_error,
+                       'initialization_error': 'LOCAL_LAYA_SNAPSHOT_MISSING: /content/laya-cache'})
+    elif mode == 'wall_gatekeeper':
         events.append({'event': 'gate_decision', 'action_id': 'a1', 'decision': gate, 'reason_code': 'MODEL',
                        'backend': 'existing_laya'})
     else:
         events.append({'event': 'gate_decision', 'action_id': 'a1', 'decision': 'ALLOW',
                        'reason_code': analyze.BYPASS})
-    if wall == 'PASS' and gate == 'ALLOW':
+    if wall == 'PASS' and gate == 'ALLOW' and not gate_error:
         events.append({'event': 'execution_result', 'action_id': 'a1', 'tool': 'get_day_calendar_events',
                        'executed': True})
     (directory / 'events.jsonl').write_text('\n'.join(json.dumps(e) for e in events) + '\n')
@@ -125,10 +136,26 @@ def test_cli_exclude_task_applies_to_every_mode_and_leaves_runs_untouched(tmp_pa
     output = tmp_path / 'report'
     completed = subprocess.run([sys.executable, str(SCRIPT), '--run-dirs', *map(str, runs),
                                 '--output', str(output), '--exclude-task', 'user_task_1'],
-                               capture_output=True, text=True, cwd=ROOT)
+                               capture_output=True, text=True, cwd=ROOT, check=False)
     assert completed.returncode == 0, completed.stdout + completed.stderr
     report = json.loads((output / 'comparison.json').read_text())
     assert report['comparable'] and report['excluded_tasks'] == ['user_task_1']
     assert {c['task'] for c in report['cases']} == {'user_task_0'} and len(report['cases']) == 6
     assert (output / 'cases.csv').exists() and (output / 'totals.csv').exists()
     assert before == {p: p.read_bytes() for run in runs for p in run.rglob('*') if p.is_file()}
+
+
+def test_laya_failure_counts_as_gate_error_not_ask_and_unresolved_is_not_a_denial(tmp_path):
+    overrides = {('wall_gatekeeper', 'user_task_0', None): {'gate_error': 'RuntimeError'},
+                 ('wall_gatekeeper', 'user_task_1', None): {'gate': 'ASK'},
+                 ('wall_only', 'user_task_1', None): {'wall': 'UNRESOLVED'},
+                 ('wall_only', 'user_task_1', 'calendar_delete'): {'wall': 'DENY'}}
+    rows = rows_of(three_runs(tmp_path, overrides=overrides))
+    totals = {t['mode']: t for t in analyze.mode_totals(rows)}
+    gate = totals['wall_gatekeeper']
+    assert (gate['gate_allow'], gate['gate_ask'], gate['gate_block'], gate['gate_errors']) == (2, 1, 0, 1)
+    assert totals['wall_only']['wall_denials'] == 1 and totals['wall_only']['wall_unresolved'] == 1
+    errored = next(r for r in rows if r['mode'] == 'wall_gatekeeper' and r['task'] == 'user_task_0'
+                   and not r['attack'])
+    assert errored['failure_class'] == 'Gatekeeper/Laya failure' and errored['executed'] == 0
+    assert errored['gate_error_detail'] == 'LOCAL_LAYA_SNAPSHOT_MISSING: /content/laya-cache'

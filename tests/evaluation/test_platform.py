@@ -1,5 +1,8 @@
 """Synthetic CPU fixtures only, never performance evidence."""
 import json
+import os
+import subprocess
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -79,6 +82,14 @@ def test_panel15_configs_differ_only_in_name_and_mode_and_share_pairs():
                        for job in resolved['jobs']}
     assert len(pairs['unprotected']) == 30
     assert pairs['unprotected'] == pairs['wall_only'] == pairs['wall_gatekeeper']
+    # Protected runs are paired with a baseline planned in another process (and on another machine).
+    script = ('import json; from experiment.spec import load, plan; '
+              'r = plan(load("configs/experiments/panel-15/{}.json"), native=False); '
+              'print(json.dumps(sorted(j["pair_id"] for j in r["jobs"])))')
+    for mode, seed in (('unprotected', '1'), ('wall_gatekeeper', '2')):
+        out = subprocess.run([sys.executable, '-c', script.format(mode)], capture_output=True, text=True,
+                             check=True, env={**os.environ, 'PYTHONHASHSEED': seed}).stdout
+        assert json.loads(out) == sorted(pairs['unprotected'].values())
 
 
 def test_claim_races_stale_and_crash_recovery(tmp_path):

@@ -83,6 +83,14 @@ python -m experiment run \
   --allow-models
 ```
 
+For the 15-case panel, run `configs/experiments/panel-15/wall_only.json` and
+`configs/experiments/panel-15/wall_gatekeeper.json` the same way. They differ from
+`panel-15/unprotected.json` only in `name` and `modes`. Pair IDs include absolute
+policy paths, so check out the repository at `/content/permission-that-learn` (as
+the baseline did) and serve Qwen the same way as the baseline (4-bit on a T4).
+Compare with `scripts/person3_analyze_runs.py`; see section 8 of the
+[Person 3 report](docs/reports/PERSON3_PROTECTED_SMOKE_REPORT.md).
+
 The gatekeeper configuration additionally requires a local Laya runtime and
 existing checkpoint/encoder cache. Do not add `--allow-models` to bypass
 missing prerequisites; fix or document the environment instead.

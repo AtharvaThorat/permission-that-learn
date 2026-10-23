@@ -127,7 +127,10 @@ def analyze_attempt(run_dir, directory, result, events):
         f"{g.get('decision')}:{g.get('reason_code')}" + (f"[{g.get('error_kind')}]" if g.get('error_kind') else '')
         + (f" raw={g.get('raw_recommendation')}" if g.get('raw_recommendation') else '')
         for g in gates_real)
-    gate_counts = Counter(g.get('decision') for g in gates_real)
+    # A Laya failure is recorded as ASK with an error_kind (MODEL_UNAVAILABLE); count it as a gate error,
+    # not as a gatekeeper ASK decision.
+    gate_counts = Counter(g.get('decision') for g in gates_real if not g.get('error_kind'))
+    wall_counts = Counter(w.get('decision') for w in walls.values())
     row = {
         'mode': mode,
         'task': (result or {}).get('task'),
@@ -152,10 +155,14 @@ def analyze_attempt(run_dir, directory, result, events):
         'wall_verdicts': '; '.join(f'{k} x{v}' for k, v in wall_summary.items()) or ('n/a' if mode == 'unprotected' else ''),
         'gate_decisions': '; '.join(f'{k} x{v}' for k, v in gate_summary.items()) or ('n/a' if mode != 'wall_gatekeeper' else ''),
         'confirmation_overrides': len(overrides),
-        'wall_denials': sum(w.get('decision') != 'PASS' for w in walls.values()) if mode != 'unprotected' else None,
+        'wall_denials': wall_counts.get('DENY', 0) if mode != 'unprotected' else None,
+        'wall_unresolved': wall_counts.get('UNRESOLVED', 0) if mode != 'unprotected' else None,
         'gate_allow': gate_counts.get('ALLOW', 0) if mode == 'wall_gatekeeper' else None,
         'gate_ask': gate_counts.get('ASK', 0) if mode == 'wall_gatekeeper' else None,
         'gate_block': gate_counts.get('BLOCK', 0) if mode == 'wall_gatekeeper' else None,
+        'gate_errors': sum(bool(g.get('error_kind')) for g in gates_real) if mode == 'wall_gatekeeper' else None,
+        'gate_error_detail': '; '.join(sorted({str(g.get('initialization_error') or g.get('error_kind'))
+                                               for g in gates_real if g.get('error_kind')})),
         'blocked': blocked,
         'pending': len(pending),
         'actor_calls': counts.get('actor_requests'),
@@ -229,7 +236,8 @@ def compare_pairs(rows):
 def case_rows(rows):
     """One row per case (task + attack) per mode, ordered by case then mode."""
     fields = ('pair_id', 'task', 'attack', 'mode', 'lifecycle', 'utility', 'attack_success', 'attack_exposed',
-              'wall_denials', 'gate_allow', 'gate_ask', 'gate_block', 'pending', 'executed_tools', 'failure_class')
+              'wall_denials', 'wall_unresolved', 'gate_allow', 'gate_ask', 'gate_block', 'gate_errors', 'pending',
+              'executed_tools', 'failure_class')
     ordered = sorted(rows, key=lambda r: (str(r['task']), str(r['attack'] or ''), r['mode']))
     return [{f: r.get(f) for f in fields} for r in ordered]
 
@@ -265,9 +273,11 @@ def mode_totals(rows):
             'injection_reached_model': fraction(attacked, 'attack_exposed'),
             'attack_success_when_exposed': fraction(exposed, 'attack_success'),
             'wall_denials': total(members, 'wall_denials'),
+            'wall_unresolved': total(members, 'wall_unresolved'),
             'gate_allow': total(members, 'gate_allow'),
             'gate_ask': total(members, 'gate_ask'),
             'gate_block': total(members, 'gate_block'),
+            'gate_errors': total(members, 'gate_errors'),
             'pending_episodes': sum(r['lifecycle'] == 'pending_approval' for r in members),
         })
     return totals
@@ -316,10 +326,10 @@ def main():
 
     implementations = sorted({str(r['implementation'])[:12] for r in rows})
     lines = ['# Protected-mode comparison', '',
-             f"Comparable per pair ID (one attempt per mode for every pair; same model, seed, code identity "
-             f"and settings; Laya cache path ignored): **{'yes' if comparable else 'NO'}**",
-             f"Modes: {', '.join(sorted({r['mode'] for r in rows}))}. Pairs: {len({r['pair_id'] for r in rows})}. "
-             f"Code identity: {', '.join(implementations)}.",
+             (f"Comparable per pair ID (one attempt per mode for every pair; same model, seed, code identity "
+              f"and settings; Laya cache path ignored): **{'yes' if comparable else 'NO'}**"), '',
+             (f"Modes: {', '.join(sorted({r['mode'] for r in rows}))}. Pairs: {len({r['pair_id'] for r in rows})}. "
+              f"Code identity: {', '.join(implementations)}."), '',
              f"Excluded tasks: {', '.join(args.exclude_task) or 'none'}."]
     if issues:
         lines += ['', '## Comparability issues', ''] + [f'- {issue}' for issue in issues]
@@ -328,7 +338,8 @@ def main():
     lines += table(totals, list(totals[0]) if totals else ['mode'])
     lines += ['', '## Per case', '']
     lines += table(cases, ['task', 'attack', 'mode', 'lifecycle', 'utility', 'attack_success', 'attack_exposed',
-                           'wall_denials', 'gate_allow', 'gate_ask', 'gate_block', 'pending', 'failure_class'])
+                           'wall_denials', 'wall_unresolved', 'gate_allow', 'gate_ask', 'gate_block', 'gate_errors',
+                           'pending', 'failure_class'])
     columns = ['mode', 'task', 'attack', 'attempt_id', 'lifecycle', 'utility', 'attack_success', 'proposed',
                'executed', 'wall_verdicts', 'gate_decisions', 'blocked', 'pending', 'actor_calls', 'actor_tokens',
                'gate_calls', 'gate_seconds', 'duration_seconds', 'errors', 'failure_class']
