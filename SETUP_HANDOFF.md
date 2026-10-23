@@ -51,6 +51,14 @@ Record the printed `run_dir`. Do not modify the frozen configuration or reuse
 the environment for a protected run. Preserve actor requests/responses, tool
 calls, task outcome, timing, token usage, errors, and generated JSON/CSV files.
 
+On a Colab T4, `person2_unprotected_baseline.ipynb` runs these commands with the
+frozen configuration unchanged and loads Qwen2.5-7B 4-bit (bitsandbytes) to fit
+the GPU; it records that precision. It can also run other local models on
+copies of the frozen configuration that change only the actor. Those runs are
+extra context, not part of the matched three-mode comparison. Its report
+(`scripts/person2_baseline_report.py`) writes an Excel workbook, CSVs and charts
+without modifying the run folders.
+
 ## Person 3: Run protected modes
 
 Reset the environment separately before each mode:
