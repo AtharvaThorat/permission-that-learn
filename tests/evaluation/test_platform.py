@@ -61,6 +61,26 @@ def test_frozen_configs_share_gatekeeper_and_pair_identity():
     assert len({job['pair_id'] for job in jobs}) == 1
 
 
+def test_panel15_configs_differ_only_in_name_and_mode_and_share_pairs():
+    modes = ('unprotected', 'wall_only', 'wall_gatekeeper')
+    raw = {mode: json.loads((Path('configs/experiments/panel-15') / f'{mode}.json').read_text())
+           for mode in modes}
+    for mode in modes:
+        assert raw[mode]['modes'] == [mode]
+        assert ({k: v for k, v in raw[mode].items() if k not in ('name', 'modes')}
+                == {k: v for k, v in raw['unprotected'].items() if k not in ('name', 'modes')})
+    assert len({raw[mode]['name'] for mode in modes}) == 3
+    pairs = {}
+    for mode in modes:
+        resolved = plan(load(Path('configs/experiments/panel-15') / f'{mode}.json'), native=False)
+        assert resolved['job_count'] == 30
+        assert resolved['clean_count'] == 15 and resolved['attacked_count'] == 15
+        pairs[mode] = {(job['task'], (job['attack'] or {}).get('id')): job['pair_id']
+                       for job in resolved['jobs']}
+    assert len(pairs['unprotected']) == 30
+    assert pairs['unprotected'] == pairs['wall_only'] == pairs['wall_gatekeeper']
+
+
 def test_claim_races_stale_and_crash_recovery(tmp_path):
     s=spec(); directory=create_run(s,tmp_path); job=plan(s)['jobs'][0]; a,b=Index(directory),Index(directory)
     try:
