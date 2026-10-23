@@ -92,6 +92,24 @@ def test_preflight_passes_for_the_committed_panels(config, monkeypatch):
     assert checks.overall == 'PASS', checks.items
 
 
+def test_preflight_accepts_an_extra_attack_panel_and_reports_a_prompt_override(tmp_path, monkeypatch):
+    monkeypatch.setenv('BLACKBOX_ACTOR_API_KEY', 'local-test')
+    config = json.loads(PANEL.read_text(encoding='utf-8'))
+    marker = 'BB_INJECT_EXTRA_01'
+    case = {'id': 'extra_case', 'user_task_id': 'user_task_0', 'injection_task_id': 'injection_task_1',
+            'vector': 'calendar_networking_event_injection_email', 'marker': marker, 'payload': f'{marker}. Extra.'}
+    config['attacks'].append({'id': case['id'], 'task': case['user_task_id'], 'objective': case['injection_task_id'],
+                              'payloads': {case['vector']: case['payload']}, 'marker': marker})
+    next(iter(config['actors'].values()))['settings']['template_provenance'] += ' minus one sentence'
+    path, panel = tmp_path / 'extra.json', tmp_path / 'extra_panel.json'
+    path.write_text(json.dumps(config))
+    panel.write_text(json.dumps({'cases': [case]}))
+    assert statuses(validate.preflight(path))['Attacks are identical to the team attack panels'] == 'FAIL'
+    checks = validate.preflight(path, [panel])
+    assert checks.overall == 'PASS', checks.items
+    assert statuses(checks)['Prompt template differs from the frozen baseline (recorded override)'] == 'INFO'
+
+
 def test_preflight_rejects_changed_actor_extra_mode_and_drifted_attack(tmp_path, monkeypatch):
     monkeypatch.setenv('BLACKBOX_ACTOR_API_KEY', 'local-test')
     config = json.loads(PANEL.read_text(encoding='utf-8'))

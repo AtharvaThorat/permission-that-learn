@@ -2,8 +2,9 @@
 
   preflight  The configuration is the unprotected baseline the team can pair with protected runs: one
              actor whose settings, wall and gatekeeper configuration equal the frozen baseline, only the
-             `unprotected` mode, attacks identical to the team attack panels in configs/blackbox/attacks/, and a
-             plan with one job per task/attack and no missing prerequisites.
+             `unprotected` mode, attacks identical to the team attack panels in configs/blackbox/attacks/ (or to
+             an extra panel given with --attack-panel), and a plan with one job per task/attack and no missing
+             prerequisites. A changed template_provenance (a recorded prompt override) is reported, not failed.
   check-run  Every planned episode finished exactly once with intact, correctly identified artifacts; every
              episode completed and was scored; no protection was applied; every response came from the
              expected served model; attacked episodes record whether the injection reached the model.
@@ -54,7 +55,7 @@ class Checks:
         print(f'Overall: {self.overall}')
 
 
-def preflight(config_path):
+def preflight(config_path, extra_panels=()):
     checks = Checks()
     spec, frozen = load(config_path), load(FROZEN_BASELINE)
     checks.add('Only the unprotected mode is selected', spec.modes == ['unprotected'], f'modes={spec.modes}')
@@ -63,15 +64,23 @@ def preflight(config_path):
         return checks
     (profile,) = spec.actors.values()
     (frozen_profile,) = frozen.actors.values()
+    # template_provenance only records which prompt was sent; a notebook prompt override changes it on purpose.
+    def without_provenance(actor):
+        dump = actor.model_dump()
+        dump['settings'].pop('template_provenance')
+        return dump
     checks.add('Actor settings equal the frozen baseline',
-               profile.model_dump() == frozen_profile.model_dump(),
+               without_provenance(profile) == without_provenance(frozen_profile),
                'differs from configs/experiments/frozen/unprotected.json', note=profile.settings.served_model_name)
+    if profile.settings.template_provenance != frozen_profile.settings.template_provenance:
+        checks.info('Prompt template differs from the frozen baseline (recorded override)',
+                    profile.settings.template_provenance)
     checks.add('Wall, gatekeeper, budgets and benchmark equal the frozen baseline (needed for pairing)',
                all(getattr(spec, field) == getattr(frozen, field)
                    for field in ('wall', 'gatekeeper', 'budgets', 'benchmark_version', 'agentdojo_revision',
                                  'metadata', 'seeds', 'suite')),
                'differs from configs/experiments/frozen/unprotected.json')
-    cases = {case['id']: case for panel in ATTACK_PANELS
+    cases = {case['id']: case for panel in [*ATTACK_PANELS, *map(Path, extra_panels)]
              for case in json.loads(panel.read_text(encoding='utf-8'))['cases']}
     drifted = [a.id for a in spec.attacks if a.id not in cases or (a.task, a.objective, a.payloads, a.marker) != (
         cases[a.id]['user_task_id'], cases[a.id]['injection_task_id'],
@@ -180,13 +189,15 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     first = commands.add_parser('preflight')
     first.add_argument('--config', required=True)
+    first.add_argument('--attack-panel', action='append', default=[],
+                       help='extra attack panel file (cases with id, user_task_id, injection_task_id, vector, marker, payload)')
     second = commands.add_parser('check-run')
     second.add_argument('--run-dir', required=True)
     second.add_argument('--config', required=True)
     second.add_argument('--output', type=Path, required=True, help='validation report; must be outside the run')
     args = parser.parse_args()
     if args.command == 'preflight':
-        checks = preflight(args.config)
+        checks = preflight(args.config, args.attack_panel)
     else:
         if args.output.resolve().is_relative_to(Path(args.run_dir).resolve()):
             parser.error('--output must be outside the run folder')
