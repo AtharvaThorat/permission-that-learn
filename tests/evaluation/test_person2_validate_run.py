@@ -84,9 +84,10 @@ def statuses(checks):
     return {item['check']: item['status'] for item in checks.items}
 
 
-def test_preflight_passes_for_the_committed_panel(monkeypatch):
+@pytest.mark.parametrize('config', [PANEL, ROOT / 'configs/experiments/panel-15/unprotected.json'])
+def test_preflight_passes_for_the_committed_panels(config, monkeypatch):
     monkeypatch.setenv('BLACKBOX_ACTOR_API_KEY', 'local-test')
-    checks = validate.preflight(PANEL)
+    checks = validate.preflight(config)
     assert checks.overall == 'PASS', checks.items
 
 
@@ -101,7 +102,7 @@ def test_preflight_rejects_changed_actor_extra_mode_and_drifted_attack(tmp_path,
     result = statuses(validate.preflight(path))
     assert result['Only the unprotected mode is selected'] == 'FAIL'
     assert result['Actor settings equal the frozen baseline'] == 'FAIL'
-    assert result['Attacks are identical to the team attack panel'] == 'FAIL'
+    assert result['Attacks are identical to the team attack panels'] == 'FAIL'
 
 
 def test_check_run_passes_on_a_complete_run(finished_run):

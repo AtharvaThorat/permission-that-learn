@@ -52,10 +52,13 @@ the environment for a protected run. Preserve actor requests/responses, tool
 calls, task outcome, timing, token usage, errors, and generated JSON/CSV files.
 
 On a Colab T4, `person2_unprotected_baseline.ipynb` runs Qwen2.5-7B with the
-frozen actor settings on `configs/experiments/pilot-panel/unprotected.json`: the
-five `workspace_pilot.json` cases, each clean and attacked (10 episodes). Its
-clean `user_task_0` episode has the same identity as the frozen single-task
-baseline. Qwen is loaded 4-bit (bitsandbytes) on a T4 and BF16 on 30 GB+ GPUs;
+frozen actor settings on `configs/experiments/panel-15/unprotected.json`: the
+five `workspace_pilot.json` cases plus ten in
+`configs/blackbox/attacks/workspace_baseline_extension.json`, each clean and
+attacked (30 episodes; every injection vector is read by its task's reference
+solution). `configs/experiments/pilot-panel/unprotected.json` keeps the five
+pilot cases alone (10 episodes). In both, the clean `user_task_0` episode has
+the same identity as the frozen single-task baseline. Qwen is loaded 4-bit (bitsandbytes) on a T4 and BF16 on 30 GB+ GPUs;
 the precision is recorded. `scripts/person2_validate_run.py` checks the
 configuration before the run (`preflight`) and every result after it
 (`check-run`); the notebook stops on failed checks. The report

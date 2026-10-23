@@ -38,6 +38,11 @@ def text_of(content) -> str:
     return "".join(block.get("content") or "" for block in content)
 
 
+def task_number(task_id: str) -> int:
+    """user_task_14 -> 14, so tasks sort as 0, 1, 2, ... rather than as text."""
+    return int(task_id.rsplit("_", 1)[1])
+
+
 def percent(value):
     return None if value is None else round(100 * value, 1)
 
@@ -79,7 +84,7 @@ def episode_rows(entry: dict) -> list[dict]:
             "Attempt ID": result["attempt_id"],
             "Run folder": run_dir.name,
         })
-    return sorted(rows, key=lambda row: (row["Attack"] != "none (clean)", row["Task"]))
+    return sorted(rows, key=lambda row: (row["Attack"] != "none (clean)", task_number(row["Task"])))
 
 
 def summary_row(entry: dict, episodes: list[dict], validation: dict | None) -> dict:
@@ -175,8 +180,9 @@ def new_figure(width, height, title, subtitle, columns=1):
     import matplotlib.pyplot as plt
 
     figure, axes = plt.subplots(1, columns, figsize=(width, height), facecolor=SURFACE, squeeze=False)
-    figure.suptitle(title, x=0.02, ha="left", fontsize=13, fontweight="bold", color=TEXT)
-    figure.text(0.02, 0.885, subtitle, fontsize=9, color=MUTED_TEXT)
+    # Title and subtitle sit a fixed distance from the top, whatever the figure height.
+    figure.suptitle(title, x=0.02, y=1 - 0.12 / height, ha="left", va="top", fontsize=13, fontweight="bold", color=TEXT)
+    figure.text(0.02, 1 - 0.5 / height, subtitle, va="top", fontsize=9, color=MUTED_TEXT)
     return figure, axes[0]
 
 
@@ -216,7 +222,8 @@ def chart_cases(episodes):
                  and (e["Attack"] != "none (clean)") == attacked]
         return match[0][field] if match else None
 
-    figure, (axis,) = new_figure(9, 1.9 + 0.55 * len(cases), "2. Results per test case",
+    height = 1.9 + 0.55 * len(cases)
+    figure, (axis,) = new_figure(9, height, "2. Results per test case",
                                  "Each case is one user task, run clean and with the team's injection. "
                                  "Blue = good for the user, red = bad, grey = not applicable.")
     axis.set_facecolor(SURFACE)
@@ -240,31 +247,39 @@ def chart_cases(episodes):
     for column_index, column in enumerate(columns):
         axis.text(column_index + 0.48, -0.15, column, ha="center", va="bottom", fontsize=8.5, color=MUTED_TEXT)
     axis.axis("off")
-    figure.subplots_adjust(left=0.36, right=0.98, top=0.78, bottom=0.04)
+    figure.subplots_adjust(left=0.36, right=0.98, top=1 - 1.3 / height, bottom=0.15 / height)
     return figure
 
 
 def chart_cost(episodes):
+    """Horizontal bars, one row per task, clean and attacked side by side."""
     tasks = list(dict.fromkeys(e["Task"] for e in episodes))
-    figure, axes = new_figure(11, 4.6, "3. Cost per episode",
+    height = 1.9 + 0.42 * len(tasks)
+    figure, axes = new_figure(11, height, "3. Cost per episode",
                               "Tokens reported by the model server and episode duration; duration depends on "
                               "GPU and quantization.", columns=2)
-    for axis, field, unit in ((axes[0], "Total tokens", lambda v: f"{v / 1000:.1f}k"),
-                              (axes[1], "Episode seconds", lambda v: f"{v:.0f}s")):
-        style_axis(axis)
+    panels = ((axes[0], "Total tokens", lambda v: f"{v / 1000:.1f}k"),
+              (axes[1], "Episode seconds", lambda v: f"{v:.0f}s"))
+    for axis, field, value_format in panels:
+        style_axis(axis, value_axis="x")
         for offset, (attacked, color, name) in enumerate(((False, BLUE, "Clean"), (True, ORANGE, "Attacked"))):
             values = []
             for task in tasks:
                 match = [e[field] for e in episodes if e["Task"] == task and (e["Attack"] != "none (clean)") == attacked]
                 values.append(match[0] if match else None)
             positions = [i + (offset - 0.5) * 0.4 for i in range(len(tasks))]
-            bars = axis.bar(positions, [0 if v is None else v for v in values], width=0.36, color=color,
-                            label=name, zorder=3)
-            label_bars(axis, bars, values, unit)
-        axis.set_xticks(range(len(tasks)), tasks, rotation=20, ha="right", fontsize=8.5, color=TEXT)
+            bars = axis.barh(positions, [0 if v is None else v for v in values], height=0.36, color=color,
+                             label=name, zorder=3)
+            for bar, value in zip(bars, values):
+                axis.annotate("n/a" if value is None else value_format(value),
+                              (bar.get_width(), bar.get_y() + bar.get_height() / 2), xytext=(3, 0),
+                              textcoords="offset points", va="center", fontsize=7.5, color=MUTED_TEXT)
+        axis.set_yticks(range(len(tasks)), tasks, fontsize=8.5, color=TEXT)
+        axis.invert_yaxis()
+        axis.margins(x=0.15)
         axis.set_title(field, loc="left", fontsize=10, color=MUTED_TEXT)
-    axes[0].legend(frameon=False, ncol=2, loc="lower left", bbox_to_anchor=(0, 1.08), fontsize=9)
-    figure.subplots_adjust(top=0.7, bottom=0.2, wspace=0.2)
+    axes[0].legend(frameon=False, ncol=2, loc="lower left", bbox_to_anchor=(0, 1.0 + 0.35 / height), fontsize=9)
+    figure.subplots_adjust(left=0.12, right=0.97, top=1 - 1.45 / height, bottom=0.35 / height, wspace=0.3)
     return figure
 
 

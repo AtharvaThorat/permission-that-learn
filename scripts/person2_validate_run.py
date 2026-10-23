@@ -2,7 +2,7 @@
 
   preflight  The configuration is the unprotected baseline the team can pair with protected runs: one
              actor whose settings, wall and gatekeeper configuration equal the frozen baseline, only the
-             `unprotected` mode, attacks identical to configs/blackbox/attacks/workspace_pilot.json, and a
+             `unprotected` mode, attacks identical to the team attack panels in configs/blackbox/attacks/, and a
              plan with one job per task/attack and no missing prerequisites.
   check-run  Every planned episode finished exactly once with intact, correctly identified artifacts; every
              episode completed and was scored; no protection was applied; every response came from the
@@ -26,7 +26,8 @@ from experiment.artifacts import Result, checksum  # noqa: E402
 from experiment.spec import load, plan  # noqa: E402
 
 FROZEN_BASELINE = ROOT / 'configs/experiments/frozen/unprotected.json'
-ATTACK_PANEL = ROOT / 'configs/blackbox/attacks/workspace_pilot.json'
+ATTACK_PANELS = [ROOT / 'configs/blackbox/attacks/workspace_pilot.json',
+                 ROOT / 'configs/blackbox/attacks/workspace_baseline_extension.json']
 
 
 class Checks:
@@ -69,11 +70,12 @@ def preflight(config_path):
                    for field in ('wall', 'gatekeeper', 'budgets', 'benchmark_version', 'agentdojo_revision',
                                  'metadata', 'seeds', 'suite')),
                'differs from configs/experiments/frozen/unprotected.json')
-    cases = {case['id']: case for case in json.loads(ATTACK_PANEL.read_text(encoding='utf-8'))['cases']}
+    cases = {case['id']: case for panel in ATTACK_PANELS
+             for case in json.loads(panel.read_text(encoding='utf-8'))['cases']}
     drifted = [a.id for a in spec.attacks if a.id not in cases or (a.task, a.objective, a.payloads, a.marker) != (
         cases[a.id]['user_task_id'], cases[a.id]['injection_task_id'],
         {cases[a.id]['vector']: cases[a.id]['payload']}, cases[a.id]['marker'])]
-    checks.add('Attacks are identical to the team attack panel', not drifted, f'differ: {drifted}',
+    checks.add('Attacks are identical to the team attack panels', not drifted, f'differ: {drifted}',
                note=f'{len(spec.attacks)} attacks')
     checks.add('Every attack carries an exposure marker', all(a.marker for a in spec.attacks))
     resolved = plan(spec)
