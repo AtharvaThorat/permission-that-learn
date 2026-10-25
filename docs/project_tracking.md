@@ -1,5 +1,15 @@
 # Project Tracking
 
+## 2026-10-24 documentation and contributor workflow
+
+- Done: refreshed the project README and repository/documentation map; repaired
+  links to the weekly process reports and verified the referenced folders.
+- Done: guidelines now require current-base pulls, task-plan compliance, concise
+  tracker/task updates, relative paths, and organized tests/notebooks. Only the
+  user creates and merges PRs; agents must not merge into `main`.
+- Remaining: user review and PR merge of this documentation branch. Runtime and
+  experiment status below is unchanged; no model execution was performed.
+
 ## Fast-track prototype plan — October 31 and November 30
 
 **Last reconciled:** 2026-10-20  
@@ -463,7 +473,7 @@ calendar events=26, inbox emails=31, cloud_drive files=26
 
 **Scope:** work committed by Kaustubh Adhe (Person 2) and Atharva Thorat (Person 3) between
 2026-10-19 and 2026-10-24, now on `main@1e36980`. Person 1's work this week is recorded in the
-sections above. Details: [process report](process_documentation/permission_that_learn_baseline_and_protected_runs_report_2026-10-24.md).
+sections above. Details: [process report](process_documentation/week1-18-10-2026/permission_that_learn_baseline_and_protected_runs_report_2026-10-24.md).
 
 ### Person 2 (Kaustubh Adhe): unprotected baseline
 
