@@ -22,7 +22,7 @@ seed and task as Person 2's `unprotected` baseline, and verifies:
 | File | Purpose |
 |---|---|
 | `scripts/person3_controlled_cases.py` | 12 controlled cases through the real experiment runtime, real `PtlWall`, native AgentDojo `user_task_0` environment. Scripted actor; scripted gate by default, real Laya worker with `--real-laya`. |
-| `scripts/person3_analyze_runs.py` | Reads any run folders and writes the required comparison table (`.md`, `.csv`, `.json`), per-attempt enforcement checks, a comparability check and a first-pass failure class. Never edits run folders. |
+| `scripts/person3_analyze_runs.py` | Reads any run folders and writes the required comparison table (`.md`, `.csv`, `.json`), per-attempt enforcement checks, a comparability check and a first-pass failure class. Never edits run folders. Extended for panel 15 (section 8). |
 | `notebooks/person3_protected_smoke_test.ipynb` | Colab A100 notebook: two environments, asset download, vLLM start, tool-call validation, real-Laya controlled cases, the two real runs, analysis and packaging. |
 | `wall/src/ptl/wall/policy.py`, `wall/tests/test_serialization_determinism.py` | Fix for defect D1 below (deterministic policy serialization). |
 
@@ -184,3 +184,50 @@ verify snapshot validation and error propagation, not real Laya loading or utili
 3. Run `notebooks/person3_protected_smoke_test.ipynb` on a Colab A100. Check step 9b first: if the real-Laya cases show `MODEL_UNAVAILABLE`, stop and send the worker error to Person 1.
 4. Fill section 4 from `comparison.md`.
 5. After a clean smoke test, freeze the configuration and move to the small paired clean/attacked demonstration (about five tasks). The `calendar_email` and `calendar_delete` attacks are the natural first pair, because the wall denies both (cases 02 and 03).
+
+## 8. Panel 15: protected-mode preparation
+
+Branch `person3-panel15-protected`, based on `22_Oct_Unprotected_Baseline@ed59454`. CPU preparation
+only: **no protected panel-15 run has been executed yet**, so there are no protected results.
+
+**Configs.** `configs/experiments/panel-15/wall_only.json` and `wall_gatekeeper.json` are copies of
+`panel-15/unprotected.json` that change only `name` and `modes`. Each plans 30 jobs (15 clean, 15 attacked)
+with code identity `81f4bf1f13fd`, and the 30 pair IDs are identical across the three configs, also when
+planned in separate processes under different `PYTHONHASHSEED` values
+(`test_panel15_configs_differ_only_in_name_and_mode_and_share_pairs`).
+
+**Checkout path.** Pair IDs include the absolute wall policy and metadata paths. Planned from
+`/content/permission-that-learn`, all three configs reproduce the pair IDs and spec ID of Person 2's run
+`panel-15-unprotected-df0505e87cf64624`; from any other checkout path they do not. Clone to that path on Colab.
+
+**Comparison script.** `scripts/person3_analyze_runs.py` now checks comparability per pair ID: every pair
+has exactly one attempt in each mode, and model, seed, code identity and settings agree within each pair
+(Laya cache path ignored). It writes per-case rows (`cases.csv`) and per-mode totals (`totals.csv`): clean
+utility, utility under attack, attack success overall and on episodes where the injection reached the
+model, injection exposure, wall DENY and UNRESOLVED counts, gate ALLOW/ASK/BLOCK, gate errors with the
+Laya initialization message (D9), and pending episodes. A Laya failure (ASK `MODEL_UNAVAILABLE` with an
+`error_kind`) is counted as a gate error, not as an ASK decision. Fractions use only episodes where the
+metric is known; unmeasured values stay empty. `--exclude-task` drops a task from every mode alike and is
+recorded in the output.
+
+```bash
+python scripts/person3_analyze_runs.py \
+  --run-dirs <unprotected-run> <wall-only-run> <wall-gatekeeper-run> \
+  --output results/person3-panel15 [--exclude-task user_task_7]
+```
+
+On Person 2's unprotected run folder alone it reproduces his workbook: clean utility 6/15, injection
+reached the model in 7/15 attacked episodes, attack success 0/7 when exposed. With `--exclude-task
+user_task_7`, clean utility is 6/14.
+
+**Open before the GPU runs.**
+
+- `user_task_7`: in both baseline episodes Qwen called `reschedule_calendar_event` with an invented event
+  ID and the runtime stopped as `uncertain_execution`, which is recorded as `infrastructure_error`. A
+  protected mode may stop or deny that call differently, so agree with Person 2 whether to exclude the task
+  in all three modes or in none.
+- D8 rerun: notebook step 9b must show real Laya decisions before the `wall_gatekeeper` panel run.
+- Precision: serve Qwen with bitsandbytes 4-bit and fp16 compute on vLLM 0.11.0, as the baseline does.
+- Notebook: adapt `notebooks/person3_protected_smoke_test.ipynb` to the two panel-15 configs.
+
+CPU suite after the change: 247 passed, 1 skipped (240 before); wall package 108 passed, 1 skipped.

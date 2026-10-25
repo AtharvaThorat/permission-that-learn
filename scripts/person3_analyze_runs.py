@@ -1,18 +1,25 @@
-"""Build the Person 3 smoke-test comparison table and enforcement checks.
+"""Build the Person 3 comparison tables and enforcement checks.
 
 Reads one or more experiment run directories (as created by
 `python -m experiment run`), inspects every attempt's result.json and
 events.jsonl, and writes:
 
-  <output>/comparison.md    human-readable table and per-attempt checks
-  <output>/comparison.csv   one row per attempt
-  <output>/comparison.json  rows, checks, and identity comparison
+  <output>/comparison.md     comparability verdict, per-mode totals, per-case table, checks
+  <output>/comparison.csv    one row per attempt
+  <output>/cases.csv         one row per case (task + attack) per mode
+  <output>/totals.csv        one row per mode
+  <output>/comparison.json   rows, checks, comparability issues, cases and totals
 
-It never edits the source run directories. Missing metrics stay empty.
+Runs are compared per pair ID: they are comparable when every pair ID has exactly
+one attempt in each mode and, within each pair, model, seed, code identity and
+behaviour settings agree. Works for one task or many (for example the 15-case panel).
+
+It never edits the source run directories. Missing metrics stay empty, never zero.
+`--exclude-task` drops a task from every mode alike and is reported in the output.
 
 Usage:
     python scripts/person3_analyze_runs.py --run-dirs <unprotected> <wall_only> <wall_gatekeeper> \
-        --output results/person3-report
+        --output results/person3-report [--exclude-task user_task_7]
 """
 import argparse
 import csv
@@ -120,9 +127,16 @@ def analyze_attempt(run_dir, directory, result, events):
         f"{g.get('decision')}:{g.get('reason_code')}" + (f"[{g.get('error_kind')}]" if g.get('error_kind') else '')
         + (f" raw={g.get('raw_recommendation')}" if g.get('raw_recommendation') else '')
         for g in gates_real)
+    # A Laya failure is recorded as ASK with an error_kind (MODEL_UNAVAILABLE); count it as a gate error,
+    # not as a gatekeeper ASK decision.
+    gate_counts = Counter(g.get('decision') for g in gates_real if not g.get('error_kind'))
+    wall_counts = Counter(w.get('decision') for w in walls.values())
     row = {
         'mode': mode,
         'task': (result or {}).get('task'),
+        'attack': ((result or {}).get('attack') or {}).get('id') if result else None,
+        'attack_exposed': (result or {}).get('attack_exposed'),
+        'implementation': ((result or {}).get('identity') or {}).get('implementation'),
         'run_id': Path(run_dir).name,
         'attempt_id': (result or {}).get('attempt_id') or directory.name,
         'pair_id': ((result or {}).get('pair_id') or '')[:12],
@@ -141,6 +155,14 @@ def analyze_attempt(run_dir, directory, result, events):
         'wall_verdicts': '; '.join(f'{k} x{v}' for k, v in wall_summary.items()) or ('n/a' if mode == 'unprotected' else ''),
         'gate_decisions': '; '.join(f'{k} x{v}' for k, v in gate_summary.items()) or ('n/a' if mode != 'wall_gatekeeper' else ''),
         'confirmation_overrides': len(overrides),
+        'wall_denials': wall_counts.get('DENY', 0) if mode != 'unprotected' else None,
+        'wall_unresolved': wall_counts.get('UNRESOLVED', 0) if mode != 'unprotected' else None,
+        'gate_allow': gate_counts.get('ALLOW', 0) if mode == 'wall_gatekeeper' else None,
+        'gate_ask': gate_counts.get('ASK', 0) if mode == 'wall_gatekeeper' else None,
+        'gate_block': gate_counts.get('BLOCK', 0) if mode == 'wall_gatekeeper' else None,
+        'gate_errors': sum(bool(g.get('error_kind')) for g in gates_real) if mode == 'wall_gatekeeper' else None,
+        'gate_error_detail': '; '.join(sorted({str(g.get('initialization_error') or g.get('error_kind'))
+                                               for g in gates_real if g.get('error_kind')})),
         'blocked': blocked,
         'pending': len(pending),
         'actor_calls': counts.get('actor_requests'),
@@ -182,41 +204,146 @@ def classify(row):
     return ''
 
 
+def compare_pairs(rows):
+    """Comparability per pair ID. Returns (comparable, issues)."""
+    issues = []
+    modes = sorted({r['mode'] for r in rows})
+    if not rows:
+        return False, ['no attempts found']
+    by_pair = {}
+    for r in rows:
+        by_pair.setdefault(r['pair_id'], []).append(r)
+    for pair_id, members in sorted(by_pair.items()):
+        label = f"{pair_id} ({members[0]['task']} + {members[0]['attack'] or 'clean'})"
+        per_mode = Counter(r['mode'] for r in members)
+        absent = [m for m in modes if per_mode[m] == 0]
+        repeated = [m for m in modes if per_mode[m] > 1]
+        if absent:
+            issues.append(f'{label}: no attempt in {", ".join(absent)}')
+        if repeated:
+            issues.append(f'{label}: more than one attempt in {", ".join(repeated)}')
+        for field in ('task', 'attack', 'model', 'seed', 'implementation', 'comparison_key'):
+            values = {str(r[field]) for r in members}
+            if len(values) > 1:
+                issues.append(f'{label}: {field} differs across modes ({", ".join(sorted(values))})')
+    for field in ('model', 'seed', 'implementation'):
+        values = {str(r[field]) for r in rows}
+        if len(values) > 1:
+            issues.append(f'{field} differs across runs ({", ".join(sorted(values))})')
+    return not issues, issues
+
+
+def case_rows(rows):
+    """One row per case (task + attack) per mode, ordered by case then mode."""
+    fields = ('pair_id', 'task', 'attack', 'mode', 'lifecycle', 'utility', 'attack_success', 'attack_exposed',
+              'wall_denials', 'wall_unresolved', 'gate_allow', 'gate_ask', 'gate_block', 'gate_errors', 'pending',
+              'executed_tools', 'failure_class')
+    ordered = sorted(rows, key=lambda r: (str(r['task']), str(r['attack'] or ''), r['mode']))
+    return [{f: r.get(f) for f in fields} for r in ordered]
+
+
+def fraction(rows, field, value=True):
+    """'k/n (p%)' over rows whose field is known; empty when nothing is known."""
+    known = [r for r in rows if r[field] is not None]
+    if not known:
+        return None
+    hits = sum(r[field] is value for r in known)
+    return f'{hits}/{len(known)} ({100 * hits / len(known):.1f}%)'
+
+
+def total(rows, field):
+    values = [r[field] for r in rows if r[field] is not None]
+    return sum(values) if values else None
+
+
+def mode_totals(rows):
+    totals = []
+    for mode in sorted({r['mode'] for r in rows}):
+        members = [r for r in rows if r['mode'] == mode]
+        clean = [r for r in members if not r['attack']]
+        attacked = [r for r in members if r['attack']]
+        exposed = [r for r in attacked if r['attack_exposed'] is True]
+        totals.append({
+            'mode': mode,
+            'episodes': len(members),
+            'infrastructure_errors': sum(r['lifecycle'] == 'infrastructure_error' for r in members),
+            'clean_utility': fraction(clean, 'utility'),
+            'utility_under_attack': fraction(attacked, 'utility'),
+            'attack_success': fraction(attacked, 'attack_success'),
+            'injection_reached_model': fraction(attacked, 'attack_exposed'),
+            'attack_success_when_exposed': fraction(exposed, 'attack_success'),
+            'wall_denials': total(members, 'wall_denials'),
+            'wall_unresolved': total(members, 'wall_unresolved'),
+            'gate_allow': total(members, 'gate_allow'),
+            'gate_ask': total(members, 'gate_ask'),
+            'gate_block': total(members, 'gate_block'),
+            'gate_errors': total(members, 'gate_errors'),
+            'pending_episodes': sum(r['lifecycle'] == 'pending_approval' for r in members),
+        })
+    return totals
+
+
+def write_csv(path, records):
+    with path.open('w', newline='', encoding='utf-8') as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(records[0]) if records else ['mode'])
+        writer.writeheader()
+        writer.writerows([{k: missing(v) for k, v in r.items()} for r in records])
+
+
+def table(records, columns):
+    lines = ['| ' + ' | '.join(columns) + ' |', '|' + '---|' * len(columns)]
+    return lines + ['| ' + ' | '.join(str(missing(r[c])) for c in columns) + ' |' for r in records]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-dirs', nargs='+', required=True, type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--exclude-task', action='append', default=[],
+                        help='Drop this task (clean and attacked) from every mode alike. Repeatable.')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     rows, all_checks = [], {}
     for run_dir in args.run_dirs:
         for directory, result, events in attempt_rows(run_dir):
             row, checks = analyze_attempt(run_dir, directory, result, events)
+            if row['task'] in args.exclude_task:
+                continue
             row['failure_class'] = classify(row)
             rows.append(row)
             all_checks[row['attempt_id']] = checks
 
-    identity_fields = ('task', 'model', 'seed', 'comparison_key')
-    identities = {f: sorted({str(r[f]) for r in rows}) for f in identity_fields}
-    comparable = all(len(v) == 1 for v in identities.values())
+    comparable, issues = compare_pairs(rows)
+    cases = case_rows(rows)
+    totals = mode_totals(rows)
 
-    with (args.output / 'comparison.csv').open('w', newline='', encoding='utf-8') as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]) if rows else ['mode'])
-        writer.writeheader()
-        writer.writerows(rows)
+    write_csv(args.output / 'comparison.csv', rows)
+    write_csv(args.output / 'cases.csv', cases)
+    write_csv(args.output / 'totals.csv', totals)
     (args.output / 'comparison.json').write_text(json.dumps(
-        {'rows': rows, 'checks': all_checks, 'identities': identities, 'comparable': comparable}, indent=2))
+        {'rows': rows, 'checks': all_checks, 'comparable': comparable, 'issues': issues,
+         'excluded_tasks': args.exclude_task, 'cases': cases, 'totals': totals}, indent=2))
 
-    columns = ['mode', 'task', 'attempt_id', 'lifecycle', 'utility', 'attack_success', 'proposed', 'executed',
-               'wall_verdicts', 'gate_decisions', 'blocked', 'pending', 'actor_calls', 'actor_tokens',
+    implementations = sorted({str(r['implementation'])[:12] for r in rows})
+    lines = ['# Protected-mode comparison', '',
+             (f"Comparable per pair ID (one attempt per mode for every pair; same model, seed, code identity "
+              f"and settings; Laya cache path ignored): **{'yes' if comparable else 'NO'}**"), '',
+             (f"Modes: {', '.join(sorted({r['mode'] for r in rows}))}. Pairs: {len({r['pair_id'] for r in rows})}. "
+              f"Code identity: {', '.join(implementations)}."), '',
+             f"Excluded tasks: {', '.join(args.exclude_task) or 'none'}."]
+    if issues:
+        lines += ['', '## Comparability issues', ''] + [f'- {issue}' for issue in issues]
+    lines += ['', '## Totals per mode', '',
+              'Fractions count only episodes where the metric is known; empty means not measured.', '']
+    lines += table(totals, list(totals[0]) if totals else ['mode'])
+    lines += ['', '## Per case', '']
+    lines += table(cases, ['task', 'attack', 'mode', 'lifecycle', 'utility', 'attack_success', 'attack_exposed',
+                           'wall_denials', 'wall_unresolved', 'gate_allow', 'gate_ask', 'gate_block', 'gate_errors',
+                           'pending', 'failure_class'])
+    columns = ['mode', 'task', 'attack', 'attempt_id', 'lifecycle', 'utility', 'attack_success', 'proposed',
+               'executed', 'wall_verdicts', 'gate_decisions', 'blocked', 'pending', 'actor_calls', 'actor_tokens',
                'gate_calls', 'gate_seconds', 'duration_seconds', 'errors', 'failure_class']
-    lines = ['# Smoke-test comparison', '',
-             f"Comparable across runs (same task, model, seed, wall, gate settings and code; Laya cache path ignored): "
-             f"**{'yes' if comparable else 'NO'}**",
-             f"Pair IDs: {', '.join(sorted({r['pair_id'] for r in rows}))}",
-             '', '| ' + ' | '.join(columns) + ' |', '|' + '---|' * len(columns)]
-    for r in rows:
-        lines.append('| ' + ' | '.join(str(missing(r[c])) for c in columns) + ' |')
+    lines += ['', '## Per attempt', ''] + table(rows, columns)
     lines += ['', '## Enforcement checks', '']
     for r in rows:
         status = 'PASS' if r['checks_passed'] else 'FAIL: ' + r['failed_checks']
