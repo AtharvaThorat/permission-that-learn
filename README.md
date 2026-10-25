@@ -1,41 +1,66 @@
-﻿# AgentDojo guarded agent black box
+# GRIDS: Permissions That Learn
 
-This branch provides an inference and evaluation pipeline for AgentDojo's `workspace` suite. The actor proposes tool calls; the black box validates them, checks a deterministic reference wall, optionally asks the existing Laya gatekeeper, and dispatches only authorized calls through the native AgentDojo runtime. The current CPU suite has 97 passing tests, including native injection scoring with scripted actors.
+GRIDS is a research platform for evaluating permission enforcement around
+tool-using language-model agents. It integrates AgentDojo's workspace benchmark,
+a deterministic permission wall, and the Laya semantic gatekeeper to compare
+task completion and prompt-injection outcomes under matched conditions.
 
-For Google Colab, follow the [Colab runbook](docs/operations/COLAB_RUNBOOK.md). Recorded T4 runs verified model loading, decisions and some tool executions, but no official task successes. The 40-task clean run also exposed email/file collection truncation; the adapter now summarizes those collections for Laya while retaining full wall/freshness evidence.
+## How it works
 
-For a timed five-task trial with a shareable report, use the [quick benchmark instructions](docs/operations/COLAB_BENCHMARK.md) or `notebooks/colab_quick_benchmark.ipynb`. This keeps the Qwen actor, original Laya gatekeeper, and reference wall; setup fixes come from the supplied Colab execution notebook.
+An acting model proposes a tool call. The runtime validates the call, binds it
+to the current workspace state, applies permission checks, and dispatches only
+authorized actions through AgentDojo. Actions awaiting approval remain pending;
+gatekeeper failures do not silently bypass protection.
 
-For explicit prompt injections, use the [injection comparison instructions](docs/operations/COLAB_INJECTION_RUN.md): five native task/attack cases, clean and injected, across three modes (30 episodes). The new GPU comparison has not yet been run; CPU tests validate placement, exposure tracking and native scoring.
-
-The Laya runtime under `gatekeeper/` is intentionally retained because `wall_gatekeeper` mode calls it. The old standalone Laya CLI, synthetic fixture set, benchmark snapshots, and evaluation scripts/tests have been removed from this branch's working tree. They remain recoverable from the earlier Git commit/branch. No other branch was edited. This branch still descends from `feature/laya-gatekeeper`; file cleanup does not rewrite Git history.
-
-## Code map
-
-| Area | What it contains |
+| Evaluation mode | Permission checks |
 |---|---|
-| `blackbox/actors/` | Acting model client (`openai_compatible.py`) and a scripted test actor. |
-| `blackbox/actions.py`, `contracts.py`, `config.py`, `state.py` | Canonical action data, interfaces, strict configuration, and per-episode state. |
-| `blackbox/controller.py` | Actor turn loop and tool-call mediation. |
-| `blackbox/permissions/` | Reference wall, workspace facts, approval/binding rules, and the adapter to Laya. |
-| `blackbox/execution.py` | Single native tool-dispatch boundary with authorization rechecks. |
-| `blackbox/audit.py`, `manifest.py` | Redacted event trail and run provenance. |
-| `blackbox/factory.py`, `cli.py` | Public pipeline factory and offline configuration/preflight commands. |
-| `integrations/agentdojo/` | Native message/tool codec, workspace fact mapping, pipeline interface, and benchmark runner. |
-| `gatekeeper/` | Reused Laya model configuration, prompts, worker lifecycle, validation, and decision policy. `policy.py` adds a validator seam for native AgentDojo tools. |
-| `configs/blackbox/` | Example modes, reference wall policy, metadata, and actor-server setup notes. Copy an example to an ignored `*.local.json` before use. |
-| `tests/blackbox/` | Synthetic acceptance and contract tests (68 user-reported passes), plus seven locally passing Colab helper tests. |
-| `scripts/` | Future setup/actor-server scripts and a source-only static checker. |
-| `docs/` | Documentation index with architecture, operations, reports, results, and reference evidence. |
-| `requirements-blackbox.txt`, `requirements-blackbox-test.txt` | Proposed full-runtime and lightweight test dependencies. `requirements-lock.txt` retains the Laya stack. |
+| `unprotected` | Explicit comparator without wall or gatekeeper checks. |
+| `wall_only` | The integrated `ptl.wall` enforces deterministic policy. |
+| `wall_gatekeeper` | The wall checks policy, then Laya evaluates semantic intent with ALLOW, ASK, or BLOCK decisions. |
 
-The four modes are `unprotected`, `wall_only`, `wall_gatekeeper`, and `wall_rules`. `wall_gatekeeper` is the Laya path; the others are explicit comparators. The reference wall is not the teammate's authoritative policy. No training or approval learning is implemented.
+The experiment platform supports deterministic planning, bounded scheduling,
+resume/retry handling, distinct attempt artifacts, JSON/CSV aggregation, paired
+comparisons, and offline action-decision replay. `wall_rules` is an additional
+legacy comparator in the black-box runtime.
 
-## Next steps
+## Current scope
 
-1. Read the [documentation index](docs/README.md) and [project development guidelines](docs/PROJECT_GUIDELINES.md) before contributing. Then read the [code map](docs/architecture/CODE_MAP.md), [runbook](docs/operations/BLACKBOX_RUNBOOK.md), and [implementation report](docs/reports/BLACKBOX_IMPLEMENTATION_REPORT.md). The [architecture](docs/architecture/BLACKBOX_ARCHITECTURE.md) and [contracts](docs/architecture/BLACKBOX_CONTRACTS.md) explain the boundaries; [compatibility notes](docs/architecture/AGENTDOJO_COMPATIBILITY.md) record the inspected AgentDojo revision.
-2. Choose a compatible Python environment and install the proposed dependencies with `scripts/setup_blackbox.ps1`. Resolve any actual dependency conflict before proceeding; this combination has not been installed or tested here.
-3. Provide local Qwen actor assets/server details and the existing Laya checkpoint cache. Copy `configs/blackbox/wall_gatekeeper.json` to an ignored `experiment.local.json`; fill in one real task ID and review the policy and workspace metadata. The runbook has the exact fields and commands.
-4. Run `& $Python scripts/static_blackbox_review.py`, then the offline `& $BBPython -m blackbox.cli preflight --config configs/blackbox/experiment.local.json`. After setup and execution are authorized, run `& $BBPython -m pytest tests/blackbox -q` and one explicitly selected clean AgentDojo task. Compare protected and comparator modes only after that baseline works.
+The runtime, wall integration, Laya adapter, and evaluation infrastructure are
+implemented. A real unprotected panel-15 run is recorded; matched protected
+panel runs and a successful integrated real-Laya rerun remain outstanding.
+Snapshot-layout and initialization-error reporting fixes are implemented and
+CPU-tested. Approval memory and permission learning are not yet implemented.
 
-No model assets are included. The runbook's actor-server and native benchmark commands are future execution steps, not results from this branch.
+CPU tests establish software behavior, not real-model utility, attack resistance,
+or resolution of Laya truncation issues. See the [project tracker](docs/project_tracking.md)
+for completed work, blockers, and next steps, and the
+[weekly task documents](docs/process_documentation/) for assignments and evidence.
+
+## Getting started
+
+Use a dedicated CPU test environment to validate the platform without model
+downloads or inference. Run from the repository root with that environment active:
+
+```sh
+python -m pip install -r requirements-evaluation-test.txt
+python -m pytest -q -p no:cacheprovider
+python -m experiment plan --config configs/experiments/frozen/unprotected.json
+python -m experiment --help
+```
+
+Real experiments require a configured actor endpoint, pinned local Laya assets
+for `wall_gatekeeper`, and compatible, separate actor-server and runner
+environments. Follow the [runtime runbook](docs/operations/BLACKBOX_RUNBOOK.md)
+and [smoke-test handoff](SETUP_HANDOFF.md) before execution. Testing and validation
+notebooks live in [notebooks/](notebooks/); no model weights are included.
+
+## Documentation and contributions
+
+The [repository and documentation guide](docs/README.md) explains the directory
+structure, key files, setup references, and available reports.
+
+Before changing code, read the [project guidelines](docs/PROJECT_GUIDELINES.md)
+and applicable weekly task plan. Pull the latest base, work on a focused branch,
+validate the change, and update progress records. The repository owner creates
+and merges the pull request; coding agents must not merge into `main` or push
+without authorization.

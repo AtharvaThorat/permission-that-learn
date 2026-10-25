@@ -4,6 +4,14 @@ These assignments are based on the supplied `project_tracking.md`, including its
 
 The required Week 2 evaluation is the existing panel-15 with `Qwen/Qwen2.5-7B-Instruct`, using the same verified 4-bit serving setup across `unprotected`, `wall_only`, and `wall_gatekeeper`. Fifteen cases, each evaluated in clean and attacked conditions across three modes, produce a planned matrix of 90 episodes. This completes the selected project panel, not the entire AgentDojo benchmark. The existing 30-episode unprotected run can contribute to this matrix only if its artifacts pass validation and match the frozen setup. Otherwise, it must be rerun. Keep the tracker’s one-GPU-at-a-time constraint and proposed 30 GPU-hour ceiling, and estimate the remaining cost from actual pilot execution before scheduling the full matrix.
 
+## Documentation maintenance (2026-10-24)
+
+Completed: contributor rules and project/directory READMEs refreshed; weekly
+process links checked. Remaining: user review and PR merge. This documentation
+work does not complete the runtime or evaluation tasks below. See the
+[project tracker](../../project_tracking.md) for overall progress and follow the
+[project guidelines](../../PROJECT_GUIDELINES.md) for every task.
+
 ## Task 1 — Siddharth Magesh: Complete Real Laya Integration and Freeze the Gatekeeper
 
 Your responsibility is to make the integrated `wall_gatekeeper` mode use the actual Laya model reliably and provide a reproducible handoff for the protected benchmark. This task carries forward Week 1’s unfinished checkpoint-loading verification, real inference validation, realistic context handling, and pending-approval verification. For coding instructions, repository conventions, implementation requirements, and testing expectations, read `docs\PROJECT_GUIDELINES.md` before making changes. Inspect the current implementation and reuse the existing adapter, controller, input preparation, and tests rather than rebuilding the permission pipeline.
