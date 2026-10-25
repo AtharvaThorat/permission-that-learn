@@ -31,6 +31,11 @@
 - [Colab pilot results](benchmark-results/COLAB_PILOT_RESULTS.md)
 - [Colab 40-task results](benchmark-results/COLAB_40_TASK_RESULTS.md)
 
+## Process documentation
+
+- [Environment setup, validation and debugging report (2026-10-22)](process_documentation/permission_that_learn_environment_validation_report_2026-10-22.md)
+- [Unprotected baseline and protected-mode runs report (2026-10-24)](process_documentation/permission_that_learn_baseline_and_protected_runs_report_2026-10-24.md)
+
 The reports describe implementation status and limitations. The results
 documents record historical test and benchmark evidence; they are not current
 runtime instructions.
