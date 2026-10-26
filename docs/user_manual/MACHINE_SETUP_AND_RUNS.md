@@ -10,11 +10,11 @@ packages/model caches on a node where your site's network policy permits it.
 ## 1. Clone and install
 
 The setup changes are on `feat/machine-setup-cli`, which includes the earlier
-Laya functional fixes. The owner must push this branch or merge its PR before
-another machine can clone it. Until then, a remote clone will not contain it.
+Laya functional fixes. Use that branch until its PR is merged; verify the checkout
+contains commits `f5c038a` and `8365f44` before running the commands.
 
 ```bash
-git clone --branch feat/machine-setup-cli https://github.com/AtharvaThorat/permission-that-learn.git
+git clone --branch feat/machine-setup-cli https://github.com/AtharvaThorat/permission-that-learn-.git permission-that-learn
 cd permission-that-learn
 git rev-parse HEAD
 python3.12 --version

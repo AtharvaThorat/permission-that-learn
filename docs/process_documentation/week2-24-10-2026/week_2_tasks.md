@@ -36,6 +36,10 @@ sweep or quality comparison. Branch: `fix/real-pipeline-functional-validation`.
 
 **Status: core implementation verified; full handoff/freeze not yet complete.**
 
+The [Siddharth Task 1 completion note](SIDDHARTH_TASK1_COMPLETION.md) records the
+completed implementation and evidence. Siddharth plans to verify CARC later;
+team agreement on benchmark settings and approval policy is also still open.
+
 | Requirement | Evidence / remaining work |
 |---|---|
 | Real pinned assets and inference | Verified on Colab T4 with CPU Laya; actual nested tokenizer assets and revision-reporting fix. |
