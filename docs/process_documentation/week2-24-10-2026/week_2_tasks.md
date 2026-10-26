@@ -4,6 +4,34 @@ These assignments are based on the supplied `project_tracking.md`, including its
 
 The required Week 2 evaluation is the existing panel-15 with `Qwen/Qwen2.5-7B-Instruct`, using the same verified 4-bit serving setup across `unprotected`, `wall_only`, and `wall_gatekeeper`. Fifteen cases, each evaluated in clean and attacked conditions across three modes, produce a planned matrix of 90 episodes. This completes the selected project panel, not the entire AgentDojo benchmark. The existing 30-episode unprotected run can contribute to this matrix only if its artifacts pass validation and match the frozen setup. Otherwise, it must be rerun. Keep the tracker’s one-GPU-at-a-time constraint and proposed 30 GPU-hour ceiling, and estimate the remaining cost from actual pilot execution before scheduling the full matrix.
 
+## Task 1 functional validation update (2026-10-25)
+
+Owner-requested scope: small functional checks and one optional actor; no panel,
+sweep or quality comparison. Branch: `fix/real-pipeline-functional-validation`.
+
+- Fixed local Laya revision reporting after verifying the actual nested tokenizer
+  layout. Added explicit bounded context override; preserved fail-closed truncation
+  and recorded initialization/raw inference errors.
+- Real standard T4: baseline Qwen2.5 ran `user_task_0` in three fresh modes; native
+  utility False in unprotected/wall-only reflects its wrong-year search. Default
+  gatekeeper input truncated; the explicit 8192 rerun produced genuine ASK without
+  dropping evidence. Laya stayed on CPU.
+- Optional Qwen3-4B loaded, passed tool parsing, and produced genuine protected
+  ASK on `user_task_1`. `user_task_10` additionally proved real Laya ALLOW, native
+  date dispatch, actor continuation, then pending ASK. No protected task completed.
+- Worker/publication errors and pending approvals are durable; HTML reports show
+  every attempt, chronological decisions and raw links. Native-score failures keep
+  metrics missing. Full CPU regression: **259 passed, 1 skipped**; controlled
+  enforcement: **12/12**. These controlled cases are separate from real inference.
+- Evidence: `results/functional-20261025/` (six verified episode checksums), plus
+  `results/functional-controlled-20261025/`. T4 shutdown confirmed; no assignments
+  remain. [Handoff](../../../SETUP_HANDOFF.md#functional-validation-2026-10-25)
+  gives versions, exact commands, run IDs, viewer paths and limitations.
+- Remaining: review/PR, Laya calibration and legitimate-task utility, then the
+  separately approved matched panel. Existing frozen profiles were not modified;
+  longer-context compatibility does not solve arbitrary truncation or establish
+  attack resistance. No reusable approval memory was introduced.
+
 ## Documentation maintenance (2026-10-24)
 
 Completed: contributor rules and project/directory READMEs refreshed; weekly

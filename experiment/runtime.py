@@ -81,8 +81,13 @@ def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, can
                 LOGGER_STACK.reset(token)
                 if pipeline.last_history is not None:
                     atomic(directory / 'conversation.json', serializable(pipeline.last_history))
+                if pipeline.last_episode is not None:
+                    atomic(directory / 'pending-approvals.json',
+                           [asdict(pending) for pending in pipeline.last_episode.pending])
     except Exception as exc:
         errors.append(type(exc).__name__)
+        if pipeline is not None and pipeline.last_episode is not None and not evaluated:
+            errors.append('native_evaluation_error')
         lifecycle = 'cancelled' if cancel.is_set() else 'infrastructure_error'
     finally:
         writer.close()
@@ -118,7 +123,8 @@ def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, can
         actor_usage=usage, actor_usage_coverage={'reported_requests': len(reported), 'requests': counts['actor_requests']},
         gate_usage={'evaluations': gate_usage} if gate_usage else None, backend_errors=sorted(set(errors)),
         artifacts={'configuration': 'config.json', 'events': 'events.jsonl', 'conversation': 'conversation.json',
-                   'decisions': 'decisions.jsonl', 'actor': 'actor.jsonl', 'evaluation_only': 'evaluation-only.json'},
+                   'decisions': 'decisions.jsonl', 'actor': 'actor.jsonl', 'evaluation_only': 'evaluation-only.json',
+                   'pending_approvals': 'pending-approvals.json'},
         checksums=writer.checksums())
     result.artifacts = {k:v for k,v in result.artifacts.items() if (directory/v).exists()}
     return result.model_dump(mode='json')

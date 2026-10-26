@@ -52,6 +52,7 @@ class GateConfig(Strict):
     allow_downloads: Literal[False] = False
     device: Literal['cpu'] = 'cpu'
     input_profile: Literal['legacy_collection_summary', 'full_evidence'] = 'legacy_collection_summary'
+    max_input_tokens: int | None = Field(default=None, ge=512, le=8192)
 
 class RuntimeConfig(Strict):
     max_actor_turns: int = Field(default=15, gt=0)

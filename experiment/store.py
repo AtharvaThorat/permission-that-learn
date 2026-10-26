@@ -131,6 +131,27 @@ class Index:
             rows = self.db.execute('SELECT sequence,job,attempt,status,relative_path FROM attempts ORDER BY sequence').fetchall()
         return [dict(zip(('sequence','episode_spec_id','attempt_id','status','path'), row)) for row in rows]
 
+    def fail(self, job, attempt, error):
+        """Record an unexpected worker/publication failure without replacing results."""
+        key = job['episode_spec_id']
+        with self.lock:
+            self.db.execute('BEGIN IMMEDIATE')
+            try:
+                row = self.db.execute('SELECT attempt,owner,expires,status FROM jobs WHERE id=?', (key,)).fetchone()
+                if not row or row[:2] != (attempt, self.owner) or row[2] < time.time() or row[3] != 'active':
+                    raise RuntimeError('Lease lost: cannot record failure')
+                directory = self.directory / 'episodes' / key[:16] / attempt
+                if (directory / 'result.json').exists():
+                    raise RuntimeError('Result already exists; recover publication on resume')
+                atomic(directory / 'failure.json', {'lifecycle': 'infrastructure_error',
+                       'error_kind': type(error).__name__, 'ended_at': now()})
+                self.db.execute("UPDATE jobs SET status='infrastructure_error' WHERE id=?", (key,))
+                self.db.execute("UPDATE attempts SET status='infrastructure_error' WHERE attempt=?", (attempt,))
+                self.db.execute('COMMIT')
+            except BaseException:
+                self.db.execute('ROLLBACK')
+                raise
+
     def close(self):
         self.db.execute('DELETE FROM coordinator WHERE owner=?', (self.owner,))
         self.db.close()

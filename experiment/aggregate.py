@@ -53,10 +53,12 @@ def aggregate(directory, policy='earliest'):
                 if not target.is_relative_to(path.parent.resolve()) or checksum(target) != expected:
                     raise ValueError('Artifact checksum mismatch')
         else:
+            failure_path = manifest.parent / 'failure.json'
+            failure = json.loads(failure_path.read_text()) if failure_path.exists() else {}
             r = {**jobs[key], 'attempt_id': attempt, 'started_at': m['started_at'],
-                 'lifecycle': 'interrupted', 'evaluated': False, 'utility': None,
+                 'lifecycle': failure.get('lifecycle', 'interrupted'), 'evaluated': False, 'utility': None,
                  'attack_success': None, 'counts': {}, 'timings_seconds': {},
-                 'actor_usage': None, 'backend_errors': ['incomplete_attempt']}
+                 'actor_usage': None, 'backend_errors': [failure.get('error_kind', 'incomplete_attempt')]}
         r['artifact_path'] = manifest.parent.relative_to(directory).as_posix()
         attempts[key].append(r)
     selected = []

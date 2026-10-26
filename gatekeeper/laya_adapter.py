@@ -165,7 +165,7 @@ def synchronized(method):
     return wrapped
 
 
-def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode):
+def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode, max_input_tokens=None):
     os.environ['HF_HOME'] = cache
     os.environ['HF_HUB_CACHE'] = str(Path(cache) / 'hub')
     os.environ['LAYA_CPU_AMP'] = '0'
@@ -177,6 +177,9 @@ def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode):
                                   'filename': warning.filename, 'lineno': warning.lineno})
             warnings.warn_explicit(warning.message, warning.category, warning.filename, warning.lineno)
     try:
+        resolved = resolve_local_snapshot(checkpoint, revision, cache)
+        if resolved != Path(local_snapshot).resolve():
+            raise ValueError('Worker snapshot does not match the pinned cache revision')
         from laya import Agent
         load_started = perf_counter()
         try:
@@ -188,7 +191,8 @@ def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode):
             record_warnings(caught)
         torch = sys.modules.get('torch')
         pipe.send({'ready': True, 'actual_checkpoint': checkpoint, 'local_snapshot': local_snapshot,
-                   'revision': agent.revision, 'device': str(agent.device),
+                   'revision': resolved.name, 'agent_reported_revision': agent.revision,
+                   'revision_source': 'validated_local_snapshot_directory', 'device': str(agent.device),
                    'config': agent.cfg, 'load_warnings': load_warnings,
                    'checkpoint_download_and_load_seconds': perf_counter() - load_started,
                    'runtime': {'dtype': str(getattr(agent, 'dtype', 'unknown')),
@@ -199,7 +203,8 @@ def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode):
             if state is None:
                 break
             try:
-                pipe.send({'raw': agent.system_one(state, questions_for_mode(question_mode)), 'api_calls': 1})
+                settings = {} if max_input_tokens is None else {'max_len': max_input_tokens}
+                pipe.send({'raw': agent.system_one(state, questions_for_mode(question_mode), **settings), 'api_calls': 1})
             except Exception as exc:
                 pipe.send({'error': f'{type(exc).__name__}: {exc}', 'api_calls': 1})
     except Exception as exc:
@@ -208,11 +213,14 @@ def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode):
         pipe.close()
 
 class LayaBackend:
-    def __init__(self, checkpoint=None, revision=None, timeout=60, load_timeout=300, question_mode='single', cache_dir=None):
+    def __init__(self, checkpoint=None, revision=None, timeout=60, load_timeout=300, question_mode='single', cache_dir=None, max_input_tokens=None):
         checkpoint, revision = resolve_checkpoint(checkpoint, revision)
         if any(type(v) not in (int, float) or not math.isfinite(v) or v <= 0 for v in (timeout, load_timeout)):
             raise ValueError('Timeouts must be finite and positive')
         self._lock = RLock()
+        if max_input_tokens is not None and (type(max_input_tokens) is not int or not 512 <= max_input_tokens <= 8192):
+            raise ValueError('max_input_tokens must be an integer between 512 and 8192')
+        self.max_input_tokens = max_input_tokens
         self.closed = False
         self.error_kind = None
         self.cache_dir = str(Path(cache_dir or os.environ.get('LAYA_CACHE_DIR', '.cache/huggingface')).expanduser().resolve())
@@ -234,7 +242,7 @@ class LayaBackend:
                          'inference_settings': {'device': 'cpu', 'backend': 'eager', 'fast': False,
                             'compile': False, 'LAYA_CPU_AMP': '0', 'USE_TF': '0',
                             'warmup': 'one identical notes-7 smoke request before fixtures',
-                            'max_len_override': None, 'head_max_len_override': None,
+                            'max_len_override': max_input_tokens, 'head_max_len_override': None,
                             'min_confidence': None},
                          'inference_timeout_seconds': timeout}
 
@@ -258,7 +266,7 @@ class LayaBackend:
             self.pipe, child = context.Pipe()
             self.process = context.Process(target=_worker, args=(child, self.checkpoint, self.revision,
                                                str(self.local_snapshot),
-                                               self.cache_dir, self.question_mode), daemon=True)
+                                               self.cache_dir, self.question_mode, self.max_input_tokens), daemon=True)
             try:
                 self.process.start()
             finally:
@@ -296,6 +304,7 @@ class LayaBackend:
                 self.close()
 
         self.metadata['initialization_error_kind'] = self.error_kind
+        self.metadata['initialization_error'] = self.error
         self.metadata['warmup_error'] = (self.metadata.get('smoke') or {}).get('error')
 
     def _infer(self, state):

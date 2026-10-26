@@ -29,6 +29,8 @@ def main():
             p.add_argument('--attempt-policy', choices=['earliest','latest'], default='earliest')
     p = commands.add_parser('compare')
     p.add_argument('--run-dirs', nargs='+', required=True)
+    p = commands.add_parser('report')
+    p.add_argument('--run-dir', required=True)
     p = commands.add_parser('replay')
     p.add_argument('--source-run', required=True)
     p.add_argument('--config', required=True)
@@ -43,6 +45,9 @@ def main():
             result = {k:v for k,v in resolved.items() if k not in ('jobs','identity')}
     elif args.command == 'aggregate':
         result = aggregate(args.run_dir, args.attempt_policy)
+    elif args.command == 'report':
+        from .report import report
+        result = {'report': report(args.run_dir)}
     elif args.command == 'compare':
         # Preserve distinct run/configuration groups; no accidental pooling.
         result = {str(Path(p)):aggregate(p) for p in args.run_dirs}

@@ -70,6 +70,8 @@ Reuse these files; do not add duplicate root-level reports or dependency manifes
 - Architecture: [code map](architecture/CODE_MAP.md), [runtime design](architecture/BLACKBOX_ARCHITECTURE.md), [contracts](architecture/BLACKBOX_CONTRACTS.md).
 - Integration: [AgentDojo compatibility](architecture/AGENTDOJO_COMPATIBILITY.md), [source inspection](architecture/AGENTDOJO_SOURCE_INSPECTION.json), [run manifest schema](schemas/run_manifest.schema.json).
 - Operations: [runtime runbook](operations/BLACKBOX_RUNBOOK.md), [Colab setup](operations/COLAB_RUNBOOK.md), [benchmark](operations/COLAB_BENCHMARK.md), [injection comparison](operations/COLAB_INJECTION_RUN.md).
+- Small real functional checks, optional actor profiles and offline HTML reports:
+  [tested T4 handoff](../SETUP_HANDOFF.md#functional-validation-2026-10-25).
 - Implementation: [black-box report](reports/BLACKBOX_IMPLEMENTATION_REPORT.md), [evaluation platform report](reports/EVALUATION_PLATFORM_IMPLEMENTATION_REPORT.md).
 - Progress: [protected smoke report](reports/PERSON3_PROTECTED_SMOKE_REPORT.md), [October 24 report](reports/PROJECT_PROGRESS_2026-10-24.md).
 - Historical results: [Colab pilot](benchmark-results/COLAB_PILOT_RESULTS.md), [40-task run](benchmark-results/COLAB_40_TASK_RESULTS.md).

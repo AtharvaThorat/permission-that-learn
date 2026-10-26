@@ -534,6 +534,28 @@ sections above. Details: [process report](process_documentation/week1-18-10-2026
 - Wall package: **109 passed**.
 - CPU tests only; no model was run for this reconciliation.
 
+### Functional validation follow-up (2026-10-25)
+
+- Real T4 execution: Qwen2.5 tool-call probe passed; `user_task_0` ran in all three
+  modes. Unprotected/wall-only reached native scoring but failed utility (actor
+  chose the wrong year). Default Laya context failed closed on truncation.
+- Pinned Laya now loads on CPU with the real nested tokenizer assets. Fixed its
+  local-directory revision reporting; an explicit 8192-token override consumed
+  all 4007 evidence tokens and produced genuine ASK with zero dispatches.
+- Optional Qwen3-4B-Instruct-2507 loaded on T4 and passed native tool parsing.
+  Protected `user_task_1` returned genuine ASK; `user_task_10` exercised real Laya
+  ALLOW, native date lookup, actor continuation, then ASK. No protected task
+  success or model-quality improvement is claimed.
+- Durable failure/approval artifacts and offline HTML viewer verified against
+  downloaded outputs in `results/functional-20261025/`; six episode checksums
+  passed. Full CPU suite: **259 passed, 1 skipped**; **12/12 controlled cases**.
+  T4 shutdown verified: no sessions/assignments, zero usage rate.
+- Remaining: Laya calibration/utility and approval-policy evaluation before any
+  benchmark; default 512-token truncation remains fail-closed. No panel was run.
+- Evidence/reproduction: [setup handoff](../SETUP_HANDOFF.md); detailed task
+  status: [Week 2](process_documentation/week2-24-10-2026/week_2_tasks.md).
+  These are functional checks, not panel results or model-quality comparisons.
+
 ### Open decisions for Persons 2 and 3
 
 1. Which panel is the October 31 demo panel: panel 15 (has a valid unprotected run) or the HARD panel

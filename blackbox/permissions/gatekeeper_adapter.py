@@ -89,7 +89,8 @@ class ExistingLayaGate:
 
         self.gate = Gatekeeper(self.backend_override or LayaBackend(checkpoint=checkpoint, revision=revision,
             cache_dir=str(cache), timeout=self.config.timeout_seconds,
-            load_timeout=self.config.load_timeout_seconds, question_mode='single'),
+            load_timeout=self.config.load_timeout_seconds, question_mode='single',
+            max_input_tokens=self.config.max_input_tokens),
             request_validator=native_request)
         # Existing evaluate() lazily initializes and reuses its persistent worker.
 
@@ -122,8 +123,13 @@ class ExistingLayaGate:
                                     error_kind='application_character_budget')
             result = self.gate.evaluate(state)
             if self.recorder:
+                self.recorder('gate_backend', {
+                    'action_id': action.action_id,
+                    'metadata': getattr(self.gate.backend, 'metadata', {}),
+                })
                 self.recorder('gate_input', {'action_id': action.action_id, 'input': state,
                     'raw_output': result.raw_model_output, 'error_kind': result.error_kind,
+                    'error': result.error, 'model_called': result.model_called,
                     'final_decision': result.decision, 'reason': result.reason_code})
             return GateDecision(result.decision, result.reason_code, result.raw_model_decision,
                 result.class_probabilities, 'existing_laya', 'single-v1',
@@ -131,7 +137,9 @@ class ExistingLayaGate:
                 diagnostics=usage_diagnostics(result.raw_model_output),
                 initialization_error=getattr(self.gate.backend, 'metadata', {}).get('initialization_error'))
         except Exception as exc:
-            return GateDecision('ASK', 'MODEL_UNAVAILABLE', backend='existing_laya', error_kind=type(exc).__name__)
+            initialization_error = f'{type(exc).__name__}: {exc}' if self.gate is None else None
+            return GateDecision('ASK', 'MODEL_UNAVAILABLE', backend='existing_laya',
+                                error_kind=type(exc).__name__, initialization_error=initialization_error)
 
     def close(self):
         self.closed = True

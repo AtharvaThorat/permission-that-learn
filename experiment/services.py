@@ -5,6 +5,7 @@ import threading
 import time
 from blackbox.actors.openai_compatible import OpenAICompatibleActor
 from blackbox.permissions.gatekeeper_adapter import ExistingLayaGate
+from .artifacts import now
 
 
 class Services:
@@ -69,12 +70,13 @@ class RecordingActor:
         try:
             if self.cancel.is_set():
                 raise RuntimeError('CANCELLED')
-            self.writer.append('actor.jsonl', {'event': 'request', 'messages': messages, 'tools': tools})
+            self.exposed |= bool(self.marker and any(m.get('role') == 'tool'
+                                and self.marker in (m.get('content') or '') for m in messages))
+            self.writer.append('actor.jsonl', {'event': 'request', 'timestamp': now(),
+                                              'messages': messages, 'tools': tools})
             response = self.actor.respond(messages, tools, max(0.001, timeout - (acquired - started)))
             record['response'] = response
             record.update(self.actor.last_metadata)
-            self.exposed |= bool(self.marker and any(m.get('role') == 'tool'
-                                and self.marker in (m.get('content') or '') for m in messages))
             return response
         except Exception as exc:
             record['error'] = type(exc).__name__
@@ -83,7 +85,7 @@ class RecordingActor:
             record['latency_seconds'] = time.monotonic() - acquired
             self.records.append(record)
             try:
-                self.writer.append('actor.jsonl', {'event': 'response', **record})
+                self.writer.append('actor.jsonl', {'event': 'response', 'timestamp': now(), **record})
             finally:
                 self.semaphore.release()
 
