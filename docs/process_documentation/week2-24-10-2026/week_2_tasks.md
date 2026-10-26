@@ -32,6 +32,29 @@ sweep or quality comparison. Branch: `fix/real-pipeline-functional-validation`.
   longer-context compatibility does not solve arbitrary truncation or establish
   attack resistance. No reusable approval memory was introduced.
 
+## Task 1 closeout assessment and CARC preparation (2026-10-26)
+
+**Status: core implementation verified; full handoff/freeze not yet complete.**
+
+| Requirement | Evidence / remaining work |
+|---|---|
+| Real pinned assets and inference | Verified on Colab T4 with CPU Laya; actual nested tokenizer assets and revision-reporting fix. |
+| Decisions through enforcement | Real ALLOW dispatched a native tool; real ASK prevented dispatch. Denied violations, unavailable/malformed models and stale/changed approval bindings are separately CPU/controlled-tested. |
+| Context preservation | Real multi-turn continuation and 4007-token full evidence verified with explicit override; over-limit evidence fails closed. This is not a general truncation or utility solution. |
+| Reproducible handoff | Commands, profiles and raw evidence exist; teammate reproduction/receipt of the ignored artifact bundle has not been confirmed. |
+| Freeze and unattended approvals | Pending remains terminal; agreement with Atharva and a versioned benchmark freeze are still required. Existing frozen configs remain unchanged. |
+| CARC execution | Not run. Linux job environment reported, but cluster/scheduler/account/partition/storage details remain unknown. |
+
+Added `scripts/machine_setup.py` for selected/all environment installation,
+pinned downloads and validated experiment config generation. Execution, model
+phase selection, concurrency, resume and reports reuse the existing experiment
+CLI; server switching/allocation stays explicit. The
+[user manual](../../user_manual/MACHINE_SETUP_AND_RUNS.md) provides commands and
+a conditional Slurm template. Six new offline tests passed; full regression:
+**265 passed, 1 skipped**. No CARC access, installation, model inference, or panel
+run was performed in this follow-up. Branch: `feat/machine-setup-cli`, based on
+the verified functional commit `f5c038a`; owner push/PR is required for remote use.
+
 ## Documentation maintenance (2026-10-24)
 
 Completed: contributor rules and project/directory READMEs refreshed; weekly

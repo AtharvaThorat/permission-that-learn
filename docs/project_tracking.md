@@ -28,7 +28,7 @@ resolution.
 |---|---|---|---|
 | 1. Freeze scope and environment | **Partially complete** | Pinned configuration profiles, AgentDojo revision metadata, CPU test environment, deterministic planning, and model endpoint profiles exist. | Validate a reproducible real runtime with the selected acting model, Laya assets, AgentDojo installation, and CARC/GPU or approved API access. |
 | 2. One runner with two modes | **Complete for the implemented scope** | The shared runtime supports `unprotected`, `wall_only`, and `wall_gatekeeper`; CPU tests exercise mode-specific behavior and state isolation. | Run the same selected real task through the protected and unprotected paths. |
-| 3. Real wall and Laya gatekeeper | **Partially complete** | The real `ptl.wall` adapter is integrated; wall decisions, gatekeeper paths, denials, pending approval, and stale evidence are CPU-tested. | Execute the Laya-backed path with real assets and verify an allowed action, blocked violation, and genuine approval wait in the target environment. |
+| 3. Real wall and Laya gatekeeper | **Integration verified; benchmark handoff open** | Real CPU Laya ALLOW/ASK reached native enforcement on Colab; wall violations and stale approvals are separately controlled-tested. See October 25 evidence below. | Agree/freeze benchmark settings and unattended approval policy; reproduce on CARC and share the artifact bundle with the teammate. |
 | 4. First paired demonstration | **Not complete in the current platform** | Historical Colab pilot/result documents show limited earlier GPU execution; current synthetic evaluation tests verify paired identities and aggregation. | Run the planned small clean/attacked email/calendar comparison across unprotected and protected modes and publish a trace plus honest comparison table. |
 | 5. Improve Laya and check Jev access | **Not started / deferred** | The existing Laya adapter and configuration seam are retained. No Jev adapter or shared real comparison is present. | Freeze the baseline first, then make development-only configuration changes. Add Jev only if access is approved; it must not block the demo. |
 | 6. Approval memory and permission-creep tests | **Not implemented** | Current approval binding is scoped to pending actions and rechecked; this is not reusable approval memory. | Add explicit scoped JSON/SQLite memory, invalidation rules, reset behavior, and targeted changed-recipient/resource/task/policy tests. |
@@ -555,6 +555,23 @@ sections above. Details: [process report](process_documentation/week1-18-10-2026
 - Evidence/reproduction: [setup handoff](../SETUP_HANDOFF.md); detailed task
   status: [Week 2](process_documentation/week2-24-10-2026/week_2_tasks.md).
   These are functional checks, not panel results or model-quality comparisons.
+
+### Siddharth / CARC preparation (2026-10-26)
+
+- Task 1's core loading, inference, context diagnostics, enforcement and error
+  separation are verified by the October 25 evidence. Full closeout remains open:
+  teammate reproduction, agreed configuration/approval-policy freeze, and CARC
+  validation have not happened. Panel execution is not claimed.
+- Added `scripts/machine_setup.py`: explicit runner/actor installation, selected
+  pinned model downloads, and validated single/sequential/parallel config creation.
+  Reused `python -m experiment` for execution, resume, aggregation and reporting.
+- [Linux/CARC user manual](user_manual/MACHINE_SETUP_AND_RUNS.md) covers clone,
+  setup, models, data selection, server management, a conditional Slurm template,
+  artifact storage and remaining site-specific inputs. Cluster/account/partition
+  are unknown; no remote job or model download was performed for this change.
+- Branch `feat/machine-setup-cli` includes `f5c038a`; requires owner push/PR before
+  another machine can clone it. Six focused tests passed; full CPU regression:
+  **265 passed, 1 skipped**.
 
 ### Open decisions for Persons 2 and 3
 

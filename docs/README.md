@@ -54,6 +54,7 @@ Reuse these files; do not add duplicate root-level reports or dependency manifes
 | [process_documentation/](process_documentation/) | Weekly task plans and task-specific progress/evidence. |
 | [architecture/](architecture/) | Code map, runtime design, contracts, and AgentDojo compatibility/source inspection. |
 | [operations/](operations/) | Setup, execution, Colab, benchmark, and injection runbooks. |
+| [user_manual/](user_manual/) | User-facing machine setup and execution commands for Linux/CARC. |
 | [reports/](reports/) | Implementation, readiness, protected-smoke, and dated progress reports. |
 | [benchmark-results/](benchmark-results/) | Historical Colab results, not current execution instructions. |
 | [schemas/](schemas/) | Machine-readable artifact schemas, including the run manifest. |
@@ -66,6 +67,10 @@ Reuse these files; do not add duplicate root-level reports or dependency manifes
 - [Baseline and protected-run report](process_documentation/week1-18-10-2026/permission_that_learn_baseline_and_protected_runs_report_2026-10-24.md)
 
 ## Technical references
+
+- [Linux/CARC setup and runs](user_manual/MACHINE_SETUP_AND_RUNS.md): clone,
+  install, pinned model downloads, config generation, sequential/parallel models,
+  conditional batch submission, resume and reports.
 
 - Architecture: [code map](architecture/CODE_MAP.md), [runtime design](architecture/BLACKBOX_ARCHITECTURE.md), [contracts](architecture/BLACKBOX_CONTRACTS.md).
 - Integration: [AgentDojo compatibility](architecture/AGENTDOJO_COMPATIBILITY.md), [source inspection](architecture/AGENTDOJO_SOURCE_INSPECTION.json), [run manifest schema](schemas/run_manifest.schema.json).
