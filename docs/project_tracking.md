@@ -28,7 +28,7 @@ resolution.
 |---|---|---|---|
 | 1. Freeze scope and environment | **Partially complete** | Pinned configuration profiles, AgentDojo revision metadata, CPU test environment, deterministic planning, and model endpoint profiles exist. | Validate a reproducible real runtime with the selected acting model, Laya assets, AgentDojo installation, and CARC/GPU or approved API access. |
 | 2. One runner with two modes | **Complete for the implemented scope** | The shared runtime supports `unprotected`, `wall_only`, and `wall_gatekeeper`; CPU tests exercise mode-specific behavior and state isolation. | Run the same selected real task through the protected and unprotected paths. |
-| 3. Real wall and Laya gatekeeper | **Partially complete** | The real `ptl.wall` adapter is integrated; wall decisions, gatekeeper paths, denials, pending approval, and stale evidence are CPU-tested. | Execute the Laya-backed path with real assets and verify an allowed action, blocked violation, and genuine approval wait in the target environment. |
+| 3. Real wall and Laya gatekeeper | **Integration verified; benchmark handoff open** | Real CPU Laya ALLOW/ASK reached native enforcement on Colab; wall violations and stale approvals are separately controlled-tested. See October 25 evidence below. | Agree/freeze benchmark settings and unattended approval policy; reproduce on CARC and share the artifact bundle with the teammate. |
 | 4. First paired demonstration | **Not complete in the current platform** | Historical Colab pilot/result documents show limited earlier GPU execution; current synthetic evaluation tests verify paired identities and aggregation. | Run the planned small clean/attacked email/calendar comparison across unprotected and protected modes and publish a trace plus honest comparison table. |
 | 5. Improve Laya and check Jev access | **Not started / deferred** | The existing Laya adapter and configuration seam are retained. No Jev adapter or shared real comparison is present. | Freeze the baseline first, then make development-only configuration changes. Add Jev only if access is approved; it must not block the demo. |
 | 6. Approval memory and permission-creep tests | **Not implemented** | Current approval binding is scoped to pending actions and rechecked; this is not reusable approval memory. | Add explicit scoped JSON/SQLite memory, invalidation rules, reset behavior, and targeted changed-recipient/resource/task/policy tests. |
@@ -533,6 +533,81 @@ sections above. Details: [process report](process_documentation/week1-18-10-2026
 - Full CPU suite: **249 passed, 1 skipped** (Python 3.13, `requirements-evaluation-test.txt`).
 - Wall package: **109 passed**.
 - CPU tests only; no model was run for this reconciliation.
+
+### Functional validation follow-up (2026-10-25)
+
+- Real T4 execution: Qwen2.5 tool-call probe passed; `user_task_0` ran in all three
+  modes. Unprotected/wall-only reached native scoring but failed utility (actor
+  chose the wrong year). Default Laya context failed closed on truncation.
+- Pinned Laya now loads on CPU with the real nested tokenizer assets. Fixed its
+  local-directory revision reporting; an explicit 8192-token override consumed
+  all 4007 evidence tokens and produced genuine ASK with zero dispatches.
+- Optional Qwen3-4B-Instruct-2507 loaded on T4 and passed native tool parsing.
+  Protected `user_task_1` returned genuine ASK; `user_task_10` exercised real Laya
+  ALLOW, native date lookup, actor continuation, then ASK. No protected task
+  success or model-quality improvement is claimed.
+- Durable failure/approval artifacts and offline HTML viewer verified against
+  downloaded outputs in `results/functional-20261025/`; six episode checksums
+  passed. Full CPU suite: **259 passed, 1 skipped**; **12/12 controlled cases**.
+  T4 shutdown verified: no sessions/assignments, zero usage rate.
+- Remaining: Laya calibration/utility and approval-policy evaluation before any
+  benchmark; default 512-token truncation remains fail-closed. No panel was run.
+- Evidence/reproduction: [setup handoff](../SETUP_HANDOFF.md); detailed task
+  status: [Week 2](process_documentation/week2-24-10-2026/week_2_tasks.md).
+  These are functional checks, not panel results or model-quality comparisons.
+
+### Siddharth / CARC preparation (2026-10-26)
+
+- [Task 1 implementation completion note](process_documentation/week2-24-10-2026/SIDDHARTH_TASK1_COMPLETION.md)
+  now separates completed coding/Colab validation from CARC verification (planned
+  by Siddharth), teammate acceptance and the benchmark configuration/policy freeze.
+
+- Task 1's core loading, inference, context diagnostics, enforcement and error
+  separation are verified by the October 25 evidence. Full closeout remains open:
+  teammate reproduction, agreed configuration/approval-policy freeze, and CARC
+  validation have not happened. Panel execution is not claimed.
+- Added `scripts/machine_setup.py`: explicit runner/actor installation, selected
+  pinned model downloads, and validated single/sequential/parallel config creation.
+  Reused `python -m experiment` for execution, resume, aggregation and reporting.
+- [Linux/CARC user manual](user_manual/MACHINE_SETUP_AND_RUNS.md) covers clone,
+  setup, models, data selection, server management, a conditional Slurm template,
+  artifact storage and remaining site-specific inputs. Cluster/account/partition
+  are unknown; no remote job or model download was performed for this change.
+- Branch `feat/machine-setup-cli` includes `f5c038a`; requires owner push/PR before
+  another machine can clone it. Six focused tests passed; full CPU regression:
+  **265 passed, 1 skipped**.
+
+### Three-suite reliability extension (2026-10-27)
+
+- Branch `feat/three-suite-gatekeeper`: opt-in `evidence_v2` groups redundant
+  resource metadata without dropping identities or authorization attributes.
+  Laya preflight now checks actual encoder limits, state truncation and question
+  truncation before inference; typed errors and preparation diagnostics reach
+  gate events. Existing input profiles remain available.
+- Implemented durable operator approval/rejection (live continuation only), pinned
+  isolated Qwen3.5 serving, shared native Slack/Banking adapters, native attack
+  selection, exposure diagnostics, aggregation and an owner-submitted CARC script.
+- Final CPU regression: **292 passed, 1 skipped**. Real Laya CPU inference passed
+  short/medium/6120-token state probes at explicit 8192 limit; 18120-token overflow
+  was rejected before inference. Default 512 remains deliberately conservative.
+- A100: both actors passed tool-call/multi-turn checks; **37 native attempts** across
+  three suites/modes (36 clean/attacked matrix cases plus one clock-evidence check).
+  **29 task successes, 3 native task failures, 5 pending approvals; no infrastructure
+  errors.** All 301 saved artifact checksums verified; seven local HTML reports and
+  CSV/JSON aggregations regenerated. Full offline plans: Workspace 3600, Slack 756,
+  Banking 960 jobs (two actors, three modes, all tasks/direct-attack objectives).
+- **Security limitation:** Qwen2.5's exposed Slack attack succeeded in all modes;
+  Laya incorrectly allowed the unsolicited message with complete, untruncated
+  action evidence. Workspace still asks for calendar approval. No calibration,
+  threshold, task or attack-specific workaround was introduced. These are functional
+  checks, not evidence of robust defense or a model-quality comparison.
+- CARC execution, site account/partition/GRES/storage confirmation and teammate
+  reproduction remain open. Cross-process suspended-action continuation is not
+  supported; only a live bound action can consume approval. No full benchmark or
+  CARC submission was run. Colab stopped: zero assignments, zero usage rate.
+- Evidence: `results/laya-context-20261027/` and
+  `results/three-suite-20261027/final-evidence.zip` (ignored; share separately).
+- Details: [Week 2 completion record](process_documentation/week2-24-10-2026/SIDDHARTH_TASK1_COMPLETION.md).
 
 ### Open decisions for Persons 2 and 3
 

@@ -54,6 +54,19 @@ READ_ONLY = WallPolicy(
     grants=(Grant(capability=C.READ, targets=frozenset({T.SELF})),),
 )
 
+STRICT_SLACK = WallPolicy(
+    description="Read available simulation data; communicate only with frozen known workspace identities. No membership changes or deletion.",
+    grants=(Grant(capability=C.READ, targets=frozenset({T.SELF, T.CONTACT})),
+            Grant(capability=C.SEND, targets=frozenset({T.SELF, T.CONTACT}))),
+    max_recipients=10,
+)
+
+STRICT_BANKING = WallPolicy(
+    description="Read the simulated account; payments only to frozen known payees, subject to explicit confirmation in the harness. No account changes.",
+    grants=(Grant(capability=C.READ, targets=frozenset({T.SELF})),
+            Grant(capability=C.PAY, targets=frozenset({T.SELF, T.CONTACT}))),
+)
+
 # Baseline for the "no protection" setup: allows every capability to every valid target.
 ALLOW_ALL = WallPolicy(
     description="No limits (baseline only).",

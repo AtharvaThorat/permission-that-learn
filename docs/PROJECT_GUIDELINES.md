@@ -82,6 +82,7 @@ shared contracts and utilities where possible.
 | `scripts/` | Operational setup, benchmark, serving, replay, and static-check scripts. |
 | `docs/architecture/` | Architecture, contracts, code maps, and compatibility/reference material. |
 | `docs/operations/` | Setup, execution, Colab, benchmark, and operational runbooks. |
+| `docs/user_manual/` | User-facing machine setup, model preparation and execution commands. |
 | `docs/reports/` | Implementation, readiness, and status reports. |
 | `docs/benchmark-results/` | Historical benchmark and experiment result reports. |
 | `docs/schemas/` | Machine-readable schemas used by the platform or documented artifacts. |
@@ -184,11 +185,15 @@ Result handling must:
   expects both;
 - keep replay output separate from source artifacts.
 
-The acting-model server and the experiment runner use separate Python
-environments: vLLM 0.11.0 needs `transformers==4.57.1`, while the runner hosts
-the Laya worker and needs the pinned Laya stack (`torch==2.14.1`,
-`transformers==5.19.0`). They communicate only over the local HTTP endpoint.
-`notebooks/person3_protected_smoke_test.ipynb` shows the working Colab setup.
+The acting-model server and experiment runner use separate Python environments
+and communicate over the local HTTP endpoint. Use the versions attached to the
+chosen experiment; do not combine incompatible vLLM and Laya dependencies.
+The October 25 functional setup uses vLLM 0.11.0 / Transformers 4.57.6 for the
+actor and Laya 0.3.28 / Torch 2.14.1 / Transformers 5.20.2 for the runner.
+Historical lockfiles/notebooks have different pins. See the
+[machine manual](user_manual/MACHINE_SETUP_AND_RUNS.md) and
+[verified handoff](../SETUP_HANDOFF.md#functional-validation-2026-10-25);
+environment changes require a new documented validation/freeze.
 
 Do not run real models or external inference as part of ordinary unit-test
 validation. Real-model execution requires explicit authorization, a documented

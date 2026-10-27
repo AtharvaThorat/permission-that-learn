@@ -63,10 +63,11 @@ def schedule(spec, resolved, directory, execute, *, retry_statuses=(), actors=No
                     job, attempt, actor, group = running.pop(future)
                     counts[actor] -= 1
                     resources[group] -= 1
-                    # Unexpected worker exceptions leave an incomplete attempt;
-                    # no success-returning placeholder or overwritten trace.
-                    result = future.result()
-                    index.publish(job, attempt, result)
+                    try:
+                        result = future.result()
+                        index.publish(job, attempt, result)
+                    except Exception as exc:
+                        index.fail(job, attempt, exc)
             elif cancel.is_set():
                 break
             elif not admitted and exhausted and not pending:
@@ -79,7 +80,10 @@ def schedule(spec, resolved, directory, execute, *, retry_statuses=(), actors=No
             finished, _ = wait(running, timeout=0.2, return_when=FIRST_COMPLETED)
             for future in finished:
                 job, attempt, _, _ = running.pop(future)
-                index.publish(job, attempt, future.result())
+                try:
+                    index.publish(job, attempt, future.result())
+                except Exception as exc:
+                    index.fail(job, attempt, exc)
     finally:
         cancel.set()
         executor.shutdown(wait=True, cancel_futures=True)

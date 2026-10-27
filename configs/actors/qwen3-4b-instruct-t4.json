@@ -1,0 +1,17 @@
+{
+  "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+  "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+  "served_model_name": "Qwen3-4B-Instruct-2507",
+  "chat_template": "checkpoint/tokenizer_config.json",
+  "tool_call_parser": "hermes",
+  "quantization": null,
+  "dtype": "half",
+  "context_limit": 8192,
+  "max_num_seqs": 1,
+  "gpu_memory_utilization": 0.85,
+  "enforce_eager": true,
+  "vllm_version": "0.11.0",
+  "transformers_version": "4.57.6",
+  "license": "Apache-2.0",
+  "model_card": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507"
+}

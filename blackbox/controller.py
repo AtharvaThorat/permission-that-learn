@@ -81,14 +81,17 @@ class Controller:
         decision_id = action.action_id + ':decision'
         if decision.decision == 'ASK':
             episode.asks += 1
-            pending = pending_record(episode, action, decision.reason, expires)
+            pending = pending_record(episode, action, decision.reason, expires,
+                decision=asdict(decision), remaining=expires - self.clock.monotonic())
             episode.pending.append(pending)
+            if self.trace:
+                self.trace('pending_approval', asdict(pending))
             audit.emit('pending_approval', action=action, reason=decision.reason, decision='ASK')
             feedback = self.approvals.request(pending)
             if feedback is None:
                 return Outcome(False, decision.reason, 'ASK', error='PermissionError: confirmation required',
                                terminal='pending_approval')
-            valid = (isinstance(feedback, ApprovalEvent) and feedback.pending_id == pending.pending_id and
+            valid = (isinstance(feedback, ApprovalEvent) and type(feedback.approved) is bool and feedback.pending_id == pending.pending_id and
                      feedback.binding == pending.binding and feedback.binding.matches(episode, action, self.clock.monotonic()))
             if not valid:
                 audit.emit('invalid_approval', action=action, reason='INVALID_APPROVAL')

@@ -17,6 +17,8 @@ class ActorConfig(Strict):
     model_revision: str | None = None
     local_model_path: str | None = None
     template_provenance: str | None = None
+    serving_profile: dict | None = Field(default=None, exclude_if=lambda value: value is None)
+    serving_profile: dict | None = Field(default=None, exclude_if=lambda value: value is None)
     server_version: str | None = None
     quantization: str | None = None
     base_url: str = 'http://127.0.0.1:8000/v1'
@@ -51,7 +53,8 @@ class GateConfig(Strict):
     load_timeout_seconds: float = Field(default=300.0, gt=0)
     allow_downloads: Literal[False] = False
     device: Literal['cpu'] = 'cpu'
-    input_profile: Literal['legacy_collection_summary', 'full_evidence'] = 'legacy_collection_summary'
+    input_profile: Literal['legacy_collection_summary', 'full_evidence', 'evidence_v2'] = 'legacy_collection_summary'
+    max_input_tokens: int | None = Field(default=None, ge=512, le=8192)
 
 class RuntimeConfig(Strict):
     max_actor_turns: int = Field(default=15, gt=0)
@@ -69,7 +72,7 @@ class RuntimeConfig(Strict):
     cancel_remaining_batch_on_nonallow: Literal[True] = True
 
 class BenchmarkConfig(Strict):
-    suite: Literal['workspace'] = 'workspace'
+    suite: Literal['workspace', 'slack', 'banking'] = 'workspace'
     distribution_version: Literal['0.1.35'] = '0.1.35'
     source_revision: Literal[AGENTDOJO_REVISION] = AGENTDOJO_REVISION
     benchmark_version: Literal['v1.2.2'] = 'v1.2.2'
@@ -93,7 +96,7 @@ class BenchmarkConfig(Strict):
 
 class WallConfig(Strict):
     implementation: Literal['reference', 'ptl'] = 'reference'
-    ptl_preset: Literal['STRICT_WORKSPACE', 'WORKSPACE_RELAXED'] = 'STRICT_WORKSPACE'
+    ptl_preset: Literal['STRICT_WORKSPACE', 'WORKSPACE_RELAXED', 'STRICT_SLACK', 'STRICT_BANKING'] = 'STRICT_WORKSPACE'
     confirm_capabilities: list[str] = Field(default_factory=list)
     policy_path: str = Field(default_factory=lambda: str(Path(__file__).resolve().parents[1] / 'configs/blackbox/policies/workspace_example.json'))
     metadata_path: str = Field(default_factory=lambda: str(Path(__file__).resolve().parents[1] / 'configs/blackbox/policies/workspace_metadata.json'))

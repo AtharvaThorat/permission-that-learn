@@ -27,7 +27,7 @@ def test_factory_is_lazy(monkeypatch, tmp_path):
     from gatekeeper.laya_adapter import LayaBackend
     def forbidden(*args, **kwargs):
         raise AssertionError('Unexpected model/network initialization')
-    monkeypatch.setattr(httpx, 'Client', forbidden)
+    monkeypatch.setattr(httpx.Client, '__init__', forbidden)
     monkeypatch.setattr(LayaBackend, 'initialize', forbidden)
     config = load_config('configs/blackbox/wall_gatekeeper.json')
     config.audit.output_directory = str(tmp_path)
@@ -130,6 +130,45 @@ def test_local_laya_snapshot_rejects_unknown_revision(tmp_path):
     _snapshot(tmp_path)
     with pytest.raises(FileNotFoundError, match='LOCAL_LAYA_SNAPSHOT_MISSING'):
         resolve_local_snapshot('convaiinnovations/laya', '8b' * 20, tmp_path)
+
+
+@pytest.mark.parametrize('limit', [None, 8192])
+def test_worker_accepts_pinned_local_snapshot_when_laya_revision_is_none(tmp_path, monkeypatch, limit):
+    import sys
+    from types import SimpleNamespace
+    from gatekeeper.laya_adapter import _worker
+    cache, snapshot = _snapshot(tmp_path)
+    class Agent:
+        revision, device, cfg, dtype = None, 'cpu', {'max_len': 512}, 'float32'
+        def __init__(self, **kwargs):
+            assert kwargs['model_id_or_path'] == str(snapshot)
+            assert kwargs['revision'] == LAYA_REVISION
+        def system_one(self, state, questions, **kwargs):
+            assert state == 'complete evidence'
+            assert kwargs == ({} if limit is None else {'max_len': limit})
+            return {'forward_pass': True}
+    class Pipe:
+        def __init__(self):
+            self.sent = []
+            self.requests = iter(['complete evidence', None])
+        def send(self, value):
+            self.sent.append(value)
+        def recv(self):
+            return next(self.requests)
+        def close(self):
+            pass
+    monkeypatch.setitem(sys.modules, 'laya', SimpleNamespace(Agent=Agent))
+    monkeypatch.setattr('gatekeeper.laya_adapter.importlib.metadata.version', lambda name: 'test')
+    monkeypatch.setattr('gatekeeper.laya_adapter.preflight', lambda agent, state, *args, **kwargs: (state, {}))
+    pipe = Pipe()
+    _worker(pipe, 'convaiinnovations/laya', LAYA_REVISION, str(snapshot), str(cache), 'single', limit)
+    assert pipe.sent[0]['ready'] is True
+    assert pipe.sent[0]['revision'] == LAYA_REVISION
+    assert pipe.sent[0]['agent_reported_revision'] is None
+    assert pipe.sent[1] == {'raw': {'forward_pass': True}, 'api_calls': 1, 'context_diagnostics': {}}
+    wrong = Pipe()
+    _worker(wrong, 'convaiinnovations/laya', LAYA_REVISION, str(snapshot.parent), str(cache), 'single')
+    assert 'Worker snapshot does not match' in wrong.sent[0]['error']
 
 def test_cleanup_on_error_and_close_idempotent():
     f = fixture([{'role': 'invalid'}])

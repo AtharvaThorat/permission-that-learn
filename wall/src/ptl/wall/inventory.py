@@ -22,7 +22,7 @@ class ToolSpec(BaseModel):
     attachment_arg: str | None = None
     permission_arg: str | None = None
     resource_arg: str | None = None                      # argument naming an existing event/file
-    resource_kind: Literal["event", "file"] | None = None  # who can already see it reaches via this action
+    resource_kind: Literal["event", "file", "channel", "transaction"] | None = None
     requires_target: bool = False                         # e.g. send/share: no recipient means malformed
 
     @model_validator(mode="after")

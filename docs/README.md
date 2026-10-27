@@ -54,6 +54,8 @@ Reuse these files; do not add duplicate root-level reports or dependency manifes
 | [process_documentation/](process_documentation/) | Weekly task plans and task-specific progress/evidence. |
 | [architecture/](architecture/) | Code map, runtime design, contracts, and AgentDojo compatibility/source inspection. |
 | [operations/](operations/) | Setup, execution, Colab, benchmark, and injection runbooks. |
+| [user_manual/](user_manual/) | User-facing machine setup and execution commands for Linux/CARC. |
+| [user_manual/colab_cli_quick_commands.md](user_manual/colab_cli_quick_commands.md) | Pinned two-model setup, Laya probes, three-suite native smoke/panel commands, live approvals and export. |
 | [reports/](reports/) | Implementation, readiness, protected-smoke, and dated progress reports. |
 | [benchmark-results/](benchmark-results/) | Historical Colab results, not current execution instructions. |
 | [schemas/](schemas/) | Machine-readable artifact schemas, including the run manifest. |
@@ -62,14 +64,21 @@ Reuse these files; do not add duplicate root-level reports or dependency manifes
 
 - [Week 1 tasks](process_documentation/week1-18-10-2026/week_1_tasks.md)
 - [Week 2 tasks](process_documentation/week2-24-10-2026/week_2_tasks.md)
+- [Siddharth Task 1 implementation completion](process_documentation/week2-24-10-2026/SIDDHARTH_TASK1_COMPLETION.md)
 - [Environment validation report](process_documentation/week1-18-10-2026/permission_that_learn_environment_validation_report_2026-10-22.md)
 - [Baseline and protected-run report](process_documentation/week1-18-10-2026/permission_that_learn_baseline_and_protected_runs_report_2026-10-24.md)
 
 ## Technical references
 
+- [Linux/CARC setup and runs](user_manual/MACHINE_SETUP_AND_RUNS.md): clone,
+  install, pinned model downloads, config generation, sequential/parallel models,
+  conditional batch submission, resume and reports.
+
 - Architecture: [code map](architecture/CODE_MAP.md), [runtime design](architecture/BLACKBOX_ARCHITECTURE.md), [contracts](architecture/BLACKBOX_CONTRACTS.md).
 - Integration: [AgentDojo compatibility](architecture/AGENTDOJO_COMPATIBILITY.md), [source inspection](architecture/AGENTDOJO_SOURCE_INSPECTION.json), [run manifest schema](schemas/run_manifest.schema.json).
 - Operations: [runtime runbook](operations/BLACKBOX_RUNBOOK.md), [Colab setup](operations/COLAB_RUNBOOK.md), [benchmark](operations/COLAB_BENCHMARK.md), [injection comparison](operations/COLAB_INJECTION_RUN.md).
+- Small real functional checks, optional actor profiles and offline HTML reports:
+  [tested T4 handoff](../SETUP_HANDOFF.md#functional-validation-2026-10-25).
 - Implementation: [black-box report](reports/BLACKBOX_IMPLEMENTATION_REPORT.md), [evaluation platform report](reports/EVALUATION_PLATFORM_IMPLEMENTATION_REPORT.md).
 - Progress: [protected smoke report](reports/PERSON3_PROTECTED_SMOKE_REPORT.md), [October 24 report](reports/PROJECT_PROGRESS_2026-10-24.md).
 - Historical results: [Colab pilot](benchmark-results/COLAB_PILOT_RESULTS.md), [40-task run](benchmark-results/COLAB_40_TASK_RESULTS.md).

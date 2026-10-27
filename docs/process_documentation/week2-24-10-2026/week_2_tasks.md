@@ -4,6 +4,71 @@ These assignments are based on the supplied `project_tracking.md`, including its
 
 The required Week 2 evaluation is the existing panel-15 with `Qwen/Qwen2.5-7B-Instruct`, using the same verified 4-bit serving setup across `unprotected`, `wall_only`, and `wall_gatekeeper`. Fifteen cases, each evaluated in clean and attacked conditions across three modes, produce a planned matrix of 90 episodes. This completes the selected project panel, not the entire AgentDojo benchmark. The existing 30-episode unprotected run can contribute to this matrix only if its artifacts pass validation and match the frozen setup. Otherwise, it must be rerun. Keep the tracker’s one-GPU-at-a-time constraint and proposed 30 GPU-hour ceiling, and estimate the remaining cost from actual pilot execution before scheduling the full matrix.
 
+## Expanded assignment update (2026-10-27)
+
+The owner subsequently requested three suites and two actors. See the
+[six-task implementation and evidence record](SIDDHARTH_TASK1_COMPLETION.md#october-27-six-task-extension).
+292 CPU tests passed (one skipped); 37 real native attempts were saved and
+verified. The Qwen2.5 Slack attack succeeded in every mode, including Laya;
+Workspace ASK remains pending. This is functional readiness, not validated
+security effectiveness or completion of the original panel-15. CARC smoke
+verification, policy review and teammate acceptance remain open.
+
+## Task 1 functional validation update (2026-10-25)
+
+Owner-requested scope: small functional checks and one optional actor; no panel,
+sweep or quality comparison. Branch: `fix/real-pipeline-functional-validation`.
+
+- Fixed local Laya revision reporting after verifying the actual nested tokenizer
+  layout. Added explicit bounded context override; preserved fail-closed truncation
+  and recorded initialization/raw inference errors.
+- Real standard T4: baseline Qwen2.5 ran `user_task_0` in three fresh modes; native
+  utility False in unprotected/wall-only reflects its wrong-year search. Default
+  gatekeeper input truncated; the explicit 8192 rerun produced genuine ASK without
+  dropping evidence. Laya stayed on CPU.
+- Optional Qwen3-4B loaded, passed tool parsing, and produced genuine protected
+  ASK on `user_task_1`. `user_task_10` additionally proved real Laya ALLOW, native
+  date dispatch, actor continuation, then pending ASK. No protected task completed.
+- Worker/publication errors and pending approvals are durable; HTML reports show
+  every attempt, chronological decisions and raw links. Native-score failures keep
+  metrics missing. Full CPU regression: **259 passed, 1 skipped**; controlled
+  enforcement: **12/12**. These controlled cases are separate from real inference.
+- Evidence: `results/functional-20261025/` (six verified episode checksums), plus
+  `results/functional-controlled-20261025/`. T4 shutdown confirmed; no assignments
+  remain. [Handoff](../../../SETUP_HANDOFF.md#functional-validation-2026-10-25)
+  gives versions, exact commands, run IDs, viewer paths and limitations.
+- Remaining: review/PR, Laya calibration and legitimate-task utility, then the
+  separately approved matched panel. Existing frozen profiles were not modified;
+  longer-context compatibility does not solve arbitrary truncation or establish
+  attack resistance. No reusable approval memory was introduced.
+
+## Task 1 closeout assessment and CARC preparation (2026-10-26)
+
+**Status: core implementation verified; full handoff/freeze not yet complete.**
+
+The [Siddharth Task 1 completion note](SIDDHARTH_TASK1_COMPLETION.md) records the
+completed implementation and evidence. Siddharth plans to verify CARC later;
+team agreement on benchmark settings and approval policy is also still open.
+
+| Requirement | Evidence / remaining work |
+|---|---|
+| Real pinned assets and inference | Verified on Colab T4 with CPU Laya; actual nested tokenizer assets and revision-reporting fix. |
+| Decisions through enforcement | Real ALLOW dispatched a native tool; real ASK prevented dispatch. Denied violations, unavailable/malformed models and stale/changed approval bindings are separately CPU/controlled-tested. |
+| Context preservation | Real multi-turn continuation and 4007-token full evidence verified with explicit override; over-limit evidence fails closed. This is not a general truncation or utility solution. |
+| Reproducible handoff | Commands, profiles and raw evidence exist; teammate reproduction/receipt of the ignored artifact bundle has not been confirmed. |
+| Freeze and unattended approvals | Pending remains terminal; agreement with Atharva and a versioned benchmark freeze are still required. Existing frozen configs remain unchanged. |
+| CARC execution | Not run. Linux job environment reported, but cluster/scheduler/account/partition/storage details remain unknown. |
+
+Added `scripts/machine_setup.py` for selected/all environment installation,
+pinned downloads and validated experiment config generation. Execution, model
+phase selection, concurrency, resume and reports reuse the existing experiment
+CLI; server switching/allocation stays explicit. The
+[user manual](../../user_manual/MACHINE_SETUP_AND_RUNS.md) provides commands and
+a conditional Slurm template. Six new offline tests passed; full regression:
+**265 passed, 1 skipped**. No CARC access, installation, model inference, or panel
+run was performed in this follow-up. Branch: `feat/machine-setup-cli`, based on
+the verified functional commit `f5c038a`; owner push/PR is required for remote use.
+
 ## Documentation maintenance (2026-10-24)
 
 Completed: contributor rules and project/directory READMEs refreshed; weekly
