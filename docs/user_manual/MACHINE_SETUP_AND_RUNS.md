@@ -162,6 +162,29 @@ the saved identities/settings match. No panel has been executed by this setup wo
 
 ## 6. Batch-job template (only if CARC uses Slurm)
 
+For the October 27 three-suite workflow, use
+[`scripts/carc_a100.sbatch`](../../scripts/carc_a100.sbatch). It validates the
+configuration and assets, checks actor readiness/identity, runs the existing
+experiment CLI, produces reports, terminates process groups and copies complete
+or interrupted artifacts to the required `PERSISTENT_DIR`. It refuses login-node
+execution. It has not been submitted to CARC.
+
+Set `RUN_PY`, `ACTOR_PY`, `PROFILE`, `CONFIG`, `HF_HOME` and `PERSISTENT_DIR` to
+approved paths in your allocation. Choose `actor-qwen35/bin/python` with
+`configs/actors/qwen35-9b-a100.json`, or retain `actor/bin/python` and the Qwen2.5
+profile. Then, **only after owner approval**, submit:
+
+```bash
+sbatch --account=<approved-account> --partition=<approved-partition> --gres=<site-A100-resource>:1 scripts/carc_a100.sbatch
+```
+
+Confirm the actual GPU resource syntax with USC CARC; do not copy another
+institution's `gpu_a100` partition name. See official
+[running-jobs guidance](https://www.carc.usc.edu/user-guides/hpc-systems/using-our-hpc-systems/running-jobs)
+and [resource overview](https://www.carc.usc.edu/user-guides/hpc-systems/discovery/resource-overview-discovery).
+The owner must supply account, cluster/partition, A100 availability and persistent
+storage. Colab validation does not establish CARC compatibility.
+
 Save under `tmp/carc-smoke.sbatch`; replace site-specific directives first. This
 example assumes packages/assets and `tmp/carc-smoke.json` are already prepared,
 and the checkout/results are on job-local storage. Adapt persistence/copy-out to

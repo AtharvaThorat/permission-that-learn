@@ -1,5 +1,6 @@
 """Explicit checkpoint, one persistent CPU worker, no routing or tool execution."""
 import importlib.util
+import importlib.metadata
 import json
 import math
 import multiprocessing as mp
@@ -12,6 +13,7 @@ from time import perf_counter
 from .schemas import Request
 from .questions import QUESTIONS, questions_for_mode, combine_answers, TEMPLATE_VERSIONS
 from .state import model_state
+from .context import preflight, ContextError
 from .config import resolve_checkpoint
 from threading import RLock
 from functools import wraps
@@ -67,6 +69,7 @@ class Prediction:
     truncated: bool | None = None
     model_call_count: int | None = 0
     model_call_submissions: int = 0
+    context_diagnostics: dict | None = None
 
 def _parse_single_response(raw) -> Prediction:
     result = Prediction(raw=raw if isinstance(raw, dict) else None, called=True)
@@ -165,7 +168,8 @@ def synchronized(method):
     return wrapped
 
 
-def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode, max_input_tokens=None):
+def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode, max_input_tokens=None,
+            context_profile='legacy_compact', max_context_chars=None):
     os.environ['HF_HOME'] = cache
     os.environ['HF_HUB_CACHE'] = str(Path(cache) / 'hub')
     os.environ['LAYA_CPU_AMP'] = '0'
@@ -194,6 +198,9 @@ def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode, ma
                    'revision': resolved.name, 'agent_reported_revision': agent.revision,
                    'revision_source': 'validated_local_snapshot_directory', 'device': str(agent.device),
                    'config': agent.cfg, 'load_warnings': load_warnings,
+                   'context_profile': context_profile,
+                   'packages': {name: importlib.metadata.version(name) for name in
+                                ('laya', 'torch', 'transformers', 'tokenizers', 'huggingface-hub')},
                    'checkpoint_download_and_load_seconds': perf_counter() - load_started,
                    'runtime': {'dtype': str(getattr(agent, 'dtype', 'unknown')),
                                'cpu_threads': torch.get_num_threads() if torch else None,
@@ -202,18 +209,30 @@ def _worker(pipe, checkpoint, revision, local_snapshot, cache, question_mode, ma
             state = pipe.recv()
             if state is None:
                 break
+            calls, diagnostics = 0, None
             try:
                 settings = {} if max_input_tokens is None else {'max_len': max_input_tokens}
-                pipe.send({'raw': agent.system_one(state, questions_for_mode(question_mode), **settings), 'api_calls': 1})
+                questions = questions_for_mode(question_mode)
+                state, diagnostics = preflight(agent, state, questions, settings,
+                    profile=context_profile, max_chars=max_context_chars)
+                calls = 1
+                pipe.send({'raw': agent.system_one(state, questions, **settings), 'api_calls': 1,
+                           'context_diagnostics': diagnostics})
+            except ContextError as exc:
+                pipe.send({'error': str(exc), 'error_kind': exc.kind, 'api_calls': 0,
+                           'context_diagnostics': exc.diagnostics})
             except Exception as exc:
-                pipe.send({'error': f'{type(exc).__name__}: {exc}', 'api_calls': 1})
+                pipe.send({'error': f'{type(exc).__name__}: {exc}', 'api_calls': calls,
+                           'error_kind': 'inference_failure' if calls else 'context_preparation_failure',
+                           'context_diagnostics': diagnostics})
     except Exception as exc:
         pipe.send({'error': f'{type(exc).__name__}: {exc}', 'load_warnings': load_warnings})
     finally:
         pipe.close()
 
 class LayaBackend:
-    def __init__(self, checkpoint=None, revision=None, timeout=60, load_timeout=300, question_mode='single', cache_dir=None, max_input_tokens=None):
+    def __init__(self, checkpoint=None, revision=None, timeout=60, load_timeout=300, question_mode='single', cache_dir=None, max_input_tokens=None,
+                 context_profile='legacy_compact', max_context_chars=None):
         checkpoint, revision = resolve_checkpoint(checkpoint, revision)
         if any(type(v) not in (int, float) or not math.isfinite(v) or v <= 0 for v in (timeout, load_timeout)):
             raise ValueError('Timeouts must be finite and positive')
@@ -221,6 +240,7 @@ class LayaBackend:
         if max_input_tokens is not None and (type(max_input_tokens) is not int or not 512 <= max_input_tokens <= 8192):
             raise ValueError('max_input_tokens must be an integer between 512 and 8192')
         self.max_input_tokens = max_input_tokens
+        self.context_profile, self.max_context_chars = context_profile, max_context_chars
         self.closed = False
         self.error_kind = None
         self.cache_dir = str(Path(cache_dir or os.environ.get('LAYA_CACHE_DIR', '.cache/huggingface')).expanduser().resolve())
@@ -266,7 +286,8 @@ class LayaBackend:
             self.pipe, child = context.Pipe()
             self.process = context.Process(target=_worker, args=(child, self.checkpoint, self.revision,
                                                str(self.local_snapshot),
-                                               self.cache_dir, self.question_mode, self.max_input_tokens), daemon=True)
+                                               self.cache_dir, self.question_mode, self.max_input_tokens,
+                                               self.context_profile, self.max_context_chars), daemon=True)
             try:
                 self.process.start()
             finally:
@@ -322,9 +343,13 @@ class LayaBackend:
                 raise TimeoutError('Inference timed out')
             response = self.pipe.recv()
             if 'error' in response:
-                return timed(Prediction(called=True, error=response['error'], error_kind='inference_failure',
+                return timed(Prediction(called=bool(response['api_calls']), error=response['error'],
+                                       error_kind=response.get('error_kind', 'inference_failure'),
+                                       context_diagnostics=response.get('context_diagnostics'),
                                        model_call_count=response['api_calls'], model_call_submissions=1))
-            return timed(parse_response(response['raw'], self.question_mode))
+            prediction = parse_response(response['raw'], self.question_mode)
+            prediction.context_diagnostics = response.get('context_diagnostics')
+            return timed(prediction)
         except Exception as exc:
             self.error = f'{type(exc).__name__}: {exc}'
             self.error_kind = 'inference_timeout' if isinstance(exc, TimeoutError) else 'inference_failure'
@@ -337,7 +362,12 @@ class LayaBackend:
         self.initialize()
         if self.error:
             return Prediction(error=self.error, error_kind=self.error_kind)
-        return self._infer(model_state(req))
+        state = model_state(req)
+        if self.context_profile == 'evidence_v2':
+            value = json.loads(state)
+            value['wall'] = req.wall.model_dump() if req.wall else None
+            state = json.dumps(value, ensure_ascii=False)
+        return self._infer(state)
 
     @synchronized
     def close(self):

@@ -4,6 +4,16 @@ These assignments are based on the supplied `project_tracking.md`, including its
 
 The required Week 2 evaluation is the existing panel-15 with `Qwen/Qwen2.5-7B-Instruct`, using the same verified 4-bit serving setup across `unprotected`, `wall_only`, and `wall_gatekeeper`. Fifteen cases, each evaluated in clean and attacked conditions across three modes, produce a planned matrix of 90 episodes. This completes the selected project panel, not the entire AgentDojo benchmark. The existing 30-episode unprotected run can contribute to this matrix only if its artifacts pass validation and match the frozen setup. Otherwise, it must be rerun. Keep the tracker’s one-GPU-at-a-time constraint and proposed 30 GPU-hour ceiling, and estimate the remaining cost from actual pilot execution before scheduling the full matrix.
 
+## Expanded assignment update (2026-10-27)
+
+The owner subsequently requested three suites and two actors. See the
+[six-task implementation and evidence record](SIDDHARTH_TASK1_COMPLETION.md#october-27-six-task-extension).
+292 CPU tests passed (one skipped); 37 real native attempts were saved and
+verified. The Qwen2.5 Slack attack succeeded in every mode, including Laya;
+Workspace ASK remains pending. This is functional readiness, not validated
+security effectiveness or completion of the original panel-15. CARC smoke
+verification, policy review and teammate acceptance remain open.
+
 ## Task 1 functional validation update (2026-10-25)
 
 Owner-requested scope: small functional checks and one optional actor; no panel,

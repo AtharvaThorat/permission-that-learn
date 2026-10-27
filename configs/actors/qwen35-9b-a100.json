@@ -1,0 +1,22 @@
+{
+  "model_id": "Qwen/Qwen3.5-9B",
+  "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "served_model_name": "Qwen3.5-9B",
+  "chat_template": "checkpoint/chat_template.jinja",
+  "tool_call_parser": "qwen3_coder",
+  "reasoning_parser": "qwen3",
+  "chat_template_kwargs": {"enable_thinking": false},
+  "quantization": null,
+  "dtype": "bfloat16",
+  "context_limit": 8192,
+  "max_num_seqs": 1,
+  "gpu_memory_utilization": 0.85,
+  "enforce_eager": true,
+  "vllm_version": "0.19.1",
+  "transformers_version": "5.6.2",
+  "environment_name": "actor-qwen35",
+  "license": "Apache-2.0",
+  "model_card": "https://huggingface.co/Qwen/Qwen3.5-9B",
+  "serving_reference": "https://recipes.vllm.ai/Qwen/Qwen3.5-9B",
+  "validation_status": "2026-10-27 Colab A100 40GB: startup, automatic tool calling, multi-turn interaction and 18 native smoke attempts verified; compatibility only, not security or quality certification"
+}

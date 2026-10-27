@@ -23,7 +23,7 @@ def install_commands(work, component, actor_profile):
     actor = profile(actor_profile)
     commands = []
     for name in (('runner', 'actor') if component == 'all' else (component,)):
-        target = work / name
+        target = work / (actor.get('environment_name', 'actor') if name == 'actor' else name)
         py = target / 'bin/python'
         if not py.exists():
             if target.exists():
@@ -32,8 +32,8 @@ def install_commands(work, component, actor_profile):
         packages = (['-r', str(ROOT / 'requirements-evaluation-test.txt'), 'laya==0.3.28',
                      'torch==2.14.1', 'transformers==5.20.2', 'tokenizers==0.23.3',
                      'huggingface-hub==2.3.0'] if name == 'runner' else
-                    ['vllm==' + actor['vllm_version'], 'transformers==' + actor['transformers_version'],
-                     'bitsandbytes==0.48.2'])
+                    ['vllm==' + actor['vllm_version'], 'transformers==' + actor['transformers_version']]
+                    + (['bitsandbytes==0.48.2'] if actor['quantization'] == 'bitsandbytes' else []))
         commands += [[str(py), '-m', 'pip', 'install', *packages], [str(py), '-m', 'pip', 'check']]
     return commands
 
@@ -52,6 +52,8 @@ def download(cache, profiles, laya):
 
 def configure(args):
     from experiment.spec import load, plan
+    if (args.clean_only and args.native_attack) or (args.task and args.all_tasks) or (args.objective and args.all_objectives):
+        raise ValueError('Conflicting task/attack selection flags')
     spec = load(args.base)
     actors = {}
     original = next(iter(spec.actors.values()))
@@ -61,6 +63,9 @@ def configure(args):
             raise ValueError('Actor profile filenames must have distinct stems')
         p = profile(path)
         actor = original.model_copy(deep=True)
+        actor.settings.serving_profile = p
+        if 'chat_template_kwargs' in p:
+            actor.settings.thinking_enabled = p['chat_template_kwargs'].get('enable_thinking')
         for key, source in {'model_id': 'model_id', 'served_model_name': 'served_model_name',
                             'model_revision': 'revision', 'server_version': 'vllm_version',
                             'quantization': 'quantization', 'dtype': 'dtype', 'context_limit': 'context_limit'}.items():
@@ -73,8 +78,31 @@ def configure(args):
         actors[name] = actor
     spec.actors = actors
     spec.name = args.name
+    if args.suite:
+        spec.suite = args.suite
+        spec.wall.ptl_preset = 'STRICT_' + args.suite.upper()
+    if args.seed:
+        spec.seeds = args.seed
+    spec.repetitions = args.repetitions
     if args.task:
         spec.clean_tasks = args.task
+    from agentdojo.task_suite.load_suites import get_suite
+    native = get_suite(spec.benchmark_version, spec.suite)
+    if args.all_tasks:
+        spec.clean_tasks = sorted(native.user_tasks)
+    if args.native_attack:
+        from integrations.agentdojo.discovery import materialize
+        objectives = sorted(native.injection_tasks) if args.all_objectives else args.objective
+        if not objectives:
+            raise ValueError('Select --objective or --all-objectives for native attacks')
+        spec.attacks = materialize(spec.suite, args.native_attack, spec.clean_tasks, objectives)
+        spec.attack_panel = 'native:' + args.native_attack + '@' + spec.agentdojo_revision
+    elif args.objective or args.all_objectives:
+        raise ValueError('Objectives require --native-attack')
+    if args.attacked_only:
+        if not spec.attacks:
+            raise ValueError('Attacked-only selection requires explicit attacks')
+        spec.clean_tasks = []
     if args.clean_only:
         spec.attacks = []
     if args.mode:
@@ -84,6 +112,8 @@ def configure(args):
         spec.gatekeeper.max_input_tokens = args.gate_max_input_tokens
     if args.gate_timeout is not None:
         spec.gatekeeper.timeout_seconds = args.gate_timeout
+    if args.gate_input_profile:
+        spec.gatekeeper.input_profile = args.gate_input_profile
     spec.limits.sequential_models = not args.parallel
     spec.limits.global_episodes = len(actors) if args.parallel else 1
     spec.limits.resource_groups = {a.resource_group: 1 for a in actors.values()}
@@ -118,12 +148,22 @@ def main(argv=None):
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--name', default='machine-run')
     p.add_argument('--task', action='append')
-    p.add_argument('--clean-only', action='store_true')
+    p.add_argument('--suite', choices=['workspace', 'slack', 'banking'])
+    p.add_argument('--all-tasks', action='store_true')
+    p.add_argument('--seed', type=int, action='append')
+    p.add_argument('--repetitions', type=int, default=1)
+    selection = p.add_mutually_exclusive_group()
+    selection.add_argument('--clean-only', action='store_true')
+    selection.add_argument('--attacked-only', action='store_true')
+    p.add_argument('--native-attack', choices=['direct', 'ignore_previous', 'system_message', 'injecagent'])
+    p.add_argument('--objective', action='append')
+    p.add_argument('--all-objectives', action='store_true')
     p.add_argument('--mode', action='append', choices=['unprotected', 'wall_only', 'wall_gatekeeper'])
     p.add_argument('--parallel', action='store_true', help='Distinct servers/ports/resource groups; requires allocated capacity')
     p.add_argument('--port', type=int, default=8000)
     p.add_argument('--gate-max-input-tokens', type=int)
     p.add_argument('--gate-timeout', type=float)
+    p.add_argument('--gate-input-profile', choices=['full_evidence', 'evidence_v2'])
     args = parser.parse_args(argv)
     if args.command == 'install':
         if not args.dry_run and (platform.system() != 'Linux' or sys.version_info[:2] != (3, 12)):

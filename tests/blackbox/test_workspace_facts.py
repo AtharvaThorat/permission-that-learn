@@ -8,7 +8,8 @@ from .helpers import fixture
 
 def environment():
     file = NS(owner='owner@example.com', shared_with={}, last_modified=datetime(2026, 1, 1), content='notes')
-    return NS(cloud_drive=NS(files={'notes-7': file}), inbox=NS(emails={}), calendar=NS(events={}))
+    return NS(cloud_drive=NS(files={'notes-7': file}), inbox=NS(emails={}),
+              calendar=NS(events={}, current_day=datetime(2026, 1, 1).date()))
 
 def test_missing_resource_and_missing_label_fail_closed():
     f = fixture()

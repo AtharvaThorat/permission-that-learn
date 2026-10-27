@@ -9,8 +9,10 @@ from .artifacts import now
 
 
 class Services:
-    def __init__(self, spec):
+    def __init__(self, spec, *, approval_directory=None, approval_wait_seconds=0):
         self.spec = spec
+        self.approval_directory = approval_directory
+        self.approval_wait_seconds = approval_wait_seconds
         self.clients = {}
         self.lock = threading.Lock()
         self.requests = {name: threading.BoundedSemaphore(p.max_concurrent_requests)
@@ -19,7 +21,7 @@ class Services:
         for _ in range(spec.limits.gatekeeper_workers):
             self.gates.put(ExistingLayaGate(spec.gatekeeper, spec.budgets.max_gate_chars))
 
-    def actor(self, name, seed, writer, cancel, marker=None):
+    def actor(self, name, seed, writer, cancel, marker=None, payloads=None):
         with self.lock:
             if name not in self.clients:
                 import httpx
@@ -27,7 +29,7 @@ class Services:
         config = self.spec.actors[name].settings.model_copy(update={'seed': seed})
         actor = OpenAICompatibleActor(config)
         actor.client = self.clients[name]
-        return RecordingActor(actor, self.requests[name], writer, cancel, marker)
+        return RecordingActor(actor, self.requests[name], writer, cancel, marker, payloads)
 
     @contextmanager
     def gate(self, cancel):
@@ -53,11 +55,13 @@ class Services:
 
 
 class RecordingActor:
-    def __init__(self, actor, semaphore, writer, cancel, marker=None):
+    def __init__(self, actor, semaphore, writer, cancel, marker=None, payloads=None):
         self.actor, self.semaphore, self.writer, self.cancel = actor, semaphore, writer, cancel
         self.marker = marker
+        self.payloads = ([marker] if marker else list(payloads or []))
         self.records = []
-        self.exposed = False
+        self.exposed = None
+        self.input_payload_present = None
 
     def respond(self, messages, tools, timeout):
         started = time.monotonic()
@@ -70,11 +74,15 @@ class RecordingActor:
         try:
             if self.cancel.is_set():
                 raise RuntimeError('CANCELLED')
-            self.exposed |= bool(self.marker and any(m.get('role') == 'tool'
-                                and self.marker in (m.get('content') or '') for m in messages))
+            exposure = (any(m.get('role') == 'tool' and any(payload in (m.get('content') or '')
+                            for payload in self.payloads) for m in messages) if self.payloads else None)
+            if exposure is not None:
+                self.input_payload_present = bool(self.input_payload_present or exposure)
             self.writer.append('actor.jsonl', {'event': 'request', 'timestamp': now(),
                                               'messages': messages, 'tools': tools})
             response = self.actor.respond(messages, tools, max(0.001, timeout - (acquired - started)))
+            if exposure is not None:
+                self.exposed = bool(self.exposed or exposure)
             record['response'] = response
             record.update(self.actor.last_metadata)
             return response

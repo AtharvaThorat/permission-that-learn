@@ -37,6 +37,7 @@ class GateDecision:
     truncated: bool | None = None
     model_call_count: int | None = 0
     model_call_submissions: int = 0
+    context_diagnostics: dict | None = None
 
     @property
     def decision(self):
@@ -118,6 +119,7 @@ class Gatekeeper:
         record.truncated = prediction.truncated
         record.model_call_count = prediction.model_call_count
         record.model_call_submissions = prediction.model_call_submissions
+        record.context_diagnostics = prediction.context_diagnostics
         record.path = 'model_evaluated' if prediction.called else 'model_unavailable'
         if prediction.decision == 'BLOCK':
             return finish('BLOCK', 'TASK_MISMATCH')

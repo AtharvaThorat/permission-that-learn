@@ -11,7 +11,8 @@ from blackbox.permissions.rules import RulesGate
 from blackbox.permissions.wall import ReferenceWall
 from blackbox.state import Clock, Episode
 from .codec import NativeCodec
-from .context import WorkspaceFacts
+from .context import suite_facts, Metadata
+import json
 from .tools import NativeTools
 
 class UnprotectedFacts:
@@ -26,9 +27,10 @@ class GuardedAgentDojoPipeline(BasePipelineElement):
         self.run_id = dependencies.run_id or uuid4().hex
         self.actor = dependencies.actor if dependencies.actor is not None else OpenAICompatibleActor(config.actor)
         from blackbox.permissions.ptl_adapter import build_wall
-        self.wall = dependencies.wall if dependencies.wall is not None else build_wall(config.wall)
+        self.wall = dependencies.wall if dependencies.wall is not None else build_wall(config.wall, config.agentdojo.suite)
         self.facts = dependencies.facts if dependencies.facts is not None else (
-            UnprotectedFacts() if config.mode == 'unprotected' else WorkspaceFacts.from_file(config.wall.metadata_path))
+            UnprotectedFacts() if config.mode == 'unprotected' else suite_facts(config.agentdojo.suite,
+                Metadata.model_validate(json.loads(Path(config.wall.metadata_path).read_text()))))
         self.gate = dependencies.gatekeeper if dependencies.gatekeeper is not None else (
             ExistingLayaGate(config.gatekeeper, config.runtime.max_gate_chars) if config.mode == 'wall_gatekeeper' else RulesGate())
         self.approvals = dependencies.approvals if dependencies.approvals is not None else PendingApprovalProvider()

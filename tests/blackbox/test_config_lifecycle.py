@@ -158,12 +158,14 @@ def test_worker_accepts_pinned_local_snapshot_when_laya_revision_is_none(tmp_pat
         def close(self):
             pass
     monkeypatch.setitem(sys.modules, 'laya', SimpleNamespace(Agent=Agent))
+    monkeypatch.setattr('gatekeeper.laya_adapter.importlib.metadata.version', lambda name: 'test')
+    monkeypatch.setattr('gatekeeper.laya_adapter.preflight', lambda agent, state, *args, **kwargs: (state, {}))
     pipe = Pipe()
     _worker(pipe, 'convaiinnovations/laya', LAYA_REVISION, str(snapshot), str(cache), 'single', limit)
     assert pipe.sent[0]['ready'] is True
     assert pipe.sent[0]['revision'] == LAYA_REVISION
     assert pipe.sent[0]['agent_reported_revision'] is None
-    assert pipe.sent[1] == {'raw': {'forward_pass': True}, 'api_calls': 1}
+    assert pipe.sent[1] == {'raw': {'forward_pass': True}, 'api_calls': 1, 'context_diagnostics': {}}
     wrong = Pipe()
     _worker(wrong, 'convaiinnovations/laya', LAYA_REVISION, str(snapshot.parent), str(cache), 'single')
     assert 'Worker snapshot does not match' in wrong.sent[0]['error']

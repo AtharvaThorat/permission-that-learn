@@ -16,6 +16,9 @@ def specification(profile, cache, task, modes, base_url, gate_max_input_tokens=N
     spec = load(ROOT / 'configs/experiments/frozen/unprotected.json')
     actor = next(iter(spec.actors.values()))
     actor.settings.model_id = profile['model_id']
+    actor.settings.serving_profile = profile
+    if 'chat_template_kwargs' in profile:
+        actor.settings.thinking_enabled = profile['chat_template_kwargs'].get('enable_thinking')
     actor.settings.served_model_name = profile['served_model_name']
     actor.settings.model_revision = profile['revision']
     actor.settings.local_model_path = str(cache.resolve() / 'hub' / ('models--' + profile['model_id'].replace('/', '--')) / 'snapshots' / profile['revision'])

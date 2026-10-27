@@ -45,7 +45,7 @@ def aggregate(directory, policy='earliest'):
             r = Result.model_validate_json(path.read_text()).model_dump()
             if (r['episode_spec_id'], r['attempt_id'], r['run_id']) != (key, attempt, directory.name):
                 raise ValueError('Result identity conflict')
-            for field in ('actor', 'mode', 'identity', 'task', 'attack', 'seed', 'pair_id'):
+            for field in ('actor', 'actor_profile', 'suite', 'mode', 'identity', 'task', 'attack', 'seed', 'repetition', 'pair_id'):
                 if r[field] != jobs[key][field]:
                     raise ValueError('Result behavior conflict: ' + field)
             for relative, expected in r['checksums'].items():
@@ -73,7 +73,7 @@ def aggregate(directory, policy='earliest'):
         groups[(r['actor_profile'], r['mode'], digest(r['identity']))].append(r)
     metrics = []
     for (actor, mode, identity), rows in groups.items():
-        metric = dict(actor=actor, mode=mode, configuration=identity, planned=len(rows),
+        metric = dict(actor=actor, suite=rows[0]['suite'], mode=mode, configuration=identity, planned=len(rows),
                       evaluated=sum(r['evaluated'] for r in rows))
         for status in ('completed','pending_approval','budget_exceeded','infrastructure_error','cancelled','interrupted','invalid_configuration','missing'):
             metric[status] = sum(r['lifecycle'] == status for r in rows)
@@ -82,8 +82,11 @@ def aggregate(directory, policy='earliest'):
             ('attacked_utility', [r for r in rows if r['attack'] is not None], 'utility'),
             ('attack_success', [r for r in rows if r['attack'] is not None], 'attack_success')):
             metric.update({label+'_'+k: v for k,v in rate([r[field] for r in subset]).items()})
-        for key in ('wall_denied','gatekeeper_blocked','ask','dispatches'):
-            metric[key] = sum(r['counts'].get(key, 0) for r in rows)
+        for key in ('wall_denied','gatekeeper_blocked','gatekeeper_allow','gatekeeper_ask',
+                    'ask','pending_approvals','dispatches','native_tool_errors','invalid_arguments','context_failures'):
+            values = [r['counts'][key] for r in rows if key in r['counts']]
+            metric[key] = sum(values) if values else None
+            metric[key + '_coverage'] = len(values)
         durations = [r['timings_seconds'].get('episode_total') for r in rows]
         metric['mean_episode_seconds'] = mean([d for d in durations if d is not None]) if any(d is not None for d in durations) else None
         usages = [r['actor_usage'] for r in rows if r['actor_usage'] is not None]
@@ -102,7 +105,18 @@ def aggregate(directory, policy='earliest'):
                 'matched_scored': scored, 'utility_difference_right_minus_left': int(b['utility'])-int(a['utility']) if scored else None})
     out = directory / 'aggregates'
     out.mkdir(exist_ok=True)
-    csv_file(out/'episodes.csv', [{k:r.get(k) for k in ('episode_spec_id','attempt_id','actor_profile','mode','task','lifecycle','evaluated','utility','attack_success','artifact_path')} for r in selected])
+    csv_file(out/'episodes.csv', [{k:r.get(k) for k in ('episode_spec_id','attempt_id','actor_profile','suite','mode','task','attack','lifecycle','evaluated','utility','attack_success','attack_exposed','artifact_path')} for r in selected])
+    detailed = defaultdict(list)
+    for row in selected:
+        detailed[(row['actor_profile'], row['suite'], row['mode'], row['task'],
+                  row['attack']['id'] if row['attack'] else None)].append(row)
+    details = []
+    for (actor, suite, mode, task, attack), rows in detailed.items():
+        item = dict(actor=actor, suite=suite, mode=mode, task=task, attack=attack, planned=len(rows))
+        for field in ('utility', 'attack_success', 'attack_exposed'):
+            item.update({field + '_' + key: value for key, value in rate([r.get(field) for r in rows]).items()})
+        details.append(item)
+    csv_file(out/'metrics_by_model_suite_task_attack_mode.csv', details)
     csv_file(out/'metrics_by_model_mode.csv', metrics)
     csv_file(out/'paired_comparisons.csv', comparisons)
     failures = Counter((r['actor_profile'], r['mode'], error) for r in selected for error in r['backend_errors'])

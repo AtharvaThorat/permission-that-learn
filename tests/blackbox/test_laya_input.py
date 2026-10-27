@@ -29,7 +29,7 @@ def test_calendar_summary_preserves_action_and_fails_closed_on_real_truncation(t
     event = NS(participants=['person@example.com'], start_time=datetime(2026, 5, 26, 10),
                end_time=datetime(2026, 5, 26, 11), status='confirmed',
                title='Networking', description='Private event text', location='Office')
-    env = NS(calendar=NS(events={str(i): event for i in range(200)}))
+    env = NS(calendar=NS(events={str(i): event for i in range(200)}, current_day=datetime(2026, 5, 26).date()))
     facts = WorkspaceFacts(Metadata(provenance='test', version='1'))
     proposal = Proposal('c', 'search_calendar_events', {'query': 'Networking', 'date': '2026-05-26'})
     action = bind(proposal, 'a', NativeTools(f.runtime), facts, f.wall, env, 32000)

@@ -57,7 +57,7 @@ def test_report_preserves_attempts_missing_scores_and_escapes_content(tmp_path):
     assert Path(report(directory)) != output
 
 
-def test_failed_actor_response_still_records_payload_exposure(tmp_path):
+def test_failed_actor_response_records_input_but_not_confirmed_model_exposure(tmp_path):
     from experiment.artifacts import Writer
     class Actor:
         def respond(self, *args):
@@ -67,7 +67,8 @@ def test_failed_actor_response_still_records_payload_exposure(tmp_path):
     with pytest.raises(TimeoutError):
         actor.respond([{'role': 'tool', 'content': 'marker'}], [], 1)
     writer.close()
-    assert actor.exposed
+    assert actor.input_payload_present is True
+    assert actor.exposed is None
     events = [json.loads(line) for line in (tmp_path / 'actor.jsonl').read_text().splitlines()]
     assert all(e['timestamp'] for e in events)
     assert events[-1]['error'] == 'TimeoutError'
@@ -138,7 +139,7 @@ def test_missing_native_score_preserves_conversation(tmp_path, monkeypatch):
     assert 'infrastructure_error' in Path(report(directory)).read_text()
 
 
-@pytest.mark.parametrize('name', ['qwen25-7b-t4', 'qwen3-4b-instruct-t4'])
+@pytest.mark.parametrize('name', ['qwen25-7b-t4', 'qwen3-4b-instruct-t4', 'qwen35-9b-a100'])
 def test_profile_drives_serving_and_single_task_spec(name, tmp_path):
     from scripts.serve_actor import command
     from scripts.functional_smoke import specification

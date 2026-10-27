@@ -44,7 +44,7 @@ def lines(path):
 
 
 class Result(Strict):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     run_id: str
     episode_spec_id: str
     attempt_id: str
@@ -68,6 +68,7 @@ class Result(Strict):
     attack_success: bool | None = None
     attack_score_meaning: Literal['native_attacker_objective_achieved'] = 'native_attacker_objective_achieved'
     attack_exposed: bool | None = None
+    attack_validity: dict = Field(default_factory=dict)
     counts: dict
     timings_seconds: dict
     actor_usage: dict | None = None
@@ -83,6 +84,7 @@ class Writer:
         self.directory = Path(directory)
         self.cancellation = cancellation
         self.streams = {}
+        self.pending_count = 0
 
     def append(self, filename, value):
         if filename not in self.streams:
@@ -92,6 +94,12 @@ class Writer:
         stream.flush()
 
     def __call__(self, event, data):
+        if event == 'pending_approval':
+            from blackbox.permissions.approvals import exclusive_json
+            pending_dir = self.directory / 'pending'
+            pending_dir.mkdir(exist_ok=True)
+            self.pending_count += 1
+            exclusive_json(pending_dir / (str(self.pending_count) + '.json'), data)
         self.append('decisions.jsonl', {'schema_version': 1, 'event': event, 'timestamp': now(), **data})
 
     def cancelled(self):

@@ -23,6 +23,7 @@ class WorkspaceFacts:
         result = {'source': 'declared_workspace_metadata', 'sidecar_source': self.metadata.provenance,
                   'sidecar_version': digest(self.metadata.model_dump()), 'resources': [],
                   'recipients': [], 'missing': []}
+        result['current_day'] = env.calendar.current_day.isoformat()
         collections = {'file': ('cloud_drive', 'files'), 'event': ('calendar', 'events'),
                        'email': ('inbox', 'emails')}
 
@@ -71,8 +72,6 @@ class WorkspaceFacts:
 
         if tool in ('search_contacts_by_name', 'search_contacts_by_email'):
             result['contact_identity_hash'] = digest([str(c.email) for c in env.inbox.contact_list])
-        if tool == 'get_current_day':
-            result['current_day'] = env.calendar.current_day.isoformat()
         if tool == 'send_email':
             for key in ('recipients', 'cc', 'bcc'):
                 result['recipients'].extend(args.get(key) or [])
@@ -94,3 +93,64 @@ class WorkspaceFacts:
         if tool == 'share_file':
             result['recipients'].append(args['email'])
         return result
+
+
+class SuiteFacts:
+    def __init__(self, suite, metadata):
+        self.suite, self.metadata = suite, metadata
+
+    def resolve(self, tool, args, env):
+        from .suites import INVENTORIES
+        if tool not in INVENTORIES[self.suite]:
+            raise ValueError('UNKNOWN_TOOL_METADATA')
+        result = {'source': 'native_' + self.suite + '_identities',
+                  'sidecar_source': self.metadata.provenance, 'sidecar_version': digest(self.metadata.model_dump()),
+                  'resources': [], 'recipients': [], 'missing': [],
+                  'environment_fingerprint': digest(env.model_dump(mode='json'))}
+        if self.suite == 'slack':
+            slack = env.slack
+            channel = args.get('channel')
+            if channel is not None:
+                if channel not in slack.channels:
+                    result['missing'].append('channel:' + channel)
+                else:
+                    members = sorted(u for u, channels in slack.user_channels.items() if channel in channels)
+                    result['resources'].append({'kind': 'channel', 'id': channel, 'recipients': members,
+                        'content_hash': digest([m.model_dump() for m in slack.channel_inbox.get(channel, [])])})
+            for key in ('user', 'recipient'):
+                if key in args:
+                    result['recipients'].append(args[key])
+                    if args[key] not in slack.users and tool != 'invite_user_to_slack':
+                        result['missing'].append('user:' + args[key])
+            if 'url' in args:
+                result['destination'] = args['url']
+            if 'user_email' in args:
+                result['recipients'].append(args['user_email'])
+        else:
+            account = env.bank_account
+            result['account'] = {'iban': account.iban, 'balance': account.balance}
+            if args.get('recipient'):
+                result['recipients'].append(args['recipient'])
+            if tool == 'update_scheduled_transaction':
+                transaction = next((t for t in account.scheduled_transactions if t.id == args['id']), None)
+                if transaction is None:
+                    result['missing'].append('transaction:' + str(args['id']))
+                else:
+                    result['resources'].append({'kind': 'transaction', 'id': str(transaction.id),
+                        'recipients': [transaction.recipient], 'amount': transaction.amount,
+                        'date': transaction.date, 'recurring': transaction.recurring,
+                        'content_hash': digest(transaction.model_dump())})
+            if tool == 'read_file':
+                path = args['file_path']
+                result['resources'].append({'kind': 'bank_file', 'id': path,
+                    'exists': path in env.filesystem.files,
+                    'content_hash': digest(env.filesystem.files.get(path))})
+        return result
+
+
+def suite_facts(suite, metadata):
+    if suite == 'workspace':
+        return WorkspaceFacts(metadata)
+    if suite not in ('slack', 'banking'):
+        raise ValueError('Unsupported suite')
+    return SuiteFacts(suite, metadata)

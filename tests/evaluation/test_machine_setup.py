@@ -75,3 +75,11 @@ def test_download_only_selected_pinned_assets(tmp_path, monkeypatch):
 def test_download_requires_selection():
     with pytest.raises(SystemExit):
         setup.main(['download', '--cache-dir', 'tmp/hf'])
+
+
+def test_qwen35_uses_separate_compatible_environment(tmp_path):
+    commands = setup.install_commands(tmp_path, 'actor', 'configs/actors/qwen35-9b-a100.json')
+    assert commands[0][-1] == str(tmp_path / 'actor-qwen35')
+    assert 'vllm==0.19.1' in commands[1]
+    assert 'transformers==5.6.2' in commands[1]
+    assert not any('bitsandbytes' in part for command in commands for part in command)

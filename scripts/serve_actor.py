@@ -21,6 +21,10 @@ def command(profile, model_path, port):
         args += ['--quantization', profile['quantization']]
     if profile['enforce_eager']:
         args.append('--enforce-eager')
+    if profile.get('reasoning_parser'):
+        args += ['--reasoning-parser', profile['reasoning_parser']]
+    if profile.get('chat_template_kwargs'):
+        args += ['--default-chat-template-kwargs', json.dumps(profile['chat_template_kwargs'])]
     return args
 
 

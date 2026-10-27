@@ -90,7 +90,8 @@ class ExistingLayaGate:
         self.gate = Gatekeeper(self.backend_override or LayaBackend(checkpoint=checkpoint, revision=revision,
             cache_dir=str(cache), timeout=self.config.timeout_seconds,
             load_timeout=self.config.load_timeout_seconds, question_mode='single',
-            max_input_tokens=self.config.max_input_tokens),
+            max_input_tokens=self.config.max_input_tokens, context_profile=self.config.input_profile,
+            max_context_chars=self.max_chars),
             request_validator=native_request)
         # Existing evaluate() lazily initializes and reuses its persistent worker.
 
@@ -110,12 +111,12 @@ class ExistingLayaGate:
                               'evaluated_action_id': action.action_id, 'reason_codes': [wall.reason]},
                      'verified_context': {'confirmation_required': wall.confirmation_required,
                          'evidence_complete': action.evidence_complete,
-                         'facts': {'metadata': (facts if self.config and self.config.input_profile == 'full_evidence'
+                         'facts': {'metadata': (facts if self.config and self.config.input_profile in ('full_evidence', 'evidence_v2')
                                                else semantic_facts(action.tool, facts)), 'effects': list(action.effects),
                                    'provenance': 'native_schema_and_declared_metadata'}}}
             if self.config and self.config.input_profile == 'full_evidence':
                 state['verified_context']['facts']['omitted_evidence'] = []
-            if len(canonical(state)) > self.max_chars:
+            if len(canonical(state)) > self.max_chars and not (self.config and self.config.input_profile == 'evidence_v2'):
                 if self.recorder:
                     self.recorder('gate_input', {'action_id': action.action_id, 'input': state,
                                   'raw_output': None, 'error_kind': 'application_character_budget'})
@@ -130,11 +131,13 @@ class ExistingLayaGate:
                 self.recorder('gate_input', {'action_id': action.action_id, 'input': state,
                     'raw_output': result.raw_model_output, 'error_kind': result.error_kind,
                     'error': result.error, 'model_called': result.model_called,
+                    'context_diagnostics': result.context_diagnostics,
                     'final_decision': result.decision, 'reason': result.reason_code})
             return GateDecision(result.decision, result.reason_code, result.raw_model_decision,
                 result.class_probabilities, 'existing_laya', 'single-v1',
                 self.gate.backend.checkpoint, self.gate.backend.revision, result.error_kind,
-                diagnostics=usage_diagnostics(result.raw_model_output),
+                diagnostics={**usage_diagnostics(result.raw_model_output),
+                             'context': result.context_diagnostics},
                 initialization_error=getattr(self.gate.backend, 'metadata', {}).get('initialization_error'))
         except Exception as exc:
             initialization_error = f'{type(exc).__name__}: {exc}' if self.gate is None else None

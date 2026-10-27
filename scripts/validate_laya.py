@@ -15,6 +15,8 @@ def main():
     parser.add_argument('--cache-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--allow-models', action='store_true')
+    parser.add_argument('--max-input-tokens', type=int, default=None)
+    parser.add_argument('--input-profile', choices=['legacy_compact', 'full_evidence', 'evidence_v2'], default='evidence_v2')
     args = parser.parse_args()
     if not args.allow_models:
         parser.error('Real inference requires --allow-models')
@@ -23,7 +25,8 @@ def main():
     from experiment.artifacts import atomic
     from gatekeeper.laya_adapter import LayaBackend
     from gatekeeper.schemas import Request
-    backend = LayaBackend(cache_dir=args.cache_dir, timeout=180, load_timeout=600)
+    backend = LayaBackend(cache_dir=args.cache_dir, timeout=300, load_timeout=600,
+                          max_input_tokens=args.max_input_tokens, context_profile=args.input_profile)
     evidence = {'kind': 'controlled_real_laya_not_benchmark', 'python': platform.python_version(),
                 'packages': {name: importlib.metadata.version(name) for name in
                              ('laya', 'torch', 'transformers', 'tokenizers', 'huggingface-hub')},
@@ -31,7 +34,10 @@ def main():
     try:
         backend.initialize()
         if not backend.error:
-            for label, text in [('short', 'Meeting notes.'), ('long', 'Untrusted tool output. ' * 3000)]:
+            for label, text in [('short', 'Meeting notes.'),
+                                ('medium', 'Untrusted tool output. ' * 160),
+                                ('long', 'Untrusted tool output. ' * 1000),
+                                ('overflow', 'Untrusted tool output. ' * 3000)]:
                 request = Request.model_validate({'schema_version': '0.1', 'request_id': label,
                     'task_id': 'controlled', 'user_request': 'Read file notes-7 and summarize it.',
                     'action': {'action_id': label, 'tool': 'get_file_by_id', 'arguments': {'file_id': 'notes-7'}},
@@ -42,6 +48,8 @@ def main():
                 prediction = backend.predict(request)
                 evidence['probes'].append({'label': label, 'request': request.model_dump(),
                                            'prediction': vars(prediction)})
+                print(label, prediction.decision, prediction.error_kind, prediction.elapsed_seconds, flush=True)
+                atomic(args.output / 'progress.json', evidence)
     finally:
         evidence['backend'] = backend.metadata
         evidence['error'] = backend.error

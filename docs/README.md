@@ -55,6 +55,7 @@ Reuse these files; do not add duplicate root-level reports or dependency manifes
 | [architecture/](architecture/) | Code map, runtime design, contracts, and AgentDojo compatibility/source inspection. |
 | [operations/](operations/) | Setup, execution, Colab, benchmark, and injection runbooks. |
 | [user_manual/](user_manual/) | User-facing machine setup and execution commands for Linux/CARC. |
+| [user_manual/colab_cli_quick_commands.md](user_manual/colab_cli_quick_commands.md) | Pinned two-model setup, Laya probes, three-suite native smoke/panel commands, live approvals and export. |
 | [reports/](reports/) | Implementation, readiness, protected-smoke, and dated progress reports. |
 | [benchmark-results/](benchmark-results/) | Historical Colab results, not current execution instructions. |
 | [schemas/](schemas/) | Machine-readable artifact schemas, including the run manifest. |

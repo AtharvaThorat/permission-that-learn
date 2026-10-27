@@ -33,6 +33,10 @@ class NativeTools:
 
     def effects(self, name):
         if name not in EFFECTS:
+            from .suites import INVENTORIES
+            for inventory in INVENTORIES.values():
+                if name in inventory:
+                    return inventory[name][1]
             if self.guarded:
                 raise ValueError('UNKNOWN_TOOL_EFFECTS')
             return ('unreviewed',)
@@ -53,6 +57,9 @@ class NativeTools:
         # mode=json removes enums while preserving the native validated value.
         normalized = schema.model_validate(arguments).model_dump(mode='json')
         json_value(normalized)
+        for key, value in arguments.items():
+            if value != normalized[key] or isinstance(value, bool) != isinstance(normalized[key], bool):
+                raise ValueError('MODEL_ARGUMENT_COERCION_REQUIRED')
         if canonical(schema.model_validate(normalized).model_dump(mode='json')) != canonical(normalized):
             raise ValueError('UNSTABLE_ARGUMENT_COERCION')
         return parse_json(canonical(normalized))

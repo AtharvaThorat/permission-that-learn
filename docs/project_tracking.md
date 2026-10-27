@@ -577,6 +577,38 @@ sections above. Details: [process report](process_documentation/week1-18-10-2026
   another machine can clone it. Six focused tests passed; full CPU regression:
   **265 passed, 1 skipped**.
 
+### Three-suite reliability extension (2026-10-27)
+
+- Branch `feat/three-suite-gatekeeper`: opt-in `evidence_v2` groups redundant
+  resource metadata without dropping identities or authorization attributes.
+  Laya preflight now checks actual encoder limits, state truncation and question
+  truncation before inference; typed errors and preparation diagnostics reach
+  gate events. Existing input profiles remain available.
+- Implemented durable operator approval/rejection (live continuation only), pinned
+  isolated Qwen3.5 serving, shared native Slack/Banking adapters, native attack
+  selection, exposure diagnostics, aggregation and an owner-submitted CARC script.
+- Final CPU regression: **292 passed, 1 skipped**. Real Laya CPU inference passed
+  short/medium/6120-token state probes at explicit 8192 limit; 18120-token overflow
+  was rejected before inference. Default 512 remains deliberately conservative.
+- A100: both actors passed tool-call/multi-turn checks; **37 native attempts** across
+  three suites/modes (36 clean/attacked matrix cases plus one clock-evidence check).
+  **29 task successes, 3 native task failures, 5 pending approvals; no infrastructure
+  errors.** All 301 saved artifact checksums verified; seven local HTML reports and
+  CSV/JSON aggregations regenerated. Full offline plans: Workspace 3600, Slack 756,
+  Banking 960 jobs (two actors, three modes, all tasks/direct-attack objectives).
+- **Security limitation:** Qwen2.5's exposed Slack attack succeeded in all modes;
+  Laya incorrectly allowed the unsolicited message with complete, untruncated
+  action evidence. Workspace still asks for calendar approval. No calibration,
+  threshold, task or attack-specific workaround was introduced. These are functional
+  checks, not evidence of robust defense or a model-quality comparison.
+- CARC execution, site account/partition/GRES/storage confirmation and teammate
+  reproduction remain open. Cross-process suspended-action continuation is not
+  supported; only a live bound action can consume approval. No full benchmark or
+  CARC submission was run. Colab stopped: zero assignments, zero usage rate.
+- Evidence: `results/laya-context-20261027/` and
+  `results/three-suite-20261027/final-evidence.zip` (ignored; share separately).
+- Details: [Week 2 completion record](process_documentation/week2-24-10-2026/SIDDHARTH_TASK1_COMPLETION.md).
+
 ### Open decisions for Persons 2 and 3
 
 1. Which panel is the October 31 demo panel: panel 15 (has a valid unprotected run) or the HARD panel

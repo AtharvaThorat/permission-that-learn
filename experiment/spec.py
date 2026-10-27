@@ -26,10 +26,11 @@ class Attack(Strict):
     objective: str
     payloads: dict[str, str]
     marker: str | None = None
+    native_template: Literal['direct', 'ignore_previous', 'system_message', 'injecagent'] | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode='after')
     def nonempty(self):
-        if not self.payloads or any(not v for v in self.payloads.values()):
+        if (not self.payloads and self.native_template is None) or any(not v for v in self.payloads.values()):
             raise ValueError('Explicit nonempty fixed payloads required')
         if self.marker and not any(self.marker in text for text in self.payloads.values()):
             raise ValueError('Exposure marker must be in the payload')
@@ -54,11 +55,12 @@ class Specification(Strict):
     clean_tasks: list[str] = Field(default_factory=list)
     attacks: list[Attack] = Field(default_factory=list)
     seeds: list[int] = Field(default_factory=lambda: [0])
+    repetitions: int = Field(default=1, ge=1, le=10000, exclude_if=lambda value: value == 1)
     budgets: RuntimeConfig = Field(default_factory=RuntimeConfig)
     wall: WallConfig = Field(default_factory=lambda: WallConfig(implementation='ptl'))
     gatekeeper: GateConfig = Field(default_factory=lambda: GateConfig(input_profile='full_evidence'))
     limits: Limits = Field(default_factory=Limits)
-    suite: Literal['workspace'] = 'workspace'
+    suite: Literal['workspace', 'slack', 'banking'] = 'workspace'
     benchmark_version: Literal['v1.2.2'] = 'v1.2.2'
     agentdojo_revision: Literal[AGENTDOJO_REVISION] = AGENTDOJO_REVISION
     task_panel: str = 'explicit'
@@ -86,7 +88,7 @@ class Specification(Strict):
             raise ValueError('Positive resource group limits required')
         if self.wall.implementation != 'ptl':
             raise ValueError('Primary experiments require the teammate ptl wall; reference is a legacy fixture')
-        if self.gatekeeper.input_profile != 'full_evidence':
+        if self.gatekeeper.input_profile not in ('full_evidence', 'evidence_v2'):
             raise ValueError('Primary experiments require explicit full gate evidence')
         return self
 
@@ -131,11 +133,21 @@ def validate_native(spec):
     if selected - suite.user_tasks.keys():
         raise ValueError('Unknown native user task')
     defaults = suite.get_injection_vector_defaults()
+    native_attacks = {}
     for attack in spec.attacks:
         if attack.objective not in suite.injection_tasks or attack.payloads.keys() - defaults.keys():
             raise ValueError('Unknown native objective/vector')
         suite.get_user_task_by_id(attack.task).init_environment(
             suite.load_and_inject_default_environment(attack.payloads))
+        if attack.native_template:
+            from agentdojo.attacks import load_attack
+            from types import SimpleNamespace
+            if attack.native_template not in native_attacks:
+                native_attacks[attack.native_template] = load_attack(attack.native_template, suite, SimpleNamespace(name='offline-materialization'))
+            expected = native_attacks[attack.native_template].attack(
+                suite.get_user_task_by_id(attack.task), suite.get_injection_task_by_id(attack.objective))
+            if attack.payloads != expected:
+                raise ValueError('Native attack payloads differ from pinned AgentDojo generation')
     identities(spec)
     return suite
 
@@ -149,7 +161,7 @@ def plan(spec, *, native=True):
     jobs = []
     cases = [(task, None) for task in spec.clean_tasks] + [(a.task, a.model_dump()) for a in spec.attacks]
     for actor, profile in sorted(spec.actors.items()):
-        for repetition, seed in enumerate(spec.seeds):
+        for repetition, seed in enumerate(spec.seeds * spec.repetitions):
             for task, attack in cases:
                 for mode in spec.modes:
                     behavior = {'actor': profile.model_dump(), 'actor_profile': actor, 'mode': mode,
@@ -178,7 +190,7 @@ def plan(spec, *, native=True):
     return {'schema_version': 1, 'spec_id': spec_id, 'identity': identity, 'jobs': jobs,
             'job_count': len(jobs), 'clean_count': sum(j['attack'] is None for j in jobs),
             'attacked_count': sum(j['attack'] is not None for j in jobs),
-            'repetitions': len(spec.seeds), 'limits': spec.limits.model_dump(), 'missing_prerequisites': missing,
+            'repetitions': len(spec.seeds) * spec.repetitions, 'limits': spec.limits.model_dump(), 'missing_prerequisites': missing,
             'model_breakdown': {k: sum(j['actor_profile'] == k for j in jobs) for k in spec.actors},
             'mode_breakdown': {k: sum(j['mode'] == k for j in jobs) for k in spec.modes},
             'task_breakdown': {k: sum(j['task'] == k for j in jobs) for k in sorted({j['task'] for j in jobs})}}
