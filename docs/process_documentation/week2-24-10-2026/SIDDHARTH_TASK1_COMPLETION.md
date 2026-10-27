@@ -51,6 +51,10 @@ comparison was performed.
 
 ### October 27 six-task extension
 
+Follow-up: the machine manual's section 8 provides the exact A100 reproduction
+sequence and acceptance checks before a CARC smoke job. Clone `main` (PR #8 is
+merged); this documentation follow-up does not add new inference evidence.
+
 Branch: `feat/three-suite-gatekeeper`. Implementation and functional checks are
 complete to the extent below; CARC acceptance and security effectiveness remain
 open. Historical results above refer to the earlier assignment.

@@ -579,6 +579,12 @@ sections above. Details: [process report](process_documentation/week1-18-10-2026
 
 ### Three-suite reliability extension (2026-10-27)
 
+- Follow-up A100 handoff: machine manual section 8 now gives an ordered setup,
+  real Laya/overflow check, actor readiness/tool check, 18-attempt native smoke
+  matrix, reports, shutdown and CARC acceptance checklist. Corrected stale branch
+  and Workspace-only instructions after PR #8 merged. Documentation-only change;
+  no new model run or CARC submission is claimed.
+
 - Branch `feat/three-suite-gatekeeper`: opt-in `evidence_v2` groups redundant
   resource metadata without dropping identities or authorization attributes.
   Laya preflight now checks actual encoder limits, state truncation and question

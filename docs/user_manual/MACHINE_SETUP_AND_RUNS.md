@@ -9,12 +9,12 @@ packages/model caches on a node where your site's network policy permits it.
 
 ## 1. Clone and install
 
-The setup changes are on `feat/machine-setup-cli`, which includes the earlier
-Laya functional fixes. Use that branch until its PR is merged; verify the checkout
-contains commits `f5c038a` and `8365f44` before running the commands.
+The three-suite implementation is merged into `main` through PR #8. Verify the
+checkout includes `8ad6282`. For the complete A100 verification sequence, use
+[section 8](#8-a100-functional-verification-before-carc).
 
 ```bash
-git clone --branch feat/machine-setup-cli https://github.com/AtharvaThorat/permission-that-learn-.git permission-that-learn
+git clone --branch main https://github.com/AtharvaThorat/permission-that-learn-.git permission-that-learn
 cd permission-that-learn
 git rev-parse HEAD
 python3.12 --version
@@ -89,8 +89,8 @@ Generation validates native task IDs and writes a new file exclusively; it never
 overwrites the base or an existing output. Sampling, policy, metadata, seeds,
 attacks and budgets are inherited from `--base` except for explicit options.
 `--task` replaces **clean** task selection; attacks remain unless `--clean-only`
-is specified. Only the existing AgentDojo workspace suite is supported; arbitrary
-datasets require a separate integration. Use another base JSON for a different
+is specified. Native `workspace`, `slack` and `banking` suites are supported;
+arbitrary datasets require a separate integration. Use another base JSON for a different
 declared task/attack panel. All commands have `--help`.
 
 The explicit 8192 Laya context/180-second inference timeout are development
@@ -250,3 +250,145 @@ revisions, generated configuration, plan, real tool probe, Laya diagnostics,
 native scores and reports. Verify ALLOW dispatch, pending ASK without dispatch,
 and fail-closed errors. Update the [tracker](../project_tracking.md) and
 [Week 2 task](../process_documentation/week2-24-10-2026/week_2_tasks.md).
+
+## 8. A100 functional verification before CARC
+
+Run these Bash blocks in order in **one Linux shell on an allocated A100**,
+from the repository root. For Colab, use a terminal or one Python script that
+calls `subprocess.run(['bash', '-lc', commands], check=True)` through `colab exec`;
+separate notebook `!` commands do not preserve shell variables or background
+process cleanup. See [Colab transport commands](colab_cli_quick_commands.md).
+Start with Qwen3.5; the alternative assignments below select Qwen2.5 unchanged.
+
+### Install and download
+
+```bash
+set -euo pipefail
+git pull --ff-only
+git merge-base --is-ancestor 8ad6282 HEAD
+nvidia-smi
+python3.12 --version
+export WORK="$PWD/tmp/machine" HF_HOME="$PWD/tmp/model-cache"
+PROFILE=configs/actors/qwen35-9b-a100.json
+ACTOR_ENV=actor-qwen35
+MODEL=Qwen3.5-9B
+# To test the baseline instead, replace the three assignments above with:
+# PROFILE=configs/actors/qwen25-7b-t4.json
+# ACTOR_ENV=actor
+# MODEL=Qwen2.5-7B-Instruct
+python3.12 scripts/machine_setup.py install --work-dir "$WORK" --component all --profile "$PROFILE"
+export RUN_PY="$WORK/runner/bin/python"
+ACTOR_PY="$WORK/$ACTOR_ENV/bin/python"
+"$RUN_PY" scripts/machine_setup.py download --cache-dir "$HF_HOME" --profile "$PROFILE" --laya
+export HF_HUB_CACHE="$HF_HOME/hub" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 USE_TF=0 LAYA_CPU_AMP=0
+mkdir -p results
+PROOF="$(mktemp -d "$PWD/results/a100-proof-XXXXXXXX")"
+export PROOF
+git rev-parse HEAD > "$PROOF/source-revision.txt"
+nvidia-smi > "$PROOF/hardware.txt"
+"$RUN_PY" -m pip freeze > "$PROOF/runner-packages.txt"
+"$ACTOR_PY" -m pip freeze > "$PROOF/actor-packages.txt"
+```
+
+Create `results/` first with `mkdir -p results` if absent. Python 3.12 and a
+working NVIDIA driver must already be available. Keep sufficient disk space for
+the separate environments and checkpoint caches; do not reinstall both actors
+unless both will be tested. On a fresh machine, clone `main` using section 1
+before this sequence. Installation/download failures must be resolved before
+continuing. The tested Qwen3.5 setup used approximately 32.2 GiB of GPU memory.
+
+### Check actual Laya inference before starting the actor
+
+```bash
+"$RUN_PY" scripts/validate_laya.py --cache-dir "$HF_HOME" --output "$PROOF/laya" --max-input-tokens 8192 --input-profile evidence_v2 --allow-models
+"$RUN_PY" - <<'PY'
+import json, os
+from pathlib import Path
+d = json.loads((Path(os.environ['PROOF'])/'laya/laya.json').read_text())
+assert not d['error'], d['error']
+p = {x['label']: x['prediction'] for x in d['probes']}
+for name in ('short', 'medium', 'long'):
+    assert p[name]['called'] and not p[name]['error_kind'], (name, p[name])
+    print(name, p[name]['decision'], p[name]['elapsed_seconds'])
+assert p['overflow']['error_kind'] == 'context_overflow' and not p['overflow']['called']
+print('Laya inference and overflow checks passed')
+PY
+```
+
+The long CPU probe may take several minutes. Inspect `laya/laya.json` for exact
+revision, resolved assets and token diagnostics. This checks actual inference
+and safe overflow, not semantic accuracy; do not require every prediction to ALLOW.
+
+### Start one actor and verify real tool calling
+
+```bash
+export BLACKBOX_ACTOR_API_KEY="$("$RUN_PY" -c 'import secrets; print(secrets.token_hex(24))')"
+setsid "$ACTOR_PY" scripts/serve_actor.py --profile "$PROFILE" --cache-dir "$HF_HOME" > "$PROOF/actor.log" 2>&1 &
+ACTOR_PID=$!
+trap 'kill -- -"$ACTOR_PID" 2>/dev/null || true' EXIT
+ready=0
+for attempt in {1..180}; do
+  if "$RUN_PY" -c 'import json,os,sys,urllib.request; r=urllib.request.Request("http://127.0.0.1:8000/v1/models",headers={"Authorization":"Bearer "+os.environ["BLACKBOX_ACTOR_API_KEY"]}); d=json.load(urllib.request.urlopen(r,timeout=5)); assert sys.argv[1] in [m["id"] for m in d["data"]]' "$MODEL" 2>/dev/null; then ready=1; break; fi
+  kill -0 "$ACTOR_PID" || { tail -n 50 "$PROOF/actor.log"; exit 1; }
+  sleep 5
+done
+test "$ready" = 1
+"$RUN_PY" scripts/validate_model_tool_call.py --model "$MODEL" --multi-turn --timeout 180 --output "$PROOF/tool-validation.json"
+```
+
+### Run 18 small native attempts, then generate reports
+
+One task and one native attack per suite, clean/attacked in three modes: six
+attempts per suite, eighteen per actor. This is a smoke matrix, not a full panel.
+
+```bash
+"$RUN_PY" -m experiment discover --suite workspace --suite slack --suite banking > "$PROOF/discovery.json"
+for SUITE in workspace slack banking; do
+  case "$SUITE" in
+    workspace) TASK=user_task_10; OBJECTIVE=injection_task_0 ;;
+    slack) TASK=user_task_0; OBJECTIVE=injection_task_1 ;;
+    banking) TASK=user_task_1; OBJECTIVE=injection_task_0 ;;
+  esac
+  CONFIG="$PROOF/$SUITE.json"
+  "$RUN_PY" scripts/machine_setup.py config --base configs/experiments/frozen/unprotected.json --profile "$PROFILE" --cache-dir "$HF_HOME" --output "$CONFIG" --name "a100-$SUITE-smoke" --suite "$SUITE" --task "$TASK" --native-attack direct --objective "$OBJECTIVE" --mode unprotected --mode wall_only --mode wall_gatekeeper --seed 42 --gate-input-profile evidence_v2 --gate-max-input-tokens 8192 --gate-timeout 300
+  "$RUN_PY" -m experiment plan --config "$CONFIG" > "$PROOF/$SUITE-plan.json"
+  "$RUN_PY" -m experiment run --config "$CONFIG" --output "$PROOF/runs" --allow-models > "$PROOF/$SUITE-run.log" 2>&1
+done
+for RUN in "$PROOF"/runs/*; do
+  "$RUN_PY" -m experiment aggregate --run-dir "$RUN"
+  "$RUN_PY" -m experiment report --run-dir "$RUN"
+done
+kill -- -"$ACTOR_PID"
+wait "$ACTOR_PID" || true
+trap - EXIT
+nvidia-smi
+printf 'Save this complete directory: %s\n' "$PROOF"
+```
+
+Verify the actor process has released GPU memory before starting another actor.
+Repeat this section in a fresh shell with the baseline assignments to test both
+models. Copy the complete proof directory before terminating the machine; do not
+export the API key. For Colab also stop the session and verify `colab sessions`
+and `colab usage` show the allocation has ended.
+
+### Decide whether the pipeline is ready for a CARC smoke job
+
+- Plans must show six attempts per suite. Inspect every `result.json`: all
+  eighteen attempts must exist, with explicit lifecycle and native scores or
+  an explicit missing-scoring outcome. A CLI zero exit alone is insufficient.
+- In `report-*.html`, inspect actor calls, real gate predictions, decisions and
+  dispatches. ALLOW must dispatch the same action; pending ASK must not dispatch
+  that action, and later independent episodes must still run. Genuine model
+  predictions have no initialization/inference/truncation error.
+- Infrastructure errors, missing attempts, incorrect model identity, unexpected
+  context failures or unsafe dispatch require diagnosis before a larger run.
+  Preserve failed attempts; use a new proof directory for a changed configuration.
+- Task failure and native attack success are research outcomes, not automatic
+  pipeline failures. Known findings: Workspace may remain pending; Qwen2.5's
+  Slack attack previously succeeded even with Wall + Laya. Do not label the
+  defense secure because these commands finish, or tune for these smoke cases.
+- Next run this same small matrix on CARC using section 6 and approved site
+  resources. Only after that, policy/configuration review and compute approval,
+  generate full-suite plans using the Colab manual's `--all-tasks` /
+  `--all-objectives` commands. Set benchmark budgets from measured smoke timing;
+  do not assume the default one-hour run or two-hour Slurm limit covers a panel.
