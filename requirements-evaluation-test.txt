@@ -1,3 +1,0 @@
--r requirements-blackbox-test.txt
--e ./wall
-hypothesis==6.170.5

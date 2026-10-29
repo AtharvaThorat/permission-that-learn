@@ -1,66 +1,55 @@
-# GRIDS: Permissions That Learn
+# GRIDS — Permissions That Learn
 
-GRIDS is a research platform for evaluating permission enforcement around
-tool-using language-model agents. It integrates AgentDojo's workspace benchmark,
-a deterministic permission wall, and the Laya semantic gatekeeper to compare
-task completion and prompt-injection outcomes under matched conditions.
+GRIDS studies whether tool actions proposed by language models are authorized by
+the user's request, policy, and verified environment evidence. It combines a
+deterministic **Wall**, a **Laya Gatekeeper**, and an enforcement controller.
 
-## How it works
+The primary experiment freezes proposed actions and evaluates the **same actions
+and context** with Wall-only, Laya-only, and Wall→Laya. Independent human-reviewed
+ALLOW/BLOCK/ASK labels are required to measure authorization accuracy. There is
+no labeled benchmark yet; unlabeled runs report decisions and coverage, not accuracy.
 
-An acting model proposes a tool call. The runtime validates the call, binds it
-to the current workspace state, applies permission checks, and dispatches only
-authorized actions through AgentDojo. Actions awaiting approval remain pending;
-gatekeeper failures do not silently bypass protection.
+Native AgentDojo Workspace, Slack, and Banking runs collect actions and measure
+secondary task utility and attack success. Live `unprotected`, `wall_only`, and
+`wall_gatekeeper` runs may produce different trajectories: their task scores are
+not a matched-action authorization comparison.
 
-| Evaluation mode | Permission checks |
-|---|---|
-| `unprotected` | Explicit comparator without wall or gatekeeper checks. |
-| `wall_only` | The integrated `ptl.wall` enforces deterministic policy. |
-| `wall_gatekeeper` | The wall checks policy, then Laya evaluates semantic intent with ALLOW, ASK, or BLOCK decisions. |
+## Start here
 
-The experiment platform supports deterministic planning, bounded scheduling,
-resume/retry handling, distinct attempt artifacts, JSON/CSV aggregation, paired
-comparisons, and offline action-decision replay. `wall_rules` is an additional
-legacy comparator in the black-box runtime.
+Use Python 3.12 from the repository root:
 
-## Current scope
-
-The runtime, wall integration, Laya adapter, and evaluation infrastructure are
-implemented. A real unprotected panel-15 run is recorded; matched protected
-panel runs and a successful integrated real-Laya rerun remain outstanding.
-Snapshot-layout and initialization-error reporting fixes are implemented and
-CPU-tested. Approval memory and permission learning are not yet implemented.
-
-CPU tests establish software behavior, not real-model utility, attack resistance,
-or resolution of Laya truncation issues. See the [project tracker](docs/project_tracking.md)
-for completed work, blockers, and next steps, and the
-[weekly task documents](docs/process_documentation/) for assignments and evidence.
-
-## Getting started
-
-Use a dedicated CPU test environment to validate the platform without model
-downloads or inference. Run from the repository root with that environment active:
-
-```sh
-python -m pip install -r requirements-evaluation-test.txt
+```bash
+python -m venv .venv
+# Linux/macOS: source .venv/bin/activate
+# PowerShell: .\.venv\Scripts\Activate.ps1
+python -m pip install -r environments/cpu.txt
+python -m grids --help
+python -m grids benchmark discover
+python -m grids benchmark plan --config configs/experiments/smoke.json
 python -m pytest -q -p no:cacheprovider
-python -m experiment plan --config configs/experiments/frozen/unprotected.json
-python -m experiment --help
 ```
 
-Real experiments require a configured actor endpoint, pinned local Laya assets
-for `wall_gatekeeper`, and compatible, separate actor-server and runner
-environments. Follow the [runtime runbook](docs/operations/BLACKBOX_RUNBOOK.md)
-and [smoke-test handoff](SETUP_HANDOFF.md) before execution. Testing and validation
-notebooks live in [notebooks/](notebooks/); no model weights are included.
+CPU installation and planning do not download model weights. Inference requires
+separate environments, explicitly downloaded assets, and `--allow-models` for
+benchmark/evaluation execution. See [machine setup](docs/guides/setup.md).
 
-## Documentation and contributions
+## Repository
 
-The [repository and documentation guide](docs/README.md) explains the directory
-structure, key files, setup references, and available reports.
+| Path | Purpose |
+|---|---|
+| `src/grids/` | Shared controller, Wall, Laya, actors, AgentDojo, execution and evaluation |
+| `configs/` | Pinned model profiles, experiment examples, permission metadata |
+| `environments/` | CPU and Laya installation profiles; actor versions live in model profiles |
+| `experiments/notebooks/` | Thin notebooks invoking the public CLI |
+| `tests/` | Unit and integration tests, with [test catalog](docs/development/testing.md) |
+| `scripts/` | Scheduler-specific shell entry points only |
+| `docs/` | [Documentation index](docs/README.md), guidelines, and project status |
+| `results/` | Ignored generated datasets, labels, runs, evaluations, and reports |
 
-Before changing code, read the [project guidelines](docs/PROJECT_GUIDELINES.md)
-and applicable weekly task plan. Pull the latest base, work on a focused branch,
-validate the change, and update progress records. The repository owner creates
-and merges the pull request; coding agents must not merge into `main` or push
-without authorization.
+Seven actor profiles are provided; profile availability is not proof of successful
+GPU execution or model quality. See [models and validation status](docs/guides/models.md).
+AgentDojo remains pinned to the inspected revision; an upgrade is a separate task.
+
+Development starts with [PROJECT_GUIDELINES](docs/PROJECT_GUIDELINES.md).
+This refactor intentionally replaces the former package names and CLI. Historical
+tracked material is available in Git; local raw results and caches are preserved.

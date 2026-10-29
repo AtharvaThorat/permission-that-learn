@@ -1,0 +1,26 @@
+{
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+  "served_model_name": "llama31-8b",
+  "chat_template": "checkpoint/tokenizer_config.json",
+  "tool_call_parser": "llama3_json",
+  "quantization": null,
+  "dtype": "bfloat16",
+  "context_limit": 8192,
+  "max_num_seqs": 1,
+  "gpu_memory_utilization": 0.85,
+  "enforce_eager": true,
+  "vllm_version": "0.19.1",
+  "transformers_version": "5.6.2",
+  "environment_name": "actor-modern",
+  "license": "llama3.1",
+  "access": "license_acceptance_required",
+  "model_card": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
+  "serving_reference": "https://docs.vllm.ai/en/v0.19.1/features/tool_calling/",
+  "validation_status": "Official metadata/parser verified; real GPU loading and tool calling pending",
+  "sampling": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_output_tokens": 1024
+  }
+}

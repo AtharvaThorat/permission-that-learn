@@ -1,0 +1,26 @@
+{
+  "model_id": "ibm-granite/granite-4.0-micro",
+  "revision": "56111ae135df9c53a78c99028e7bc24035a9e979",
+  "served_model_name": "granite4-micro",
+  "chat_template": "checkpoint/chat_template.jinja",
+  "tool_call_parser": "granite4",
+  "quantization": null,
+  "dtype": "bfloat16",
+  "context_limit": 8192,
+  "max_num_seqs": 1,
+  "gpu_memory_utilization": 0.85,
+  "enforce_eager": true,
+  "vllm_version": "0.19.1",
+  "transformers_version": "5.6.2",
+  "environment_name": "actor-modern",
+  "license": "apache-2.0",
+  "access": "public",
+  "model_card": "https://huggingface.co/ibm-granite/granite-4.0-micro",
+  "serving_reference": "https://docs.vllm.ai/en/v0.19.1/features/tool_calling/",
+  "validation_status": "Official metadata/parser verified; real GPU loading and tool calling pending",
+  "sampling": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_output_tokens": 1024
+  }
+}

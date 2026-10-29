@@ -1,6 +1,0 @@
-{
-  "schema_version": 1,
-  "mode": "wall_rules",
-  "wall": {"implementation": "reference", "policy_path": "policies/workspace_example.json", "metadata_path": "policies/workspace_metadata.json"},
-  "agentdojo": {"user_task_ids": []}
-}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "comparators": ["wall_only", "laya_only", "wall_gatekeeper"],
+  "gatekeeper": {
+    "cache_dir": "tmp/model-cache",
+    "input_profile": "evidence_v2",
+    "max_input_tokens": 8192,
+    "timeout_seconds": 300,
+    "load_timeout_seconds": 600
+  },
+  "max_context_chars": 100000
+}

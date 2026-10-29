@@ -1,0 +1,6 @@
+-e .[benchmark]
+laya==0.3.28
+torch==2.14.1
+transformers==5.20.2
+tokenizers==0.23.3
+huggingface-hub==2.3.0
