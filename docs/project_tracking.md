@@ -525,8 +525,13 @@ sections above. Details: [process report](process_documentation/week1-18-10-2026
 - [x] **Integration and progress report.** Merged `22_Oct_Unprotected_Baseline` and
   `person3-panel15-protected` into `main`; added
   [the progress report](reports/PROJECT_PROGRESS_2026-10-24.md). (commit `1e36980`)
-- [ ] **Protected panel-15 runs.** Configured, not yet run. Blocked on a real Laya decision for
-  `wall_gatekeeper`.
+- [x] **Protected panel-15 runs (2026-10-28).** One run, all three modes, 90/90 episodes, Qwen2.5-7B
+  BF16 on A100, `main@c56f2fb`, real Laya (48 calls, 0 errors). Clean utility 6/15, 5/15, 1/15;
+  attack success 1/15, 0/15, 0/15 (`user_task_24`/`inbox_delete` stopped by the wall). 15/30
+  gatekeeper episodes ended pending approval. Notebook `notebooks/person3_panel15_three_mode.ipynb`;
+  [report](reports/PERSON3_PANEL15_THREE_MODE_REPORT.md). Open: the unprotected arm is an in-run
+  BF16 rerun, not the 4-bit `df0505` run, and is not yet accepted as canonical; single seed; Laya
+  over-asks/over-blocks.
 
 ### Validation evidence on `main@1e36980`
 

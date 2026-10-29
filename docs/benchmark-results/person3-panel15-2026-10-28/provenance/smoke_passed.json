@@ -1,0 +1,37 @@
+{
+  "commit": "c56f2fb121858e29ee1b00811aa5e80f741fe18f",
+  "smoke_run": "/content/ptl-runs/smoke/p3-smoke-d120685667dd4244",
+  "session": "20261028_1943",
+  "checks": [
+    [
+      "all three modes ran",
+      true,
+      "unprotected, wall_gatekeeper, wall_only"
+    ],
+    [
+      "every attempt passed the analyzer enforcement checks",
+      true,
+      "ok"
+    ],
+    [
+      "wall_only dispatched a legitimate tool call and was scored",
+      true,
+      "executed=1 utility=False; executed=1 utility=False"
+    ],
+    [
+      "wall_gatekeeper made at least one real Laya decision",
+      true,
+      "2 real decisions"
+    ],
+    [
+      "no Laya load/inference/context errors",
+      true,
+      "none"
+    ],
+    [
+      "no infrastructure errors",
+      true,
+      "none"
+    ]
+  ]
+}
