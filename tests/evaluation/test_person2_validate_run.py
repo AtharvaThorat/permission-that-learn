@@ -110,6 +110,30 @@ def test_preflight_accepts_an_extra_attack_panel_and_reports_a_prompt_override(t
     assert statuses(checks)['Prompt template differs from the frozen baseline (recorded override)'] == 'INFO'
 
 
+def test_preflight_accepts_a_pinned_actor_profile_but_not_changed_generation_settings(tmp_path, monkeypatch):
+    monkeypatch.setenv('BLACKBOX_ACTOR_API_KEY', 'local-test')
+    profile_path = ROOT / 'configs/actors/qwen35-9b-a100.json'
+    pinned = json.loads(profile_path.read_text(encoding='utf-8'))
+    config = json.loads(PANEL.read_text(encoding='utf-8'))
+    (actor,) = config['actors'].values()
+    actor['settings'].update(model_id=pinned['model_id'], served_model_name=pinned['served_model_name'],
+                             model_revision=pinned['revision'], dtype='half', thinking_enabled=False,
+                             serving_profile={**pinned, 'tensor_parallel_size': 2})
+    path = tmp_path / 'qwen35.json'
+    path.write_text(json.dumps(config))
+    assert statuses(validate.preflight(path))['Actor settings equal the frozen baseline'] == 'FAIL'
+    checks = validate.preflight(path, actor_profile=profile_path)
+    assert checks.overall == 'PASS', checks.items
+    assert statuses(checks)['Serving precision and context'] == 'INFO'
+
+    actor['settings']['temperature'] = 0.7
+    actor['settings']['model_revision'] = '0' * 40
+    path.write_text(json.dumps(config))
+    result = statuses(validate.preflight(path, actor_profile=profile_path))
+    assert result['Actor settings equal the frozen baseline'] == 'FAIL'
+    assert result['Actor model matches the pinned profile (model, served name, exact revision)'] == 'FAIL'
+
+
 def test_preflight_rejects_changed_actor_extra_mode_and_drifted_attack(tmp_path, monkeypatch):
     monkeypatch.setenv('BLACKBOX_ACTOR_API_KEY', 'local-test')
     config = json.loads(PANEL.read_text(encoding='utf-8'))

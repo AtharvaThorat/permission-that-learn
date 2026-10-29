@@ -5,6 +5,8 @@
              `unprotected` mode, attacks identical to the team attack panels in configs/blackbox/attacks/ (or to
              an extra panel given with --attack-panel), and a plan with one job per task/attack and no missing
              prerequisites. A changed template_provenance (a recorded prompt override) is reported, not failed.
+             With --actor-profile, a different model is accepted when it matches that pinned profile in
+             configs/actors/ and every generation setting still equals the frozen baseline.
   check-run  Every planned episode finished exactly once with intact, correctly identified artifacts; every
              episode completed and was scored; no protection was applied; every response came from the
              expected served model; attacked episodes record whether the injection reached the model.
@@ -27,6 +29,9 @@ from experiment.artifacts import Result, checksum  # noqa: E402
 from experiment.spec import load, plan  # noqa: E402
 
 FROZEN_BASELINE = ROOT / 'configs/experiments/frozen/unprotected.json'
+# Model identity and serving fields an --actor-profile run may change; generation settings must not change.
+MODEL_FIELDS = ('model_id', 'served_model_name', 'model_revision', 'server_version', 'quantization', 'dtype',
+                'context_limit', 'thinking_enabled', 'local_model_path', 'serving_profile')
 ATTACK_PANELS = [ROOT / 'configs/blackbox/attacks/workspace_pilot.json',
                  ROOT / 'configs/blackbox/attacks/workspace_baseline_extension.json',
                  ROOT / 'configs/blackbox/attacks/workspace_hard_tasks.json']
@@ -55,7 +60,7 @@ class Checks:
         print(f'Overall: {self.overall}')
 
 
-def preflight(config_path, extra_panels=()):
+def preflight(config_path, extra_panels=(), actor_profile=None):
     checks = Checks()
     spec, frozen = load(config_path), load(FROZEN_BASELINE)
     checks.add('Only the unprotected mode is selected', spec.modes == ['unprotected'], f'modes={spec.modes}')
@@ -68,10 +73,22 @@ def preflight(config_path, extra_panels=()):
     def without_provenance(actor):
         dump = actor.model_dump()
         dump['settings'].pop('template_provenance')
+        for field in (MODEL_FIELDS if actor_profile else ()):
+            dump['settings'].pop(field, None)
         return dump
     checks.add('Actor settings equal the frozen baseline',
                without_provenance(profile) == without_provenance(frozen_profile),
                'differs from configs/experiments/frozen/unprotected.json', note=profile.settings.served_model_name)
+    if actor_profile:
+        pinned = json.loads(Path(actor_profile).read_text(encoding='utf-8'))
+        settings = profile.settings
+        checks.add('Actor model matches the pinned profile (model, served name, exact revision)',
+                   (settings.model_id, settings.served_model_name, settings.model_revision)
+                   == (pinned['model_id'], pinned['served_model_name'], pinned['revision']),
+                   f'config has {settings.model_id}@{settings.model_revision}, profile {Path(actor_profile).name} '
+                   f"pins {pinned['model_id']}@{pinned['revision']}", note=f"{pinned['model_id']}@{pinned['revision'][:12]}")
+        checks.info('Serving precision and context',
+                    f'dtype={settings.dtype} quantization={settings.quantization} context={settings.context_limit}')
     if profile.settings.template_provenance != frozen_profile.settings.template_provenance:
         checks.info('Prompt template differs from the frozen baseline (recorded override)',
                     profile.settings.template_provenance)
@@ -191,13 +208,15 @@ def main():
     first.add_argument('--config', required=True)
     first.add_argument('--attack-panel', action='append', default=[],
                        help='extra attack panel file (cases with id, user_task_id, injection_task_id, vector, marker, payload)')
+    first.add_argument('--actor-profile', help='pinned actor profile in configs/actors/ that the config may use '
+                                                'instead of the frozen model')
     second = commands.add_parser('check-run')
     second.add_argument('--run-dir', required=True)
     second.add_argument('--config', required=True)
     second.add_argument('--output', type=Path, required=True, help='validation report; must be outside the run')
     args = parser.parse_args()
     if args.command == 'preflight':
-        checks = preflight(args.config, args.attack_panel)
+        checks = preflight(args.config, args.attack_panel, args.actor_profile)
     else:
         if args.output.resolve().is_relative_to(Path(args.run_dir).resolve()):
             parser.error('--output must be outside the run folder')
