@@ -1,0 +1,29 @@
+{
+  "model_id": "mistralai/Ministral-3-8B-Instruct-2512-BF16",
+  "revision": "f6fae9795746f63c9be8344932f01275f3c63734",
+  "served_model_name": "ministral3-8b",
+  "chat_template": "checkpoint/chat_template.jinja",
+  "tool_call_parser": "mistral",
+  "quantization": null,
+  "dtype": "bfloat16",
+  "context_limit": 8192,
+  "max_num_seqs": 1,
+  "gpu_memory_utilization": 0.85,
+  "enforce_eager": true,
+  "vllm_version": "0.19.1",
+  "transformers_version": "5.6.2",
+  "environment_name": "actor-modern",
+  "license": "apache-2.0",
+  "access": "public",
+  "model_card": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512-BF16",
+  "serving_reference": "https://docs.vllm.ai/en/v0.19.1/features/tool_calling/",
+  "validation_status": "Official metadata/parser verified; real GPU loading and tool calling pending",
+  "sampling": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_output_tokens": 1024
+  },
+  "tokenizer_mode": "mistral",
+  "config_format": "mistral",
+  "load_format": "mistral"
+}

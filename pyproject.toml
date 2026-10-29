@@ -3,17 +3,35 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "grids-evaluation"
-version = "0.1.0"
-description = "Permissions That Learn experiment orchestration"
-requires-python = ">=3.10"
-dependencies = ["pydantic>=2.12,<3", "httpx>=0.28,<1", "PyYAML>=6,<7"]
+name = "grids"
+version = "0.2.0"
+description = "Matched-action authorization evaluation for tool-using agents"
+requires-python = ">=3.11"
+dependencies = ["pydantic==2.12.3", "httpx==0.28.1", "PyYAML==6.0.3"]
+
+[project.optional-dependencies]
+benchmark = ["agentdojo @ git+https://github.com/ethz-spylab/agentdojo.git@089ed468cf3ed0322acc66b0211f26d9d90dbf60", "requests>=2.32.3,<3"]
+test = ["pytest==9.1.1", "hypothesis==6.170.5", "ruff==0.14.3"]
 
 [project.scripts]
-experiment = "experiment.__main__:main"
+grids = "grids.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["experiment*", "blackbox*", "gatekeeper*", "integrations*"]
+where = ["src"]
 
 [tool.setuptools.package-data]
-gatekeeper = ["model_manifest.json"]
+"grids.gatekeeper" = ["*.json"]
+"grids.wall" = ["*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "--import-mode=importlib"
+markers = ["model_backed: explicit real-model validation, excluded by default"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["F"]
+ignore = ["F401"]

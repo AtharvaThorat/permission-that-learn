@@ -1,0 +1,26 @@
+{
+  "model_id": "microsoft/Phi-4-mini-instruct",
+  "revision": "cfbefacb99257ffa30c83adab238a50856ac3083",
+  "served_model_name": "phi4-mini",
+  "chat_template": "checkpoint/tokenizer_config.json",
+  "tool_call_parser": "phi4_mini_json",
+  "quantization": null,
+  "dtype": "bfloat16",
+  "context_limit": 8192,
+  "max_num_seqs": 1,
+  "gpu_memory_utilization": 0.85,
+  "enforce_eager": true,
+  "vllm_version": "0.19.1",
+  "transformers_version": "5.6.2",
+  "environment_name": "actor-modern",
+  "license": "mit",
+  "access": "public",
+  "model_card": "https://huggingface.co/microsoft/Phi-4-mini-instruct",
+  "serving_reference": "https://docs.vllm.ai/en/v0.19.1/features/tool_calling/",
+  "validation_status": "Official metadata/parser verified; real GPU loading and tool calling pending",
+  "sampling": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_output_tokens": 1024
+  }
+}
