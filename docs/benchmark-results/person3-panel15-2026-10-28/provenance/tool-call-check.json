@@ -1,0 +1,94 @@
+{
+  "validation": "passed",
+  "endpoint_scope": "local_only",
+  "model": "Qwen2.5-7B-Instruct",
+  "tool_call": {
+    "name": "get_day_calendar_events",
+    "arguments": {
+      "day": "2024-05-15"
+    }
+  },
+  "choice_count": 1,
+  "raw_response": {
+    "id": "chatcmpl-c10e5275ff4847c0af8176b71afd83ea",
+    "object": "chat.completion",
+    "created": 1793217219,
+    "model": "Qwen2.5-7B-Instruct",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": [
+            {
+              "id": "chatcmpl-tool-ad011522299d4649ad620a897f7444cf",
+              "type": "function",
+              "function": {
+                "name": "get_day_calendar_events",
+                "arguments": "{\"day\": \"2024-05-15\"}"
+              }
+            }
+          ],
+          "reasoning_content": null
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls",
+        "stop_reason": null,
+        "token_ids": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+      "prompt_tokens": 190,
+      "total_tokens": 221,
+      "completion_tokens": 31,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "kv_transfer_params": null
+  },
+  "continuation": {
+    "id": "chatcmpl-d477b007f1ed4d7a881638c7ce90134b",
+    "object": "chat.completion",
+    "created": 1793217220,
+    "model": "Qwen2.5-7B-Instruct",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "There are no events scheduled for May 15, 2024.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": [],
+          "reasoning_content": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+      "prompt_tokens": 244,
+      "total_tokens": 262,
+      "completion_tokens": 18,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "kv_transfer_params": null
+  },
+  "scope": "controlled simulated tool result; no native task executed"
+}

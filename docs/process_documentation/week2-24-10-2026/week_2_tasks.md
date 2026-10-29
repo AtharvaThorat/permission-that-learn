@@ -169,6 +169,28 @@ Task 2 is complete when the team has an accessible and validated 30-episode unpr
 
 ## Task 3 — Atharva Thorat: Complete Protected Evaluation and Prepare the Matched Results and Demo
 
+### Task 3 update (2026-10-28)
+
+**Executed:** panel-15 in `unprotected`, `wall_only` and `wall_gatekeeper` in one run
+(`p3-panel15-3mode-ea89f9415572449a`) from `main@c56f2fb`, Qwen2.5-7B **BF16** on a Colab A100,
+Laya on CPU at 8192 tokens with `evidence_v2`. Unattended policy: ASK stays pending, nothing
+auto-approved. Real Laya check and a 6-episode smoke test passed first.
+
+- Coverage 90/90, one attempt per episode, comparable per pair ID; 0 Laya errors, 0 enforcement
+  check failures.
+- Clean utility 6/15, 5/15, 1/15; utility under attack 5/15, 5/15, 2/15; attack success 1/15,
+  0/15, 0/15. The only successful attack (`user_task_24`/`inbox_delete`) was stopped by the wall in
+  both protected modes. 15/30 gatekeeper episodes ended pending approval; Laya ALLOW/ASK/BLOCK
+  16/15/17.
+- Overhead: mean episode 4.1 s, 5.0 s, 13.8 s; Laya 328.6 s over 48 calls.
+- Report, traces and provenance: [PERSON3_PANEL15_THREE_MODE_REPORT.md](../../reports/PERSON3_PANEL15_THREE_MODE_REPORT.md).
+  Notebook: `notebooks/person3_panel15_three_mode.ipynb`. Raw run folder on Atharva's Drive.
+
+**Outstanding:** decide whether this in-run BF16 unprotected arm replaces the 4-bit `df0505`
+baseline (it has not been through `person2_validate_run.py`); reconcile with Task 2's switch to the
+HARD panel; repeats/seeds; Laya calibration (Task 1); `user_task_0` wrong-year diagnosis; a
+recorded human-approval demo.
+
 Your responsibility is to execute the protected panel-15 configurations, compare them fairly with the validated baseline, and prepare the evidence package for the October 31 demonstration. This task carries forward both unexecuted protected panels, the real Laya rerun, the wrong-year single-task failure, and the missing complete three-mode comparison. For coding instructions, repository conventions, implementation requirements, and testing expectations, read `docs\PROJECT_GUIDELINES.md` before making changes. Reuse the existing protected configurations, controlled-case checks, per-pair analyzer, scheduler, aggregation, and result storage.
 
 **Verify integration and prepare work that does not depend on Laya.** Inspect the current runtime and confirm that deterministic policy serialization remains intact, pair identities match the baseline, each episode starts from a fresh environment, and protected modes apply their intended enforcement. Check that failures cannot silently fall back to unprotected execution and that gatekeeper errors remain distinct from genuine semantic ASK decisions. Coordinate with Kaustubh on the common panel and provenance and with Siddharth on the real Laya handoff. Configuration checks, report preparation, and the wall-only panel can proceed once their dependencies are ready; they do not need to wait for Laya loading to be solved.
