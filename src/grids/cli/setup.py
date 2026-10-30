@@ -28,7 +28,13 @@ def install_commands(work, component, actor_profile):
         packages = (['-r', str(ROOT / 'environments/laya.txt')] if name == 'runner' else
                     ['-e', str(ROOT), 'vllm==' + actor['vllm_version'], 'transformers==' + actor['transformers_version']]
                     + (['bitsandbytes==0.48.2'] if actor['quantization'] == 'bitsandbytes' else []))
-        commands += [[str(py), '-m', 'pip', 'install', *packages], [str(py), '-m', 'pip', 'check']]
+        if name == 'actor':
+            # Resolve the full binary stack before changing an existing actor environment.
+            commands.append([str(py), '-m', 'pip', 'install', '--dry-run', '--ignore-installed',
+                             '--only-binary=:all:', *packages])
+        commands += [[str(py), '-m', 'pip', 'install',
+                      *(['--only-binary=:all:'] if name == 'actor' else []), *packages],
+                     [str(py), '-m', 'pip', 'check']]
     return commands
 
 
@@ -164,6 +170,9 @@ def main(argv=None):
     if args.command == 'install':
         if not args.dry_run and (platform.system() != 'Linux' or sys.version_info[:2] != (3, 12)):
             parser.error('Installation targets Linux Python 3.12; use --dry-run to inspect elsewhere')
+        if not args.dry_run and args.component in ('actor', 'all'):
+            from grids.actors.preflight import check_host
+            check_host(profile(args.profile))
         for command in install_commands(args.work_dir.resolve(), args.component, args.profile):
             print(json.dumps(command), flush=True)
             if not args.dry_run:

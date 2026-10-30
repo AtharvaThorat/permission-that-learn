@@ -16,6 +16,7 @@ work="${SLURM_TMPDIR:-$PWD/tmp}/grids-${SLURM_JOB_ID}"
 destination="$PERSISTENT_DIR/grids-${SLURM_JOB_ID}"
 test ! -e "$work" && test ! -e "$destination"
 mkdir -p "$work" "$PERSISTENT_DIR"
+export ACTOR_WORK_DIR="$work" ACTOR_USE_GPU=1
 actor_pid='' runner_pid=''
 stop_group() {
   local pid="$1"
@@ -42,6 +43,14 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM USR1
+# Optional site module; this does not make an incompatible wheel installable.
+if [[ -n "${CUDA_MODULE:-}" ]]; then
+  type module >/dev/null 2>&1 || { echo 'Initialize site modules before submission' >&2; exit 2; }
+  module load "$CUDA_MODULE"
+  if [[ -z "${CUDA_HOME:-}" ]] && command -v nvcc >/dev/null 2>&1; then
+    export CUDA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v nvcc)")")")"
+  fi
+fi
 export HF_HUB_CACHE="$HF_HOME/hub" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 USE_TF=0 LAYA_CPU_AMP=0
 export GRIDS_ACTOR_API_KEY="$("$RUN_PY" -c 'import secrets; print(secrets.token_hex(24))')"
 "$RUN_PY" -m grids benchmark validate --config "$CONFIG" > "$work/plan.json"
@@ -50,6 +59,8 @@ export GRIDS_ACTOR_API_KEY="$("$RUN_PY" -c 'import secrets; print(secrets.token_
 "$RUN_PY" -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",8000)); s.close()'
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv > "$work/hardware.txt"
 grep -q A100 "$work/hardware.txt" || { echo 'Allocated GPU is not A100' >&2; exit 2; }
+"$ACTOR_PY" -m pip check > "$work/actor-dependencies.txt" 2>&1
+"$ACTOR_PY" -m grids validate actor-env --profile "$PROFILE" --gpu --output "$work/actor-preflight.json" > "$work/actor-preflight.log" 2>&1
 "$RUN_PY" -m pip freeze > "$work/runner-packages.txt"
 "$ACTOR_PY" -m pip freeze > "$work/actor-packages.txt"
 git rev-parse HEAD > "$work/source-revision.txt"

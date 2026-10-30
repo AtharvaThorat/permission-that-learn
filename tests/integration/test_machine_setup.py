@@ -54,7 +54,7 @@ def test_install_dry_run_has_no_environment_or_process_side_effects(tmp_path, mo
     target = tmp_path / 'envs'
     setup.main(['install', '--work-dir', str(target), '--dry-run'])
     commands = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
-    assert len(commands) == 6 and not target.exists()
+    assert len(commands) == 7 and not target.exists()
     requirement = next(part for c in commands for part in c if part.endswith('environments/laya.txt') or part.endswith('environments\\laya.txt'))
     assert 'laya==0.3.28' in Path(requirement).read_text()
     assert any('vllm==0.11.0' in c for c in commands)
@@ -83,4 +83,6 @@ def test_qwen35_uses_separate_compatible_environment(tmp_path):
     assert commands[0][-1] == str(tmp_path / 'actor-qwen35')
     assert 'vllm==0.19.1' in commands[1]
     assert 'transformers==5.6.2' in commands[1]
+    assert '--dry-run' in commands[1]
+    assert all('--only-binary=:all:' in c for c in commands if 'install' in c)
     assert not any('bitsandbytes' in part for command in commands for part in command)

@@ -28,3 +28,7 @@ Real inference is a separate opt-in layer: `grids validate laya`, `grids validat
 actor --multi-turn`, then small native episodes. Follow [setup](../guides/setup.md),
 inspect artifacts, and record the actual hardware/pins/outcome in a milestone.
 No mocked prediction may be presented as real Laya or actor evidence.
+
+Actor installation tests cover glibc rejection before subprocess execution,
+binary-only resolution stopping installation, package mismatch, and durable failed
+preflight reports. GPU kernel/model checks require explicit allocated hardware.

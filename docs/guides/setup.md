@@ -95,3 +95,10 @@ For Colab CLI automation, first run `colab --help`, `colab sessions`, and `colab
 Use the installed interface to execute the same commands on the chosen session,
 download outputs, stop sessions you started, and verify their final status. No Colab
 session has been created or stopped by this refactor. See [CARC](carc.md) for Slurm.
+
+Actor setup uses binary-only dependency resolution and refuses implicit source
+builds. Qwen3.5/vLLM 0.19.1 requires Linux glibc >=2.31 for its published wheel.
+For Rocky 8 / older CARC nodes, use the pinned container instructions in
+[CARC setup](carc.md#qwen35-installation-failure-job-13499742). Before model startup
+inside a GPU allocation, run `"$ACTOR_PY" -m grids validate actor-env --profile
+"$PROFILE" --gpu`. Passing this check does not replace real tool-call validation.

@@ -22,3 +22,5 @@ the ignored root `results/`, not in documentation or source directories.
 The former operations, reports, schemas, user_manual, and process_documentation
 trees were retired. Use the destinations above; Git retains their history.
 Do not recreate parallel command manuals or status reports.
+
+[CARC installation repair](milestones/2026-10-carc-actor-installation.md) records the wheel failure, safeguards, tests and pending on-cluster validation.

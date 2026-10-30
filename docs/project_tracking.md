@@ -41,3 +41,15 @@ The labeled authorization benchmark is not yet available.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.
+
+## CARC actor installation repair
+
+- Job 13499742 failed during vLLM source-build setup, before any inference.
+- Actor setup now resolves binary wheels only and rejects incompatible Qwen3.5
+  host glibc before installation. Batch startup checks dependencies/native imports
+  and CUDA before serving; failures are retained in job artifacts.
+- Added a pinned Apptainer actor adapter for older Linux hosts, keeping runner/Laya
+  separate. See [CARC guide](guides/carc.md) for preparation and validation commands.
+- CARC glibc/driver outputs, container installation and allocated-A100 smoke tests
+  remain unverified. No benchmark or GPU job submitted for this repair.
+- Repair verification: 11 focused tests and 266 full CPU tests passed; Ruff and Bash syntax checks passed. [Evidence](milestones/2026-10-carc-actor-installation.md).

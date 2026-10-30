@@ -34,7 +34,9 @@ def main(argv=None):
             from .validate_laya import main as validate
         elif rest and rest[0] == 'actor':
             from .validate_actor import main as validate
-        else: parser.error('validate laya --help | validate actor --help')
+        elif rest and rest[0] == 'actor-env':
+            from grids.actors.preflight import main as validate
+        else: parser.error('validate laya --help | validate actor --help | validate actor-env --help')
         return validate(rest[1:])
     if args.command == 'benchmark':
         if rest and rest[0] == 'config':
