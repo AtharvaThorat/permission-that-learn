@@ -111,12 +111,12 @@ class ExistingLayaGate:
                               'evaluated_action_id': action.action_id, 'reason_codes': [wall.reason]},
                      'verified_context': {'confirmation_required': wall.confirmation_required,
                          'evidence_complete': action.evidence_complete,
-                         'facts': {'metadata': (facts if self.config and self.config.input_profile in ('full_evidence', 'evidence_v2')
+                         'facts': {'metadata': (facts if self.config and self.config.input_profile in ('full_evidence', 'evidence_v2', 'compact_v1')
                                                else semantic_facts(action.tool, facts)), 'effects': list(action.effects),
                                    'provenance': 'native_schema_and_declared_metadata'}}}
             if self.config and self.config.input_profile == 'full_evidence':
                 state['verified_context']['facts']['omitted_evidence'] = []
-            if len(canonical(state)) > self.max_chars and not (self.config and self.config.input_profile == 'evidence_v2'):
+            if len(canonical(state)) > self.max_chars and not (self.config and self.config.input_profile in ('evidence_v2', 'compact_v1')):
                 if self.recorder:
                     self.recorder('gate_input', {'action_id': action.action_id, 'input': state,
                                   'raw_output': None, 'error_kind': 'application_character_budget'})

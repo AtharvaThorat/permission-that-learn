@@ -75,3 +75,9 @@ native AgentDojo actions, through the same replay path as frozen evaluation. Ins
 `review.csv` exists, because review decisions are keyed to candidate ids. Builds are
 deterministic. These labels train the model; they are not independent evaluation labels
 for the frozen-action comparison above.
+
+For 1,024-token checkpoints such as `TextCortex/laya-cybersec`, set the gatekeeper `input_profile`
+to `compact_v1` and `max_input_tokens` to 1024. `compact`, `compact-tokens` (in a `environments/laya.txt`
+environment) and `compact-validate` build and check
+[`docs/results/laya-permission-v1-compact/`](../results/laya-permission-v1-compact/README.md) with the
+same function.

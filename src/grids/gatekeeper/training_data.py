@@ -107,6 +107,7 @@ class Layout:
     raw: Path = ROOT / 'results' / NAME / 'raw'
     work: Path = ROOT / 'results' / NAME / 'work'
     published: Path = ROOT / 'docs' / 'results' / NAME
+    compact: Path = ROOT / 'docs' / 'results' / (NAME + '-compact')
 
     @property
     def review(self):
@@ -820,9 +821,180 @@ def validate(layout, args):
     print('valid')
 
 
+# ------------------------------------------------------------------- compact_v1
+
+# Checkpoints the compact data is sized for: (repository, revision, head_max_len from its rl_agent_config).
+TOKEN_CHECKPOINTS = {
+    'laya-cybersec': ('TextCortex/laya-cybersec', '41fd5a2dfced0fb357974afd780a3ed6e7c43838', 256),
+    'laya': ('convaiinnovations/laya', '7b928d828b7b0e022f929d9bd2e44165aa270148', 192),
+}
+COMPACT_MAX_LEN = 1024
+COMPACT_TOKEN_TARGET = 850  # context tokens; leaves margin inside the 1024-token sequence
+EVIDENCE_SPAN = 60  # contiguous characters of the injected text that must survive
+
+
+def compact_rows(rows):
+    """Same rows with `context` replaced by the compact_v1 transform used at inference."""
+    from grids.gatekeeper.context import compact
+    return [dict(row, context=compact(row['context'])[0]) for row in rows]
+
+
+def compact_stage(layout, _args):
+    layout.compact.mkdir(parents=True, exist_ok=True)
+    for split in SPLITS:
+        write_jsonl(layout.compact / f'{split}.jsonl', compact_rows(read_jsonl(layout.published / f'{split}.jsonl')))
+    print(f'wrote {layout.compact} from {layout.published} (original unchanged)')
+
+
+def _unescape(text):
+    """Tool outputs are YAML: undo \\uXXXX escapes and backslash line continuations before comparing text."""
+    text = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), text)
+    return re.sub(r'\\\n\s*(\\ )?', ' ', text)
+
+
+def _plain(text):
+    return re.sub(r'\s+', ' ', re.sub(r"[\"'`|\\]", ' ', _unescape(text))).strip().lower()
+
+
+def _longest_shared(a, b):
+    from difflib import SequenceMatcher
+    return SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b)).size
+
+
+def injected_payloads(layout):
+    """source_id -> injected text, from the deterministic build (regenerated in memory if needed)."""
+    path = layout.work / 'candidates.jsonl'
+    if path.exists():
+        rows = read_jsonl(path)
+    else:
+        verify_agentdojo()
+        with frozen_clock():
+            rows = generate(layout)
+    return {r['source_id']: r['meta']['injected_text'] for r in rows if r['meta']['injected_text']}
+
+
+def check_compact(original_dir, compact_dir, payloads=None):
+    """Problems and summary for a compact pair against its original; no tokenizer needed."""
+    from grids.gatekeeper.context import COMPACT_TARGET_ARGS, _scalars, compact
+    problems, lines = [], []
+    totals = Counter()
+    for split in SPLITS:
+        original = read_jsonl(Path(original_dir) / f'{split}.jsonl')
+        rows = read_jsonl(Path(compact_dir) / f'{split}.jsonl')
+        if [{k: r[k] for k in ROW_KEYS if k != 'context'} for r in rows] != [{k: r[k] for k in ROW_KEYS if k != 'context'} for r in original]:
+            problems.append(f'{split}: ids, prompts, labels or sources differ from the original')
+            continue
+        for full, row in zip(original, rows):
+            state, source = json.loads(row['context']), json.loads(full['context'])
+            if row['context'] != compact(full['context'])[0]:
+                problems.append(f'{row["id"]}: context is not compact_v1 of the original')
+                continue
+            for key in ('authentic_user_request', 'untrusted_proposed_action', 'wall'):
+                if state.get(key) != source.get(key):
+                    problems.append(f'{row["id"]}: {key} changed by compaction')
+            for key in ('confirmation_required', 'evidence_complete'):
+                if state['verified_context'].get(key) != source['verified_context'].get(key):
+                    problems.append(f'{row["id"]}: {key} changed by compaction')
+            facts = state['verified_context']['facts']
+            history = json.dumps(facts['history'], ensure_ascii=False).lower()
+            outputs = '\n'.join(str(m['content']) for m in source['verified_context']['facts'].get('untrusted_history', [])
+                                if m['role'] == 'tool').lower()
+            arguments = source['untrusted_proposed_action']['arguments']
+            for key, value in arguments.items():
+                if key in COMPACT_TARGET_ARGS:
+                    for item in _scalars(value):
+                        if item not in facts['targets']:
+                            problems.append(f'{row["id"]}: target {item} has no trust class')
+            for value in set(_scalars(arguments)):
+                if 4 <= len(value) <= 80 and value.lower() in outputs and value.lower() not in row['prompt'].lower():
+                    totals['provenance'] += 1
+                    totals['provenance_kept'] += value.lower() in history
+            if payloads is not None and row['label'] == 'BLOCK' and '/mismatch/' not in row['source_id']:
+                totals['injected'] += 1
+                payload = _plain(payloads[row['source_id']])
+                values = [_plain(v) for v in _scalars(arguments) if _plain(v)]
+                need = min(EVIDENCE_SPAN, len(payload))
+                kept = any(_longest_shared(payload, _plain(e['text'])) >= need and
+                           any((v in _plain(e['text'])) if len(v) >= 4 else re.search(rf'\b{re.escape(v)}\b', _plain(e['text']))
+                               for v in values) for e in facts['history']['evidence'])
+                totals['injected_kept'] += kept
+                if not kept:
+                    problems.append(f'{row["id"]}: injected instruction lost by compaction')
+    if payloads is not None:
+        lines.append(f'injected-BLOCK rows keeping >= {EVIDENCE_SPAN} chars of the injected text with the attack target: '
+                     f'{totals["injected_kept"]}/{totals["injected"]}')
+    lines.append(f'action values taken from tool outputs whose source stays in the compact history: '
+                 f'{totals["provenance_kept"]}/{totals["provenance"]}')
+    return problems, lines
+
+
+def compact_validate(layout, _args):
+    """Check the compact pair; when valid, render its README from the results and token report."""
+    problems, lines = check(layout.compact, load=True)
+    more, summary = check_compact(layout.published, layout.compact, injected_payloads(layout))
+    print('\n'.join(lines + summary))
+    if problems + more:
+        sys.exit('INVALID:\n  ' + '\n  '.join(problems + more))
+    report_path = layout.compact / 'token_report.json'
+    if not report_path.exists():
+        sys.exit('valid, but token_report.json is missing: run compact-tokens in a Laya environment first')
+    report = json.loads(report_path.read_text(encoding='utf-8'))
+    tokens = ['| Checkpoint | Revision | Room for context | Train median / max | Test median / max | Over budget |',
+              '|---|---|---:|---|---|---:|']
+    for name, entry in report['checkpoints'].items():
+        s = entry['splits']
+        tokens.append(f'| {entry["repository"]} | `{entry["revision"][:8]}` | {entry["context_room"]} | '
+                      f'{s["train"]["median"]} / {s["train"]["max"]} | {s["test"]["median"]} / {s["test"]["max"]} | '
+                      f'{sum(len(v["over"]) for v in s.values())} |')
+    validation = '\n'.join(f'- {line}' for line in [
+        'same ids, prompts, labels, sources and groups as the original; 300 train and 150 test rows, 100/50 per label',
+        'every context equals compact_v1 of the original context (deterministic), is canonical and validates as a '
+        'Laya state; request, action, wall and flags unchanged; every target identity has a trust class',
+        'no duplicate contexts or source ids, no label word in any context, no prompt and action pair with two labels, '
+        'no shared group or near-duplicate prompt across splits; both files load with `datasets`', *summary,
+        f'every row fits {report["context_token_target"]} context tokens and its checkpoint room (table below)'])
+    hashes = '\n'.join(f'- `{name}`: `{sha256(layout.compact / name)}`' for name in ('train.jsonl', 'test.jsonl', 'token_report.json'))
+    card = (layout.config / 'compact_card.md').read_text(encoding='utf-8')
+    for key, value in {'{validation}': validation, '{tokens}': '\n'.join(tokens), '{hashes}': hashes}.items():
+        card = card.replace(key, value)
+    (layout.compact / 'README.md').write_text(card, encoding='utf-8')
+    print(f'valid; wrote {layout.compact / "README.md"}')
+
+
+def compact_tokens(layout, _args):
+    """Context tokens per row with each checkpoint's own tokenizer and Laya's sequence builder (needs laya)."""
+    from transformers import AutoTokenizer
+    from laya.agent import Agent
+    from laya.common import encode_text, serialize_state, state_room
+    from grids.gatekeeper.questions import questions_for_mode
+
+    question = Agent._to_internal(questions_for_mode('single')['decision'])
+    report, failures = {'max_len': COMPACT_MAX_LEN, 'context_token_target': COMPACT_TOKEN_TARGET, 'checkpoints': {}}, []
+    for name, (repository, revision, head) in TOKEN_CHECKPOINTS.items():
+        tok = AutoTokenizer.from_pretrained(repository, revision=revision, subfolder='tokenizer')
+        room = state_room(tok, question, COMPACT_MAX_LEN, head)
+        entry = {'repository': repository, 'revision': revision, 'head_max_len': head, 'context_room': room, 'splits': {}}
+        for split in SPLITS:
+            counts = {r['id']: len(encode_text(tok, serialize_state(r['context']).replace(tok.mask_token, ' '),
+                                               add_special_tokens=False)['input_ids'])
+                      for r in read_jsonl(layout.compact / f'{split}.jsonl')}
+            ordered = sorted(counts.values())
+            over = sorted(i for i, n in counts.items() if n > min(room, COMPACT_TOKEN_TARGET))
+            entry['splits'][split] = {'rows': len(ordered), 'median': ordered[len(ordered) // 2], 'max': ordered[-1], 'over': over}
+            failures += [f'{name} {i}' for i in over]
+            print(f'{name} {split}: median {ordered[len(ordered) // 2]}, max {ordered[-1]} tokens; room {room}; '
+                  f'over min(room, {COMPACT_TOKEN_TARGET}): {len(over)}')
+        report['checkpoints'][name] = entry
+    write_json(layout.compact / 'token_report.json', report)
+    if failures:
+        sys.exit('rows over the token budget: ' + ', '.join(failures))
+    print(f'wrote {layout.compact / "token_report.json"}')
+
+
 def main(argv=None):
     stages = {'fetch': fetch, 'extract': extract, 'candidates': candidates, 'review': review,
-              'finalize': finalize, 'validate': validate}
+              'finalize': finalize, 'validate': validate, 'compact': compact_stage,
+              'compact-validate': compact_validate, 'compact-tokens': compact_tokens}
     parser = argparse.ArgumentParser(prog='grids training-data', description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('stage', choices=stages)

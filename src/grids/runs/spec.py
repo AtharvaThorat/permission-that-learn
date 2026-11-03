@@ -88,7 +88,7 @@ class Specification(Strict):
             raise ValueError('Positive resource group limits required')
         if self.wall.implementation != 'ptl':
             raise ValueError('Primary experiments require the teammate ptl wall; reference is a legacy fixture')
-        if self.gatekeeper.input_profile not in ('full_evidence', 'evidence_v2'):
+        if self.gatekeeper.input_profile not in ('full_evidence', 'evidence_v2', 'compact_v1'):
             raise ValueError('Primary experiments require explicit full gate evidence')
         return self
 

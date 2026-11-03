@@ -12,4 +12,5 @@ refactor; historical tracked reports are available in Git.
 
 `laya-permission-v1/` is a curated training dataset with its own card, label guide,
 review sheet and file hashes. It is not an evaluation result and its labels are not
-independent authorization ground truth.
+independent authorization ground truth. `laya-permission-v1-compact/` holds the same rows
+with `context` reduced by `compact_v1` for 1,024-token Laya checkpoints.
