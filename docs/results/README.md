@@ -9,3 +9,7 @@ Raw generated artifacts belong in ignored root `results/` and approved persisten
 storage. Preserve unique attempts and manifests. Do not commit credentials, caches,
 model weights, or unchecked raw traces. There are no new research results from this
 refactor; historical tracked reports are available in Git.
+
+`laya-permission-v1/` is a curated training dataset with its own card, label guide,
+review sheet and file hashes. It is not an evaluation result and its labels are not
+independent authorization ground truth.

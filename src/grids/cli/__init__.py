@@ -8,7 +8,8 @@ def main(argv=None):
     import sys
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(prog='grids', description='Authorization evaluation and native AgentDojo experiments')
-    parser.add_argument('command', choices=['setup', 'models', 'serve', 'validate', 'benchmark', 'dataset', 'evaluate', 'report'])
+    parser.add_argument('command', choices=['setup', 'models', 'serve', 'validate', 'benchmark', 'dataset', 'evaluate', 'report',
+                                            'training-data'])
     if not argv or argv[0] in ('-h', '--help'):
         parser.print_help()
         return
@@ -42,6 +43,9 @@ def main(argv=None):
             return setup(rest)
         from .benchmark import main as benchmark
         return benchmark(rest)
+    if args.command == 'training-data':
+        from grids.gatekeeper.training_data import main as training_data
+        return training_data(rest)
     sub = argparse.ArgumentParser(prog='grids '+args.command)
     if args.command == 'dataset':
         sub.add_argument('operation', choices=['capture', 'validate', 'export-labels', 'import-labels'])

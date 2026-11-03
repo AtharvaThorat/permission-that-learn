@@ -1,7 +1,8 @@
 # Project tracking
 
-Updated 2026-10-29. Use the [documentation index](README.md) for commands and
-architecture, and the [refactor milestone](milestones/2026-10-refactor.md) for evidence.
+Updated 2026-11-02. Use the [documentation index](README.md) for commands and
+architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
+[training-data milestone](milestones/2026-11-laya-training-data.md) for evidence.
 
 ## Current objective
 
@@ -22,6 +23,10 @@ The labeled authorization benchmark is not yet available.
 - Consolidated dependencies, docs and notebooks; removed obsolete tracked wrappers,
   panels and reports. Local raw results, environments and caches retained.
 - Final CPU regression: **262 passed**; Ruff passed. No real models run in this refactor.
+- Laya fine-tuning data (2026-11-02, branch `data/laya-permission-v1`): `grids training-data`
+  and [laya-permission-v1](results/laya-permission-v1/README.md), 300 train (Slack, Banking) and
+  150 test (Workspace) rows, 100/50 per label, exact Laya input in `context`, deterministic
+  builds. Labels reviewed by Claude, not a human. CPU regression **273 passed**.
 
 ## Remaining work
 
@@ -38,6 +43,11 @@ The labeled authorization benchmark is not yet available.
    process exit remains unsupported; only live exact-bound approval can dispatch.
 6. Evaluate a newer AgentDojo revision/local clone separately. The pin is unchanged;
    full benchmarks and model-quality comparisons were not run here.
+7. Serialize Wall identities and policies deterministically: frozensets currently change
+   `permission-context.json`, frozen `context_id` and the Laya input across processes
+   (see the training-data milestone).
+8. Have people relabel at least the training-data test split before reporting accuracy on it,
+   then fine-tune Laya and validate it with real inference.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.
