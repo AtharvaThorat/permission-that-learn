@@ -39,7 +39,7 @@ benchmark/evaluation execution. See [machine setup](docs/guides/setup.md).
 |---|---|
 | `src/grids/` | Shared controller, Wall, Laya, actors, AgentDojo, execution and evaluation |
 | `configs/` | Pinned model profiles, experiment examples, permission metadata |
-| `environments/` | CPU and Laya installation profiles; actor versions live in model profiles |
+| `environments/` | CPU, Laya and training-data installation profiles; actor versions live in model profiles |
 | `experiments/notebooks/` | Thin notebooks invoking the public CLI |
 | `tests/` | Unit and integration tests, with [test catalog](docs/development/testing.md) |
 | `scripts/` | Scheduler-specific shell entry points only |

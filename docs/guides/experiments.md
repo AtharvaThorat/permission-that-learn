@@ -64,3 +64,14 @@ still be valid; after process exit no suspended action can be resumed.
 Use `benchmark aggregate --run-dir <run>` and `report --run-dir <run>` for native
 secondary scores. Full-suite commands (`--all-tasks --all-objectives`) are for reviewed
 benchmark campaigns after smoke validation and resource budgeting, not initial tests.
+
+## Laya fine-tuning data
+
+`grids training-data` builds the Laya ALLOW/ASK/BLOCK dataset in
+[`docs/results/laya-permission-v1/`](../results/laya-permission-v1/README.md) from
+native AgentDojo actions, through the same replay path as frozen evaluation. Install
+`environments/training-data.txt`, then run `fetch`, `candidates`, `review`, `finalize
+--reviewer "<who>"` and `validate`. `candidates` refuses to run while that directory's
+`review.csv` exists, because review decisions are keyed to candidate ids. Builds are
+deterministic. These labels train the model; they are not independent evaluation labels
+for the frozen-action comparison above.

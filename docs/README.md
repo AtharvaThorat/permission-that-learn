@@ -14,6 +14,8 @@
 | [development/testing.md](development/testing.md) | Test catalog and required checks |
 | [milestones/2026-10-refactor.md](milestones/2026-10-refactor.md) | Refactor decisions, migration, and validation evidence |
 | [results/README.md](results/README.md) | Rules for future curated research results |
+| [results/laya-permission-v1/README.md](results/laya-permission-v1/README.md) | Laya ALLOW/ASK/BLOCK fine-tuning dataset, label guide and review sheet |
+| [milestones/2026-11-laya-training-data.md](milestones/2026-11-laya-training-data.md) | Training-data build, verification evidence and limitations |
 
 Source, configuration, environment, test, and notebook directory responsibilities
 are mapped in the [project README](../README.md). Generated artifacts belong in
