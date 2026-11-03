@@ -363,7 +363,7 @@ class LayaBackend:
         if self.error:
             return Prediction(error=self.error, error_kind=self.error_kind)
         state = model_state(req)
-        if self.context_profile == 'evidence_v2':
+        if self.context_profile in ('evidence_v2', 'compact_v1'):
             value = json.loads(state)
             value['wall'] = req.wall.model_dump() if req.wall else None
             state = json.dumps(value, ensure_ascii=False)

@@ -1,0 +1,46 @@
+{
+  "checkpoints": {
+    "laya": {
+      "context_room": 874,
+      "head_max_len": 192,
+      "repository": "convaiinnovations/laya",
+      "revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+      "splits": {
+        "test": {
+          "max": 741,
+          "median": 417,
+          "over": [],
+          "rows": 150
+        },
+        "train": {
+          "max": 622,
+          "median": 300,
+          "over": [],
+          "rows": 300
+        }
+      }
+    },
+    "laya-cybersec": {
+      "context_room": 882,
+      "head_max_len": 256,
+      "repository": "TextCortex/laya-cybersec",
+      "revision": "41fd5a2dfced0fb357974afd780a3ed6e7c43838",
+      "splits": {
+        "test": {
+          "max": 764,
+          "median": 439,
+          "over": [],
+          "rows": 150
+        },
+        "train": {
+          "max": 748,
+          "median": 304,
+          "over": [],
+          "rows": 300
+        }
+      }
+    }
+  },
+  "context_token_target": 850,
+  "max_len": 1024
+}

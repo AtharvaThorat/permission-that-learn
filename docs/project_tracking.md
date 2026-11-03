@@ -1,8 +1,9 @@
 # Project tracking
 
-Updated 2026-11-02. Use the [documentation index](README.md) for commands and
+Updated 2026-11-03. Use the [documentation index](README.md) for commands and
 architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
-[training-data milestone](milestones/2026-11-laya-training-data.md) for evidence.
+[training-data](milestones/2026-11-laya-training-data.md) and
+[compact_v1](milestones/2026-11-laya-compact.md) milestones for evidence.
 
 ## Current objective
 
@@ -27,6 +28,11 @@ The labeled authorization benchmark is not yet available.
   and [laya-permission-v1](results/laya-permission-v1/README.md), 300 train (Slack, Banking) and
   150 test (Workspace) rows, 100/50 per label, exact Laya input in `context`, deterministic
   builds. Labels reviewed by Claude, not a human. CPU regression **273 passed**.
+- compact_v1 Laya input (2026-11-03, branch `data/laya-permission-v1-compact`): `compact()` in
+  `gatekeeper/context.py` as input profile `compact_v1`, and
+  [laya-permission-v1-compact](results/laya-permission-v1-compact/README.md). All 450 rows fit 1,024 tokens
+  with Laya-Cybersec and pinned Laya tokenizers (max 764 context tokens); injected evidence kept in 119/119.
+  CPU regression **282 passed**.
 
 ## Remaining work
 
@@ -48,6 +54,8 @@ The labeled authorization benchmark is not yet available.
    (see the training-data milestone).
 8. Have people relabel at least the training-data test split before reporting accuracy on it,
    then fine-tune Laya and validate it with real inference.
+9. Pass tool history and trusted identities into the live Laya input (`gatekeeper_adapter`), which today carries
+   neither, so live `compact_v1` states match training; verify `TextCortex/laya-cybersec` before pinning it.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.

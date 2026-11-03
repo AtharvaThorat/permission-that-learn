@@ -5,7 +5,7 @@ block model loading/downloads through `tests/conftest.py`.
 
 | Location | Essential coverage |
 |---|---|
-| `tests/unit/core` | Parsing, exact binding, ALLOW/BLOCK/ASK, stale/replayed approvals, bounded execution, context limits, snapshot layout and initialization errors, actor transport, Laya training data (published files, exact and reproducible model input, attacker identities, review selection) |
+| `tests/unit/core` | Parsing, exact binding, ALLOW/BLOCK/ASK, stale/replayed approvals, bounded execution, context limits, snapshot layout and initialization errors, actor transport, Laya training data (published files, exact and reproducible model input, attacker identities, review selection), compact_v1 input (verbatim request/action, trust classes, injection evidence, fail-closed preflight, published compact data) |
 | `tests/unit/wall` | Policy/context normalization, unknown identities/resources, determinism and property-based invariants |
 | `tests/integration/test_platform.py` | Planning identities, all live modes with native fixtures, scheduler caps, claims, stateful capture and attempt aggregation |
 | `tests/integration/test_authorization.py` | Same-input comparators, no actor/tool replay, independent label identities, corruption, missing metrics and model-error exclusion |

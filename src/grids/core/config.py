@@ -53,7 +53,7 @@ class GateConfig(Strict):
     load_timeout_seconds: float = Field(default=300.0, gt=0)
     allow_downloads: Literal[False] = False
     device: Literal['cpu'] = 'cpu'
-    input_profile: Literal['legacy_collection_summary', 'full_evidence', 'evidence_v2'] = 'legacy_collection_summary'
+    input_profile: Literal['legacy_collection_summary', 'full_evidence', 'evidence_v2', 'compact_v1'] = 'legacy_collection_summary'
     max_input_tokens: int | None = Field(default=None, ge=512, le=8192)
 
 class RuntimeConfig(Strict):
