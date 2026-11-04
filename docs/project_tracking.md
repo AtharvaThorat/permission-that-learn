@@ -33,6 +33,10 @@ The labeled authorization benchmark is not yet available.
   [laya-permission-v1-compact](results/laya-permission-v1-compact/README.md). All 450 rows fit 1,024 tokens
   with Laya-Cybersec and pinned Laya tokenizers (max 764 context tokens); injected evidence kept in 119/119.
   CPU regression **282 passed**.
+- LLM permission benchmark notebook (2026-11-03, branch `03_Nov_LLM_Permission_Benchmark`):
+  [milestone](milestones/2026-11-llm-permission-benchmark.md). Five Ollama models on the 150 compact test rows, LLM alone vs
+  Wall + LLM, no AgentDojo. Real Wall matches the recorded verdict on 150/150 rows; rehearsed against a fake server only.
+  **No real model has run.**
 
 ## Remaining work
 

@@ -18,6 +18,7 @@
 | [milestones/2026-11-laya-training-data.md](milestones/2026-11-laya-training-data.md) | Training-data build, verification evidence and limitations |
 | [results/laya-permission-v1-compact/README.md](results/laya-permission-v1-compact/README.md) | The same dataset compacted to fit 1,024 Laya tokens |
 | [milestones/2026-11-laya-compact.md](milestones/2026-11-laya-compact.md) | compact_v1 measurement, design, verification and limitations |
+| [milestones/2026-11-llm-permission-benchmark.md](milestones/2026-11-llm-permission-benchmark.md) | Five-LLM benchmark notebook, LLM alone vs Wall + LLM: design, checks and limitations |
 
 Source, configuration, environment, test, and notebook directory responsibilities
 are mapped in the [project README](../README.md). Generated artifacts belong in
