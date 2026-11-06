@@ -35,8 +35,12 @@ The labeled authorization benchmark is not yet available.
   CPU regression **282 passed**.
 - LLM permission benchmark notebook (2026-11-03, branch `03_Nov_LLM_Permission_Benchmark`):
   [milestone](milestones/2026-11-llm-permission-benchmark.md). Five Ollama models on the 150 compact test rows, LLM alone vs
-  Wall + LLM, no AgentDojo. Real Wall matches the recorded verdict on 150/150 rows; rehearsed against a fake server only.
-  **No real model has run.**
+  Wall + LLM, no AgentDojo. Real Wall matches the recorded verdict on 150/150 rows. Real A100 run, 100% coverage: no configuration
+  beat the Wall alone (85/150; best 84/150). Across models, BLOCK rows approved fell from 14 to 1 of 250 with the Wall, and LLM
+  calls, time and GPU energy fell about 50%. 29 of the Wall's 32 disagreements are policy refusals (the request asks for an
+  external recipient the policy forbids), reported separately. Without them, Wall + LLM beats the LLM alone for 4 of 5 models.
+  Results in [docs/results/llm-permission-benchmark](results/llm-permission-benchmark/README.md). Labels are LLM-reviewed,
+  so this is agreement with them, not authorization accuracy.
 
 ## Remaining work
 

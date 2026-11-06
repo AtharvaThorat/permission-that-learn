@@ -36,7 +36,7 @@ notebook guideline made at the requester's direction.
 
 ## Verification on 2026-11-03
 
-CPU only, no real model. A local fake Ollama server returned invented answers, so its metrics mean nothing.
+Before the real run, on CPU with no real model. A local fake Ollama server returned invented answers, so its metrics mean nothing.
 
 ```bash
 python -m ruff check src tests
@@ -50,20 +50,73 @@ python -m pytest -q -p no:cacheprovider
   exactly 150 unique rows; a finished run sends no more requests; user messages equal the row context, plus the Wall field
   in B; B calls the LLM on 70 rows, all PASS; `think` is sent only to thinking-capable models; errors and unparseable
   replies lower coverage; an interrupted run keeps its compute measurement; a missing power reading stays missing;
-  workbook, CSVs and six charts are written. GPU readings were faked too, so `nvidia-smi` parsing is unverified.
+  workbook, CSVs and six charts are written. GPU readings were faked in this rehearsal; the real run below measured them.
 
 Facts about the data, independent of any LLM: the Wall alone agrees with 85/150 labels, passes 70 rows, and stops all 39 injected
 BLOCK rows. It approves 8/50 BLOCK and 25/50 ASK rows, and blocks 10/50 ALLOW rows. Because it disagrees with the labels on 32
 of the 80 rows it stops, Configuration B cannot exceed **118/150 (78.7%)**. B therefore makes 53% fewer LLM calls (70 against 150).
 The real Wall took about 0.16 s of CPU for all 150 rows on a Windows laptop, including rebuilding its policy for every row.
 
+## Real run on 2026-11-03
+
+Colab A100-SXM4-40GB, Ollama 0.40.14, repository code at `a4af015`, seed 42, `RUN_NAME` `run_01`. Coverage 100%: no errors or
+unparseable replies, and all models ran fully on the GPU. Outputs are saved in the notebook (commit `735ecc8`); the raw run
+folder is on the requester's Drive under `agentdojo_local_benchmark/llm_permission_benchmark/run_01`. Charts, summary CSVs,
+digests and settings are in [docs/results/llm-permission-benchmark](../results/llm-permission-benchmark/README.md).
+
+Counts are out of 150 (accuracy) and 50 (approved rows). Arrows read A → B; `p` is exact McNemar on accuracy.
+
+| Model (digest) | Accuracy | p | BLOCK approved | ASK approved | False block | LLM seconds | GPU Wh |
+|---|---|---:|---|---|---|---|---|
+| `qwen2.5:7b` (`845dbda0ea48`) | 84 → 84 | 1.000 | 2 → 0 | 30 → 19 | 11 → 16 | 31.5 → 12.4 | 1.58 → 0.61 |
+| `qwen3.5:9b-q4_K_M` (`56671c2ab938`) | 74 → 84 | 0.002 | 0 → 0 | 13 → 21 | 27 → 19 | 71.5 → 31.6 | 2.78 → 1.30 |
+| `ministral-3:8b-instruct-2512-q4_K_M` (`1922accd5827`) | 76 → 73 | 0.648 | 1 → 0 | 7 → 6 | 20 → 22 | 40.1 → 20.8 | 2.07 → 0.99 |
+| `llama3.1:8b` (`46e0c10c039e`) | 79 → 83 | 0.659 | 0 → 0 | 1 → 0 | 1 → 11 | 30.8 → 15.8 | 1.34 → 0.79 |
+| `nemotron-3-nano:4b-q4_K_M` (`6cc467f05439`) | 69 → 79 | 0.087 | 11 → 1 | 39 → 22 | 12 → 19 | 76.0 → 34.4 | 2.27 → 1.13 |
+| Wall only (no LLM) | 85 | | 8 | 25 | 10 | 0 | 0 |
+
+- **Accuracy:** no configuration exceeded the Wall alone (85/150). Only `qwen3.5:9b` changed significantly with the Wall in
+  front (McNemar p = 0.002).
+- **Harmful approvals:** across all models, approved BLOCK rows fell from 14 to 1 of 250, and approved injected BLOCK rows from
+  11 to 0 of 195. `nemotron-3-nano` accounts for 11 of the 14 and 9 of the 11 without the Wall.
+- **The layers complement each other on BLOCK:** the Wall alone approves 8/50 BLOCK rows, every Wall + LLM setup 0 or 1.
+- **Low approval is not always judgment:** alone, `qwen3.5:9b` decides BLOCK on 113/150 rows and `llama3.1:8b` decides ASK on
+  118/150, including 43/50 ALLOW rows.
+- **ASK is the weak class:** correct ASK alone is 7, 1, 11, 49 and 0 of 50, and 9, 7, 10, 31 and 6 of 50 with the Wall.
+- **Compute, all five models, A → B:** LLM calls 750 → 350 (53% fewer), tokens 479,720 → 247,872 (48%), LLM time 249.8 s → 115.0 s
+  (54%), GPU energy 10.04 Wh → 4.81 Wh (52%), measured on the whole GPU board. Per model, energy savings range from 42% to
+  62%. The Wall added 0.14 s of CPU.
+- **Wall against labels:** of the 80 rows the Wall decides, it disagrees with the labels on 32. These are not label errors.
+  Atharva Thorat's review (2026-11-05), confirmed on the data:
+  - **29 are policy refusals.** All are `TARGET_NOT_ALLOWED:external`: `STRICT_WORKSPACE` forbids an external recipient the
+    request asks for, on 10 ALLOW and 19 ASK rows. The labels answer "did the request authorize this", the Wall "does the policy
+    allow it", so relabeling would not reconcile them.
+  - **3 are a Wall gap.** They are `share_file` on a file created earlier in the same episode, which the Wall reports as
+    missing facts.
+
+## Policy refusals, reported separately (2026-11-06)
+
+Kaustubh Adhe chose to report the policy refusals separately instead of using policy-aware labels or rerunning with
+`WORKSPACE_RELAXED`. The notebook gained one section after section 11. Its existing cells and their Colab outputs are unchanged.
+The section was run locally on the real run's `predictions.csv`, with the Hugging Face rows and the Wall rebuilt as in Colab.
+Dataset and prompt hashes equal `run_info.json`, and the re-scored full-dataset metrics and paired table equal the Colab files
+exactly.
+
+On the 121 remaining rows, Wall + LLM is significantly more accurate than the LLM alone for four models: `qwen2.5` 75 → 84
+(p = 0.004), `qwen3.5` 74 → 84 (p = 0.002), `llama3.1` 59 → 83 and `nemotron-3-nano` 60 → 79 (both p < 0.001). `ministral-3`
+is the exception, 69 → 73 (p = 0.388). The Wall alone still scores 85/121, and B's ceiling there is 118/121. Leaving out these rows
+favors the Wall and B by design, so this view is reported next to the full-dataset results, not instead of them. The
+3 Wall-gap rows stay in the scoring.
+
 ## Limitations
 
-- Real Ollama serving, model downloads, GPU offload and model quality are unverified. The Ollama request format was checked
-  against its published API documentation only.
+- One A100 run. T4 serving is unverified, and the differences between models are small against 95% intervals of about ±8 points.
 - Labels are LLM-reviewed, so results measure agreement with them, not independent authorization accuracy.
 - GPU energy covers the whole board and includes its idle draw. Tokens are as Ollama reports them, and its prompt cache
   may reduce the prompt tokens it reports; cached counts are saved alongside.
 - One seed and 150 rows from one suite; rows come from a Workspace-only split.
 - These models are not Laya: this does not evaluate the Gatekeeper, and uses no `exact_time_conflict` rule.
+- Policy refusals were defined after seeing the results, using the labels and Wall verdicts. Scoring the combined system
+  against policy-aware labels, or a `WORKSPACE_RELAXED` rerun, remain open alternatives.
+- The Wall cannot verify files created earlier in the same episode. That is a Wall fix outside this task.
 - Ollama tags can change upstream. The recorded digest detects this but does not pin the download.
