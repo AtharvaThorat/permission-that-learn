@@ -65,6 +65,12 @@ Use `benchmark aggregate --run-dir <run>` and `report --run-dir <run>` for nativ
 secondary scores. Full-suite commands (`--all-tasks --all-objectives`) are for reviewed
 benchmark campaigns after smoke validation and resource budgeting, not initial tests.
 
+## LLM permission benchmark
+
+`experiments/notebooks/llm_permission_benchmark.ipynb` compares small LLMs alone against the Wall followed by the LLM on the
+compact test rows, on Colab with Ollama and without AgentDojo. Its labels are LLM-reviewed, so results measure agreement
+with them. See the [milestone](../milestones/2026-11-llm-permission-benchmark.md).
+
 ## Laya fine-tuning data
 
 `grids training-data` builds the Laya ALLOW/ASK/BLOCK dataset in

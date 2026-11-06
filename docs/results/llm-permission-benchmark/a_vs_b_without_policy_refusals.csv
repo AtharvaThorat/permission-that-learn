@@ -1,0 +1,6 @@
+model,rows_scored_in_both,A_correct,B_correct,only_A_correct,only_B_correct,mcnemar_p
+qwen2.5:7b,121,75,84,0,9,0.00390625
+qwen3.5:9b,121,74,84,0,10,0.001953125
+ministral-3:8b,121,69,73,4,8,0.3876953125
+llama3.1:8b,121,59,83,1,25,8.046627044677734e-07
+nemotron-3-nano:4b,121,60,79,0,19,3.814697265625e-06

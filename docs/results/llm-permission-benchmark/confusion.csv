@@ -1,0 +1,100 @@
+model,config,label,decided,rows
+Wall only,Wall only,ALLOW,ALLOW,37
+Wall only,Wall only,ALLOW,BLOCK,10
+Wall only,Wall only,ALLOW,ASK,3
+Wall only,Wall only,BLOCK,ALLOW,8
+Wall only,Wall only,BLOCK,BLOCK,42
+Wall only,Wall only,BLOCK,ASK,0
+Wall only,Wall only,ASK,ALLOW,25
+Wall only,Wall only,ASK,BLOCK,19
+Wall only,Wall only,ASK,ASK,6
+qwen2.5:7b,A_unprotected_llm,ALLOW,ALLOW,29
+qwen2.5:7b,A_unprotected_llm,ALLOW,BLOCK,11
+qwen2.5:7b,A_unprotected_llm,ALLOW,ASK,10
+qwen2.5:7b,A_unprotected_llm,BLOCK,ALLOW,2
+qwen2.5:7b,A_unprotected_llm,BLOCK,BLOCK,48
+qwen2.5:7b,A_unprotected_llm,BLOCK,ASK,0
+qwen2.5:7b,A_unprotected_llm,ASK,ALLOW,30
+qwen2.5:7b,A_unprotected_llm,ASK,BLOCK,13
+qwen2.5:7b,A_unprotected_llm,ASK,ASK,7
+qwen2.5:7b,B_wall_then_llm,ALLOW,ALLOW,25
+qwen2.5:7b,B_wall_then_llm,ALLOW,BLOCK,16
+qwen2.5:7b,B_wall_then_llm,ALLOW,ASK,9
+qwen2.5:7b,B_wall_then_llm,BLOCK,ALLOW,0
+qwen2.5:7b,B_wall_then_llm,BLOCK,BLOCK,50
+qwen2.5:7b,B_wall_then_llm,BLOCK,ASK,0
+qwen2.5:7b,B_wall_then_llm,ASK,ALLOW,19
+qwen2.5:7b,B_wall_then_llm,ASK,BLOCK,22
+qwen2.5:7b,B_wall_then_llm,ASK,ASK,9
+qwen3.5:9b,A_unprotected_llm,ALLOW,ALLOW,23
+qwen3.5:9b,A_unprotected_llm,ALLOW,BLOCK,27
+qwen3.5:9b,A_unprotected_llm,ALLOW,ASK,0
+qwen3.5:9b,A_unprotected_llm,BLOCK,ALLOW,0
+qwen3.5:9b,A_unprotected_llm,BLOCK,BLOCK,50
+qwen3.5:9b,A_unprotected_llm,BLOCK,ASK,0
+qwen3.5:9b,A_unprotected_llm,ASK,ALLOW,13
+qwen3.5:9b,A_unprotected_llm,ASK,BLOCK,36
+qwen3.5:9b,A_unprotected_llm,ASK,ASK,1
+qwen3.5:9b,B_wall_then_llm,ALLOW,ALLOW,27
+qwen3.5:9b,B_wall_then_llm,ALLOW,BLOCK,19
+qwen3.5:9b,B_wall_then_llm,ALLOW,ASK,4
+qwen3.5:9b,B_wall_then_llm,BLOCK,ALLOW,0
+qwen3.5:9b,B_wall_then_llm,BLOCK,BLOCK,50
+qwen3.5:9b,B_wall_then_llm,BLOCK,ASK,0
+qwen3.5:9b,B_wall_then_llm,ASK,ALLOW,21
+qwen3.5:9b,B_wall_then_llm,ASK,BLOCK,22
+qwen3.5:9b,B_wall_then_llm,ASK,ASK,7
+ministral-3:8b,A_unprotected_llm,ALLOW,ALLOW,16
+ministral-3:8b,A_unprotected_llm,ALLOW,BLOCK,20
+ministral-3:8b,A_unprotected_llm,ALLOW,ASK,14
+ministral-3:8b,A_unprotected_llm,BLOCK,ALLOW,1
+ministral-3:8b,A_unprotected_llm,BLOCK,BLOCK,49
+ministral-3:8b,A_unprotected_llm,BLOCK,ASK,0
+ministral-3:8b,A_unprotected_llm,ASK,ALLOW,7
+ministral-3:8b,A_unprotected_llm,ASK,BLOCK,32
+ministral-3:8b,A_unprotected_llm,ASK,ASK,11
+ministral-3:8b,B_wall_then_llm,ALLOW,ALLOW,13
+ministral-3:8b,B_wall_then_llm,ALLOW,BLOCK,22
+ministral-3:8b,B_wall_then_llm,ALLOW,ASK,15
+ministral-3:8b,B_wall_then_llm,BLOCK,ALLOW,0
+ministral-3:8b,B_wall_then_llm,BLOCK,BLOCK,50
+ministral-3:8b,B_wall_then_llm,BLOCK,ASK,0
+ministral-3:8b,B_wall_then_llm,ASK,ALLOW,6
+ministral-3:8b,B_wall_then_llm,ASK,BLOCK,34
+ministral-3:8b,B_wall_then_llm,ASK,ASK,10
+llama3.1:8b,A_unprotected_llm,ALLOW,ALLOW,6
+llama3.1:8b,A_unprotected_llm,ALLOW,BLOCK,1
+llama3.1:8b,A_unprotected_llm,ALLOW,ASK,43
+llama3.1:8b,A_unprotected_llm,BLOCK,ALLOW,0
+llama3.1:8b,A_unprotected_llm,BLOCK,BLOCK,24
+llama3.1:8b,A_unprotected_llm,BLOCK,ASK,26
+llama3.1:8b,A_unprotected_llm,ASK,ALLOW,1
+llama3.1:8b,A_unprotected_llm,ASK,BLOCK,0
+llama3.1:8b,A_unprotected_llm,ASK,ASK,49
+llama3.1:8b,B_wall_then_llm,ALLOW,ALLOW,4
+llama3.1:8b,B_wall_then_llm,ALLOW,BLOCK,11
+llama3.1:8b,B_wall_then_llm,ALLOW,ASK,35
+llama3.1:8b,B_wall_then_llm,BLOCK,ALLOW,0
+llama3.1:8b,B_wall_then_llm,BLOCK,BLOCK,48
+llama3.1:8b,B_wall_then_llm,BLOCK,ASK,2
+llama3.1:8b,B_wall_then_llm,ASK,ALLOW,0
+llama3.1:8b,B_wall_then_llm,ASK,BLOCK,19
+llama3.1:8b,B_wall_then_llm,ASK,ASK,31
+nemotron-3-nano:4b,A_unprotected_llm,ALLOW,ALLOW,33
+nemotron-3-nano:4b,A_unprotected_llm,ALLOW,BLOCK,12
+nemotron-3-nano:4b,A_unprotected_llm,ALLOW,ASK,5
+nemotron-3-nano:4b,A_unprotected_llm,BLOCK,ALLOW,11
+nemotron-3-nano:4b,A_unprotected_llm,BLOCK,BLOCK,36
+nemotron-3-nano:4b,A_unprotected_llm,BLOCK,ASK,3
+nemotron-3-nano:4b,A_unprotected_llm,ASK,ALLOW,39
+nemotron-3-nano:4b,A_unprotected_llm,ASK,BLOCK,11
+nemotron-3-nano:4b,A_unprotected_llm,ASK,ASK,0
+nemotron-3-nano:4b,B_wall_then_llm,ALLOW,ALLOW,25
+nemotron-3-nano:4b,B_wall_then_llm,ALLOW,BLOCK,19
+nemotron-3-nano:4b,B_wall_then_llm,ALLOW,ASK,6
+nemotron-3-nano:4b,B_wall_then_llm,BLOCK,ALLOW,1
+nemotron-3-nano:4b,B_wall_then_llm,BLOCK,BLOCK,48
+nemotron-3-nano:4b,B_wall_then_llm,BLOCK,ASK,1
+nemotron-3-nano:4b,B_wall_then_llm,ASK,ALLOW,22
+nemotron-3-nano:4b,B_wall_then_llm,ASK,BLOCK,22
+nemotron-3-nano:4b,B_wall_then_llm,ASK,ASK,6
