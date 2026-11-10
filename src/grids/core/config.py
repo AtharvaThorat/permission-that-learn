@@ -100,6 +100,25 @@ class WallConfig(Strict):
     confirm_capabilities: list[str] = Field(default_factory=list)
     metadata_path: str = Field(default_factory=lambda: str(ROOT / 'configs/policies/workspace_metadata.json'))
 
+class LearningConfig(Strict):
+    """Approval memory. It only answers judgment asks after a Wall PASS; see core/permissions/memory.py."""
+    enabled: bool = False
+    learner: Literal['counting', 'bandit'] = 'counting'
+    granularity: Literal['exact', 'class'] = 'exact'
+    approvals_to_allow: int = Field(default=2, ge=1, le=100)
+    rejections_to_block: int = Field(default=1, ge=1, le=100)
+    ttl: int | None = Field(default=None, ge=1)  # memory consultations a record survives without new feedback
+    ask_cost: float = Field(default=1.0, gt=0)
+    wrong_allow_cost: float = Field(default=10.0, gt=0)
+    explore: float = Field(default=0.1, ge=0, le=1)
+    seed: int = 0
+
+    @model_validator(mode='after')
+    def costs(self):
+        if self.wrong_allow_cost <= self.ask_cost:
+            raise ValueError('A wrong automatic allow must cost more than a question')
+        return self
+
 class AuditConfig(Strict):
     output_directory: str = 'results/episodes'
     record_raw_content: bool = False
@@ -108,7 +127,7 @@ class Config(Strict):
     schema_version: Literal[1] = 1
     mode: Literal['unprotected', 'wall_only', 'wall_gatekeeper'] = 'wall_gatekeeper'
     simulation_only: Literal[True] = True
-    learning_enabled: Literal[False] = False
+    learning_enabled: bool = False
     approval_provider: Literal['pending'] = 'pending'
     actor: ActorConfig = Field(default_factory=ActorConfig)
     gatekeeper: GateConfig = Field(default_factory=GateConfig)

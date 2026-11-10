@@ -15,6 +15,10 @@ class Services:
         self.approval_wait_seconds = approval_wait_seconds
         self.clients = {}
         self.lock = threading.Lock()
+        # One approval memory per run, shared by its episodes: that is where it learns.
+        from grids.core.permissions.memory import build_memory
+        self.memory = build_memory(spec.learning) if spec.learning.enabled else None
+        self.memory_lock = threading.Lock()
         self.requests = {name: threading.BoundedSemaphore(p.max_concurrent_requests)
                          for name, p in spec.actors.items()}
         self.gates = Queue(maxsize=spec.limits.gatekeeper_workers)

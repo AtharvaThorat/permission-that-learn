@@ -14,3 +14,6 @@ refactor; historical tracked reports are available in Git.
 review sheet and file hashes. It is not an evaluation result and its labels are not
 independent authorization ground truth. `laya-permission-v1-compact/` holds the same rows
 with `context` reduced by `compact_v1` for 1,024-token Laya checkpoints.
+
+`memory-sim/` is an offline simulation of approval memory with simulated users on the same 450 actions. Its users
+and metrics use the LLM-reviewed labels; it is not a real-model or human-user result.

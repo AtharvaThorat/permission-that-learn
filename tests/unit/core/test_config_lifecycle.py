@@ -10,7 +10,7 @@ from grids.core.factory import build_agentdojo_pipeline
 from grids.core.permissions.gatekeeper_adapter import ExistingLayaGate
 from .helpers import call, fixture, reply, run
 
-@pytest.mark.parametrize('raw', [{'typo': 1}, {'learning_enabled': True}, {'simulation_only': False},
+@pytest.mark.parametrize('raw', [{'typo': 1}, {'learning_enabled': 'yes'}, {'simulation_only': False},
     {'mode': 'learned'}, {'actor': {'backend': 'paid_fallback'}},
     {'gatekeeper': {'allow_downloads': True}}, {'runtime': {'max_actor_turns': 0}},
     {'agentdojo': {'attack_name': 'fixed_file'}}, {'actor': {'base_url': 'https://key:secret@example.com/v1'}}])

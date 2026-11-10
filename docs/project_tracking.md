@@ -1,9 +1,10 @@
 # Project tracking
 
-Updated 2026-11-03. Use the [documentation index](README.md) for commands and
+Updated 2026-11-09. Use the [documentation index](README.md) for commands and
 architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
 [training-data](milestones/2026-11-laya-training-data.md) and
-[compact_v1](milestones/2026-11-laya-compact.md) milestones for evidence.
+[compact_v1](milestones/2026-11-laya-compact.md) and
+[approval memory](milestones/2026-11-approval-memory.md) milestones for evidence.
 
 ## Current objective
 
@@ -33,6 +34,12 @@ The labeled authorization benchmark is not yet available.
   [laya-permission-v1-compact](results/laya-permission-v1-compact/README.md). All 450 rows fit 1,024 tokens
   with Laya-Cybersec and pinned Laya tokenizers (max 764 context tokens); injected evidence kept in 119/119.
   CPU regression **282 passed**.
+- Approval memory (2026-11-09, branch `feature/approval-memory`): counting and bandit memory behind the Wall as an
+  approval-provider wrapper (judgment asks only), a live per-run hook, a rules gatekeeper and `grids memory simulate`
+  for the proposal's four setups with careful and careless users. [memory-sim](results/memory-sim/README.md): inside
+  the Wall, questions fall from 474 to 170.5 per 1,350 actions with 1.2 attacks executed at 20% careless; without the
+  Wall, class-level memory executes 96.1. Simulated users and LLM-reviewed labels; live hook not run with real models.
+  CPU regression **298 passed**.
 
 ## Remaining work
 
@@ -56,6 +63,9 @@ The labeled authorization benchmark is not yet available.
    then fine-tune Laya and validate it with real inference.
 9. Pass tool history and trusted identities into the live Laya input (`gatekeeper_adapter`), which today carries
    neither, so live `compact_v1` states match training; verify `TextCortex/laya-cybersec` before pinning it.
+10. Approval memory: run the live hook with real models; make `RulesGate` selectable for live runs; let memory
+    see the request (or defer to Laya) so task mismatches identical to legitimate actions are not auto-allowed;
+    measure how often real actions recur before relying on the simulated reduction in questions.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.

@@ -13,6 +13,15 @@ def serializable(value):
     return json.loads(json.dumps(value, default=lambda x: x.model_dump(mode='json')))
 
 
+def learned_approvals(learning, services, inner, wall, writer):
+    """The run's shared memory in front of the episode's approval provider."""
+    from grids.core.permissions.approvals import PendingApprovalProvider
+    from grids.core.permissions.memory import MemoryApprovalProvider
+    return MemoryApprovalProvider(inner or PendingApprovalProvider(), services.memory, classify=wall.context.classify,
+                                  granularity=learning.granularity, lock=services.memory_lock,
+                                  record=lambda row: writer.append('memory.jsonl', row))
+
+
 def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, cancel, *, dependencies=None):
     """dependencies is an explicit CPU fixture seam, never a runtime fallback."""
     started_at, started = now(), time.monotonic()
@@ -22,8 +31,10 @@ def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, can
     evaluated = False
     errors = []
     lifecycle = 'infrastructure_error'
+    learning = getattr(services, 'memory', None) is not None and job['mode'] == 'wall_gatekeeper'
     cfg = Config(mode=job['mode'], actor=spec.actors[job['actor_profile']].settings.model_copy(deep=True),
-                 gatekeeper=spec.gatekeeper.model_copy(deep=True), runtime=spec.budgets.model_copy(deep=True), wall=spec.wall.model_copy(deep=True))
+                 gatekeeper=spec.gatekeeper.model_copy(deep=True), runtime=spec.budgets.model_copy(deep=True), wall=spec.wall.model_copy(deep=True),
+                 learning_enabled=learning)
     cfg.audit.output_directory = str(directory.parent)
     # Native friendly names/caches are never used for reuse; direct suite scoring
     # below and per-attempt unique artifacts are authoritative.
@@ -73,6 +84,10 @@ def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, can
             deps.wall = wall
             deps.trace, deps.run_id = writer, attempt
             actor = deps.actor
+        if learning:
+            deps.approvals = learned_approvals(spec.learning, services, deps.approvals, wall, writer)
+            atomic(directory / 'memory-policy.json', {'learning': spec.learning.model_dump(mode='json'),
+                   'answers': 'judgment asks only, after a Wall PASS', 'scope': 'shared by every episode in this run'})
         with build_agentdojo_pipeline(cfg, deps) as pipeline:
             pipeline.name = 'experiment-' + attempt
             # Native Logger uses a mutable default ContextVar list. A new list

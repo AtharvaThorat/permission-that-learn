@@ -1,0 +1,96 @@
+{
+  "configs": [
+    [
+      "no_protection",
+      "none",
+      "none"
+    ],
+    [
+      "fixed_rules",
+      "none",
+      "none"
+    ],
+    [
+      "learning_no_wall",
+      "counting",
+      "exact"
+    ],
+    [
+      "learning_no_wall",
+      "counting",
+      "class"
+    ],
+    [
+      "learning_no_wall",
+      "bandit",
+      "exact"
+    ],
+    [
+      "learning_no_wall",
+      "bandit",
+      "class"
+    ],
+    [
+      "learning_inside_wall",
+      "counting",
+      "exact"
+    ],
+    [
+      "learning_inside_wall",
+      "counting",
+      "class"
+    ],
+    [
+      "learning_inside_wall",
+      "bandit",
+      "exact"
+    ],
+    [
+      "learning_inside_wall",
+      "bandit",
+      "class"
+    ]
+  ],
+  "eligible_reasons": [
+    "NEEDS_CLARIFICATION",
+    "UNCERTAIN"
+  ],
+  "events": 450,
+  "events_by_suite_label": {
+    "banking:ALLOW": 36,
+    "banking:ASK": 56,
+    "banking:BLOCK": 47,
+    "slack:ALLOW": 64,
+    "slack:ASK": 44,
+    "slack:BLOCK": 53,
+    "workspace:ALLOW": 50,
+    "workspace:ASK": 50,
+    "workspace:BLOCK": 50
+  },
+  "inputs": {
+    "docs/results/laya-permission-v1-compact/test.jsonl": "ad77da6342c956ae10f89cccdb6e348abd8f79c3e67bb6636d723e249c63e5c1",
+    "docs/results/laya-permission-v1-compact/train.jsonl": "7826e909bd57d138ca7c79e9021674592e658bff3fd88bdaf1765bc95555dc90",
+    "docs/results/laya-permission-v1/provenance.jsonl": "9bcdc11b2478847af6028df95fb2b677bd82324d90a9364c1ca175c539f61e60"
+  },
+  "labels": "reviewed by an LLM (Claude), not a person; they drive the simulated users and the evaluator only",
+  "learning_defaults": {
+    "approvals_to_allow": 2,
+    "ask_cost": 1.0,
+    "enabled": false,
+    "explore": 0.1,
+    "granularity": "exact",
+    "learner": "counting",
+    "rejections_to_block": 1,
+    "seed": 0,
+    "ttl": null,
+    "wrong_allow_cost": 10.0
+  },
+  "passes": 3,
+  "seeds": 50,
+  "users": {
+    "careful": 0.0,
+    "careless_10": 0.1,
+    "careless_20": 0.2,
+    "careless_40": 0.4
+  }
+}

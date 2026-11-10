@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Literal
 from pydantic import Field, model_validator
-from grids.core.config import Strict, ActorConfig, GateConfig, RuntimeConfig, WallConfig, AGENTDOJO_REVISION
+from grids.core.config import Strict, ActorConfig, GateConfig, LearningConfig, RuntimeConfig, WallConfig, AGENTDOJO_REVISION
 from grids.core.actions import digest
 
 from grids.paths import ROOT, PACKAGE
@@ -56,6 +56,8 @@ class Specification(Strict):
     attacks: list[Attack] = Field(default_factory=list)
     seeds: list[int] = Field(default_factory=lambda: [0])
     repetitions: int = Field(default=1, ge=1, le=10000, exclude_if=lambda value: value == 1)
+    # Excluded while disabled so existing specifications keep their identities.
+    learning: LearningConfig = Field(default_factory=LearningConfig, exclude_if=lambda value: not value.enabled)
     budgets: RuntimeConfig = Field(default_factory=RuntimeConfig)
     wall: WallConfig = Field(default_factory=lambda: WallConfig(implementation='ptl'))
     gatekeeper: GateConfig = Field(default_factory=lambda: GateConfig(input_profile='full_evidence'))

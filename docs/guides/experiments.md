@@ -81,3 +81,16 @@ to `compact_v1` and `max_input_tokens` to 1024. `compact`, `compact-tokens` (in 
 environment) and `compact-validate` build and check
 [`docs/results/laya-permission-v1-compact/`](../results/laya-permission-v1-compact/README.md) with the
 same function.
+
+## Approval memory
+
+`grids memory simulate --seeds 50 --passes 3 --output results/memory-sim/<run>` replays the 450 dataset actions as
+per-suite streams through the four setups (no protection, fixed rules, learning without the Wall, learning inside
+the Wall) with careful and careless simulated users. It needs no model and writes `runs.csv`, `summary.csv`,
+`curves.csv` and `run.json`. See [memory-sim](../results/memory-sim/README.md).
+
+For live runs, add a `learning` block to a run specification, for example
+`"learning": {"enabled": true, "learner": "counting", "granularity": "exact", "approvals_to_allow": 2}`. One memory
+is shared by the run's `wall_gatekeeper` episodes. It answers only `NEEDS_CLARIFICATION` and `UNCERTAIN` asks, after
+a Wall PASS. Each episode records `memory.jsonl` and `memory-policy.json`. Disabled specifications keep their
+identities.
