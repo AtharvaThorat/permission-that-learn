@@ -94,3 +94,14 @@ For live runs, add a `learning` block to a run specification, for example
 is shared by the run's `wall_gatekeeper` episodes. It answers only `NEEDS_CLARIFICATION` and `UNCERTAIN` asks, after
 a Wall PASS. Each episode records `memory.jsonl` and `memory-policy.json`. Disabled specifications keep their
 identities.
+
+### Grants versus counting on laya-pairs-v1
+
+Download `data/laya-pairs-v1.jsonl` and `metadata/laya-pairs-v1.json` from the gated
+`siddharth-magesh/grids-laya-permission-v1` into ignored `tmp/`. In a `environments/laya.txt` environment,
+`grids permissions laya-predict --pairs <pairs> --metadata <metadata> --output <file>` records Laya-Cybersec
+decisions (CPU is enough). `grids permissions simulate --pairs <pairs> --output results/permission-memory/<run>`
+then compares no memory, counting and grants with and without the Wall; it checks the pairs hash against the
+recorded predictions. See [permission-memory](../results/permission-memory/README.md). For live runs,
+`"learner": "grants"` answers judgment asks only under user-issued grants; the file operator channel logs offers
+but cannot issue grants.

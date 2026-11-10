@@ -6,6 +6,12 @@ BLOCK. It answers only judgment asks (`ELIGIBLE_REASONS`); mandatory confirmatio
 incomplete evidence and model failures always reach the user. A remembered answer is an
 ordinary ApprovalEvent bound to the exact pending action, so execution keeps the
 single-use ledger and the executor's Wall recheck. Learners see only the user's answers.
+
+Two kinds of memory: counting/bandit learners turn repeated approvals into automatic
+allows; `GrantStore` never does. With grants, approvals are preference statistics that can
+only prompt an offer, and an action is allowed without asking only under a scoped grant
+the user explicitly issued (bound to tool, people and resources or their trust classes,
+policy version, and an optional expiry; revoked when the user rejects a covered action).
 """
 import json
 import random
@@ -116,7 +122,69 @@ class BanditMemory:
                       if (1 + r.approvals) / (2 + r.approvals + r.rejections) > self.threshold)
 
 
+@dataclass
+class Grant:
+    key: str
+    scope: str  # 'exact' or 'class'
+    issued: int
+    expires: int | None = None
+    uses: int = 0
+    revoked: bool = False
+
+
+class GrantStore:
+    """Explicit, scoped, expiring grants plus approval statistics that only suggest them.
+
+    `record` returns True when an offer is due: the `offer_after`-th approval of one exact
+    pattern with no rejection and no live grant (once per streak; any rejection ends offers for
+    that pattern). Only `grant`, the user's own act, creates authority.
+    """
+
+    def __init__(self, offer_after=2, ttl=None):
+        self.offer_after, self.ttl = offer_after, ttl
+        self.stats, self.grants, self.tick = {}, {}, 0
+
+    def _live(self, grant):
+        return not grant.revoked and (grant.expires is None or self.tick <= grant.expires)
+
+    def covers(self, exact, broad):
+        self.tick += 1
+        for key in (exact, broad):
+            grant = self.grants.get(key)
+            if grant and self._live(grant) and (grant.scope == 'exact') == (key == exact):
+                grant.uses += 1
+                return True
+        return False
+
+    def record(self, exact, approved):
+        record = self.stats.setdefault(exact, Record())
+        record.last = self.tick
+        if approved:
+            record.approvals += 1
+        else:
+            record.rejections += 1
+            record.approvals = 0
+            if exact in self.grants:
+                self.grants[exact].revoked = True
+        live = exact in self.grants and self._live(self.grants[exact])
+        return approved and not live and record.rejections == 0 and record.approvals == self.offer_after
+
+    def grant(self, key, scope):
+        if scope not in ('exact', 'class'):
+            raise ValueError('Unknown grant scope')
+        self.grants[key] = Grant(key, scope, self.tick, None if self.ttl is None else self.tick + self.ttl)
+
+    def revoke(self, key):
+        if key in self.grants:
+            self.grants[key].revoked = True
+
+    def active(self):
+        return sorted((g.key, g.scope) for g in self.grants.values() if self._live(g))
+
+
 def build_memory(config):
+    if config.learner == 'grants':
+        return GrantStore(config.approvals_to_allow, config.ttl)
     if config.learner == 'counting':
         return CountingMemory(config.approvals_to_allow, config.rejections_to_block, config.ttl)
     return BanditMemory(config.ask_cost, config.wrong_allow_cost, config.explore, config.seed, config.ttl)
@@ -154,4 +222,51 @@ class MemoryApprovalProvider:
             with self.lock:
                 self.memory.update(key, event.approved)
             self._log(pending, key, 'user', event.approved)
+        return event
+
+
+class GrantApprovalProvider:
+    """Answers an eligible ask only under a live user grant; otherwise asks `inner`.
+
+    When an approval makes an offer due, `inner.grant_offer(pending)` (if the channel has
+    one) returns the scope the user chooses, 'exact' or 'class', or None to decline. The
+    file operator channel has no such method, so live grants are then offered and logged,
+    never issued.
+    """
+
+    def __init__(self, inner, store, *, classify, record=None, lock=None, eligible_reasons=ELIGIBLE_REASONS):
+        self.inner, self.store, self.classify = inner, store, classify
+        self.record, self.lock = record, lock or threading.Lock()
+        self.eligible = frozenset(eligible_reasons)
+
+    def _log(self, pending, keys, source, approved, **extra):
+        if self.record:
+            self.record({'pending_id': pending.pending_id, 'action_id': pending.binding.action_id,
+                         'tool': pending.action.tool, 'reason': pending.reason, 'key': keys[0], 'class_key': keys[1],
+                         'source': source, 'approved': approved, **extra})
+
+    def request(self, pending):
+        if pending.reason not in self.eligible:
+            return self.inner.request(pending)
+        arguments = json.loads(pending.action.arguments_json)
+        keys = tuple(pattern_key(pending.action.tool, arguments, self.classify, g, pending.binding.policy_version)
+                     for g in ('exact', 'class'))
+        with self.lock:
+            covered = self.store.covers(*keys)
+        if covered:
+            self._log(pending, keys, 'grant', True)
+            return ApprovalEvent(pending.pending_id, pending.binding, True)
+        event = self.inner.request(pending)
+        if not (isinstance(event, ApprovalEvent) and type(event.approved) is bool
+                and event.pending_id == pending.pending_id and event.binding == pending.binding):
+            return event
+        with self.lock:
+            offer = self.store.record(keys[0], event.approved)
+        scope = None
+        if offer and callable(getattr(self.inner, 'grant_offer', None)):
+            scope = self.inner.grant_offer(pending)
+            if scope is not None:
+                with self.lock:
+                    self.store.grant(keys[0] if scope == 'exact' else keys[1], scope)
+        self._log(pending, keys, 'user', event.approved, offered=offer, granted=scope)
         return event

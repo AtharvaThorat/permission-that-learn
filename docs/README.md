@@ -20,6 +20,9 @@
 | [milestones/2026-11-laya-compact.md](milestones/2026-11-laya-compact.md) | compact_v1 measurement, design, verification and limitations |
 | [results/memory-sim/README.md](results/memory-sim/README.md) | Approval memory simulation: four setups, careful and careless users |
 | [milestones/2026-11-approval-memory.md](milestones/2026-11-approval-memory.md) | Approval memory design, live hook, verification and limitations |
+| [architecture/authorization/permission-memory.md](architecture/authorization/permission-memory.md) | Permission memory research note and design: grants versus counting |
+| [results/permission-memory/README.md](results/permission-memory/README.md) | Grants versus counting on laya-pairs-v1, with real Laya-Cybersec predictions |
+| [milestones/2026-11-permission-memory.md](milestones/2026-11-permission-memory.md) | Permission memory build, verification and limitations |
 
 Source, configuration, environment, test, and notebook directory responsibilities
 are mapped in the [project README](../README.md). Generated artifacts belong in

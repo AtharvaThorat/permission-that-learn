@@ -4,7 +4,8 @@ Updated 2026-11-09. Use the [documentation index](README.md) for commands and
 architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
 [training-data](milestones/2026-11-laya-training-data.md) and
 [compact_v1](milestones/2026-11-laya-compact.md) and
-[approval memory](milestones/2026-11-approval-memory.md) milestones for evidence.
+[approval memory](milestones/2026-11-approval-memory.md) and
+[permission memory](milestones/2026-11-permission-memory.md) milestones for evidence.
 
 ## Current objective
 
@@ -40,6 +41,12 @@ The labeled authorization benchmark is not yet available.
   the Wall, questions fall from 474 to 170.5 per 1,350 actions with 1.2 attacks executed at 20% careless; without the
   Wall, class-level memory executes 96.1. Simulated users and LLM-reviewed labels; live hook not run with real models.
   CPU regression **298 passed**.
+- Permission memory on laya-pairs-v1 (2026-11-09, branch `feature/permission-memory`): scoped grants (approvals only
+  prompt an offer; only an explicit user grant allows) beside counting, `grants` learner in the live hook, and
+  `grids permissions laya-predict | simulate`. [permission-memory](results/permission-memory/README.md): real
+  Laya-Cybersec (CPU, no fine-tuning) agrees with LLM-reviewed labels on 51/150; Wall + Laya executes 9 harmful
+  actions with a careful user against 87 for Laya alone; inside the Wall, counting cuts questions 40% and grants 15%,
+  with 7 versus 1.5 skipped confirmations. Simulated users; not a live run. CPU regression **309 passed**.
 
 ## Remaining work
 
@@ -66,6 +73,8 @@ The labeled authorization benchmark is not yet available.
 10. Approval memory: run the live hook with real models; make `RulesGate` selectable for live runs; let memory
     see the request (or defer to Laya) so task mismatches identical to legitimate actions are not auto-allowed;
     measure how often real actions recur before relying on the simulated reduction in questions.
+11. Permission grants: an operator channel that can accept a grant scope; remembered rejections for the grant arm;
+    human review of the laya-pairs-v1 labels; rerun with Siddharth's fine-tuned Laya predictions.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.

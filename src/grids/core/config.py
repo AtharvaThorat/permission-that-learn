@@ -103,9 +103,9 @@ class WallConfig(Strict):
 class LearningConfig(Strict):
     """Approval memory. It only answers judgment asks after a Wall PASS; see core/permissions/memory.py."""
     enabled: bool = False
-    learner: Literal['counting', 'bandit'] = 'counting'
+    learner: Literal['counting', 'bandit', 'grants'] = 'counting'
     granularity: Literal['exact', 'class'] = 'exact'
-    approvals_to_allow: int = Field(default=2, ge=1, le=100)
+    approvals_to_allow: int = Field(default=2, ge=1, le=100)  # grants: approvals before a grant is offered
     rejections_to_block: int = Field(default=1, ge=1, le=100)
     ttl: int | None = Field(default=None, ge=1)  # memory consultations a record survives without new feedback
     ask_cost: float = Field(default=1.0, gt=0)

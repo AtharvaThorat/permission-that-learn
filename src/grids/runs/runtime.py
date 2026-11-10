@@ -16,10 +16,13 @@ def serializable(value):
 def learned_approvals(learning, services, inner, wall, writer):
     """The run's shared memory in front of the episode's approval provider."""
     from grids.core.permissions.approvals import PendingApprovalProvider
-    from grids.core.permissions.memory import MemoryApprovalProvider
+    from grids.core.permissions.memory import GrantApprovalProvider, MemoryApprovalProvider
+    record = lambda row: writer.append('memory.jsonl', row)
+    if learning.learner == 'grants':
+        return GrantApprovalProvider(inner or PendingApprovalProvider(), services.memory,
+                                     classify=wall.context.classify, lock=services.memory_lock, record=record)
     return MemoryApprovalProvider(inner or PendingApprovalProvider(), services.memory, classify=wall.context.classify,
-                                  granularity=learning.granularity, lock=services.memory_lock,
-                                  record=lambda row: writer.append('memory.jsonl', row))
+                                  granularity=learning.granularity, lock=services.memory_lock, record=record)
 
 
 def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, cancel, *, dependencies=None):

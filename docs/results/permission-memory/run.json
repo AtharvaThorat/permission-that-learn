@@ -1,0 +1,45 @@
+{
+  "arms": [
+    "no_memory",
+    "counting_exact",
+    "counting_class",
+    "grants"
+  ],
+  "counting_approvals_to_allow": 2,
+  "counting_rejections_to_block": 1,
+  "expiry": "none in simulation",
+  "grant_offer_after": 2,
+  "inputs": {
+    "docs/results/laya-permission-v1-compact/test.jsonl": "ad77da6342c956ae10f89cccdb6e348abd8f79c3e67bb6636d723e249c63e5c1",
+    "docs/results/laya-permission-v1-compact/train.jsonl": "7826e909bd57d138ca7c79e9021674592e658bff3fd88bdaf1765bc95555dc90",
+    "docs/results/laya-permission-v1/provenance.jsonl": "9bcdc11b2478847af6028df95fb2b677bd82324d90a9364c1ca175c539f61e60",
+    "docs/results/permission-memory/laya_cybersec_predictions.jsonl": "2fe994d032e6161c0ff5a8882f47066f398cd5f3478005aa5dfb349d2869233f",
+    "docs/results/permission-memory/reviewed_labels.csv": "5778ac2315229d78a7de0808e063057511ea83704dd8684b1372b7022a905eee"
+  },
+  "labels": {
+    "reviewed": "reviewed by an LLM (Claude) against the adapted prompts, not by people",
+    "source": "the release source_label: provisional LLM intent labels of the original rows"
+  },
+  "laya_predictions": {
+    "checkpoint": "TextCortex/laya-cybersec",
+    "device": "cpu",
+    "metadata_sha256": "88373778e55b35e23d35bfa8ca73425039d0682973cdab1b16d720709aded16e",
+    "packages": {
+      "laya": "0.3.28",
+      "torch": "2.14.1",
+      "transformers": "5.20.2"
+    },
+    "pairs_sha256": "78560d3ffce82ebbc1c78bc411b106029d9d7c0203b5db6f0b2665d6fd654c68",
+    "question_sha256": "0ea28ad8b74e02a78a38ac926ea3044c6a64c723d7d78a3f171593b9c537f69b",
+    "revision": "41fd5a2dfced0fb357974afd780a3ed6e7c43838"
+  },
+  "pairs_sha256": "78560d3ffce82ebbc1c78bc411b106029d9d7c0203b5db6f0b2665d6fd654c68",
+  "passes": 3,
+  "seeds": 50,
+  "users": {
+    "careful": 0.0,
+    "careless_10": 0.1,
+    "careless_20": 0.2,
+    "careless_40": 0.4
+  }
+}
