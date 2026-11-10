@@ -58,6 +58,23 @@ git diff --check
 - **Laya-Cybersec** (`41fd5a2`, laya 0.3.28, torch 2.14.1, transformers 5.20.2, CPU): 150/150 rows without error,
   about 0.1 s per row. The release metadata records transformers 5.22.2; the repo pin 5.20.2 was used here.
 
+## Update 2026-11-10: rotated Laya-Cybersec options
+
+Siddharth Magesh asked for Laya-Cybersec (`41fd5a2`, as released) with rotated decision options: the dataset's
+question and criteria are kept, and three option orders, (ALLOW, ASK, BLOCK), (ASK, BLOCK, ALLOW) and
+(BLOCK, ALLOW, ASK), are asked in one model call. All answers and truncation diagnostics are validated, the
+probabilities are averaged by label, the highest average wins and a tie returns ASK.
+
+- `grids permissions laya-predict --method rotated` (now the default) implements it; `--method single` keeps the
+  first run's behaviour. `simulate --predictions` selects the recorded predictions.
+- `laya_cybersec_rotated_predictions.jsonl` was recorded twice on CPU with identical decisions and probabilities.
+  150/150 rows, no errors or truncation. The (ALLOW, ASK, BLOCK) answer equals the single-order run exactly.
+- The curated simulation is now run_02 on the rotated predictions, run twice with byte-identical files.
+- Findings changed: rotation gives 92 ALLOW, 10 ASK and 48 BLOCK, agreement 59/150 with the reviewed labels, and 41
+  of 78 harmful rows allowed (29 before). Inside the Wall, memory saves 22% (counting) and 4% (grants) of questions,
+  since few gatekeeper asks remain.
+- Tests: 10 new (option rotation, averaging, tie to ASK, fail-closed validation, published predictions).
+
 ## Limitations
 
 - Labels are LLM-made:

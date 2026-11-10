@@ -6,6 +6,12 @@ replayed verdict and verified flags come from `docs/results/laya-permission-v1/p
 classes from the compact rows. Gatekeeper decisions are either real Laya predictions (`laya-predict`, recorded
 once and replayed) or the deterministic rules stand-in.
 
+Laya method (Siddharth Magesh, 2026-11-10): `rotated` keeps the dataset's decision question and its ALLOW, ASK and
+BLOCK criteria, and asks it in three option orders in one model call: (ALLOW, ASK, BLOCK), (ASK, BLOCK, ALLOW) and
+(BLOCK, ALLOW, ASK). Every answer and the truncation diagnostics are validated first; any failure makes the row a
+gatekeeper error. The probabilities are averaged by label and the highest average wins; a tie returns ASK.
+`single` asks the question once in its own order (the first recorded run).
+
 Decision path, in the live order (`gatekeeper/policy.py` after the Wall):
 
   1. Wall verdict other than PASS          BLOCK
@@ -22,6 +28,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import random
 import statistics
 import sys
@@ -36,7 +43,10 @@ DATA = ROOT / 'docs' / 'results' / 'laya-permission-v1'
 COMPACT = ROOT / 'docs' / 'results' / 'laya-permission-v1-compact'
 RESULTS = ROOT / 'docs' / 'results' / 'permission-memory'
 LABELS = RESULTS / 'reviewed_labels.csv'
-PREDICTIONS = RESULTS / 'laya_cybersec_predictions.jsonl'
+PREDICTIONS = RESULTS / 'laya_cybersec_rotated_predictions.jsonl'
+DECISIONS = ('ALLOW', 'ASK', 'BLOCK')
+ROTATIONS = ((0, 1, 2), (1, 2, 0), (2, 0, 1))  # indices into DECISIONS
+TIE = 1e-9
 USERS = {'careful': 0.0, 'careless_10': 0.1, 'careless_20': 0.2, 'careless_40': 0.4}
 ARMS = ('no_memory', 'counting_exact', 'counting_class', 'grants')
 METRICS = ('actions', 'questions', 'forced_questions', 'auto_allowed', 'auto_blocked', 'auto_allowed_correct',
@@ -56,8 +66,55 @@ def load_pairs(path):
 
 # ---------------------------------------------------------------- Laya predictions (real model, CPU)
 
-def laya_predict(pairs_path, metadata_path, output, profile='cybersec'):
-    """Run the pinned checkpoint on each pair exactly as the dataset card describes; never dispatch tools."""
+def rotated_questions(question):
+    """The dataset's decision question three times, criteria unchanged, options in each rotated order."""
+    if set(question) != {'decision'} or set(question['decision']['criteria']) != set(DECISIONS):
+        raise ValueError('Expected one decision question with ALLOW, ASK and BLOCK criteria')
+    base = question['decision']
+    return {'decision_' + ''.join(map(str, order)): {
+                **base, 'criteria': {DECISIONS[i]: base['criteria'][DECISIONS[i]] for i in order}}
+            for order in ROTATIONS}
+
+
+def rotated_decision(raw, questions):
+    """Validate all answers and truncation diagnostics, then average probabilities by label (tie: ASK).
+
+    Returns (decision, mean probabilities, answers); raises ValueError on any invalid or truncated response.
+    """
+    if not isinstance(raw, dict):
+        raise ValueError('Response is not an object')
+    usage, answers = raw.get('usage'), raw.get('answers')
+    if (not isinstance(usage, dict) or usage.get('truncated') is not False
+            or type(usage.get('state_tokens_dropped')) is not int or usage['state_tokens_dropped'] != 0
+            or not isinstance(usage.get('truncated_questions'), list)):
+        raise ValueError('Truncated input or missing truncation diagnostics')
+    if usage['truncated_questions'] or usage.get('options'):
+        raise ValueError('Question or option truncation/collapse')
+    if raw.get('low_confidence'):
+        raise ValueError('Provider abstained')
+    if not isinstance(answers, dict) or set(answers) != set(questions):
+        raise ValueError('Missing or unexpected question answers')
+    kept = {}
+    for qid in questions:
+        answer = answers[qid]
+        if not isinstance(answer, dict) or answer.get('type') != 'choice' or answer.get('choice') not in DECISIONS:
+            raise ValueError(f'Invalid typed answer: {qid}')
+        if answer.get('low_confidence'):
+            raise ValueError(f'Provider abstained: {qid}')
+        probs = answer.get('probabilities')
+        if (not isinstance(probs, dict) or set(probs) != set(DECISIONS)
+                or any(type(v) not in (float, int) or not math.isfinite(v) or not 0 <= v <= 1 for v in probs.values())
+                or abs(sum(probs.values()) - 1) > 0.002):
+            raise ValueError(f'Invalid class probabilities: {qid}')
+        kept[qid] = {'choice': answer['choice'], 'probabilities': {d: probs[d] for d in DECISIONS}}
+    mean = {d: sum(a['probabilities'][d] for a in kept.values()) / len(kept) for d in DECISIONS}
+    top = max(mean.values())
+    winners = [d for d in DECISIONS if top - mean[d] <= TIE]
+    return (winners[0] if len(winners) == 1 else 'ASK'), mean, kept
+
+
+def laya_predict(pairs_path, metadata_path, output, profile='cybersec', method='rotated'):
+    """Run the pinned checkpoint on each pair with the dataset's own question; never dispatch tools."""
     import importlib.metadata
     import time
     from huggingface_hub import snapshot_download
@@ -68,6 +125,9 @@ def laya_predict(pairs_path, metadata_path, output, profile='cybersec'):
     metadata = json.loads(Path(metadata_path).read_text(encoding='utf-8'))
     pin = metadata['question_and_checkpoint_provenance'][profile]
     question = metadata['laya_question']
+    if method not in ('single', 'rotated'):
+        raise ValueError(f'Unknown method: {method}')
+    asked = rotated_questions(question) if method == 'rotated' else question
     # Only what the Laya agent loads; the checkpoint repository also carries a large ONNX export.
     snapshot = snapshot_download(pin['checkpoint'], revision=pin['revision'],
                                  allow_patterns=['*.json', 'model.safetensors', 'encoder/*', 'tokenizer/*'])
@@ -78,18 +138,28 @@ def laya_predict(pairs_path, metadata_path, output, profile='cybersec'):
     header = {'checkpoint': pin['checkpoint'], 'revision': pin['revision'], 'device': 'cpu',
               'pairs_sha256': sha256(pairs_path), 'metadata_sha256': sha256(metadata_path),
               'question_sha256': hashlib.sha256(json.dumps(question, sort_keys=True).encode()).hexdigest(),
+              'method': method, 'questions_asked': list(asked),
               'packages': {name: importlib.metadata.version(name) for name in ('laya', 'torch', 'transformers')}}
     lines = [json.dumps({'header': header}, sort_keys=True)]
     for row in sorted(rows, key=lambda r: r['id']):
         started = time.monotonic()
         record = {'id': row['id']}
         try:
-            prepared, diagnostics = preflight(agent, row['laya_input'], question, {}, profile='recorded_full',
+            prepared, diagnostics = preflight(agent, row['laya_input'], asked, {}, profile='recorded_full',
                                               max_chars=None)
-            result = parse_response(agent.system_one(prepared, question), 'single')
-            record.update(decision=result.decision, raw_decision=result.raw_decision,
-                          probabilities=result.probabilities, error=result.error,
-                          state_tokens=diagnostics.get('prepared_token_count'))
+            raw = agent.system_one(prepared, asked)  # one model call, all questions together
+            if method == 'single':
+                result = parse_response(raw, 'single')
+                record.update(decision=result.decision, raw_decision=result.raw_decision,
+                              probabilities=result.probabilities, error=result.error)
+            else:
+                try:
+                    decision, mean, answers = rotated_decision(raw, asked)
+                    record.update(decision=decision, probabilities=mean, answers=answers, error=None)
+                except ValueError as exc:
+                    record.update(decision=None, probabilities=None, answers=None, error=f'ValueError: {exc}')
+            record.update(state_tokens=diagnostics.get('prepared_token_count'),
+                          sequence_tokens=diagnostics.get('sequence_tokens'))
         except Exception as exc:  # recorded per row; a failed row is a gatekeeper error, never an ALLOW
             record.update(decision=None, raw_decision=None, probabilities=None, error=f'{type(exc).__name__}: {exc}')
         record['seconds'] = round(time.monotonic() - started, 3)
@@ -289,9 +359,11 @@ def gate_table(events, gatekeepers):
     return rows
 
 
-def simulate(pairs_path, output, seeds=50, passes=3, label_sources=('reviewed', 'source')):
+def simulate(pairs_path, output, seeds=50, passes=3, label_sources=('reviewed', 'source'),
+             predictions_path=PREDICTIONS):
     pairs = load_pairs(pairs_path)
-    header, predictions = load_predictions()
+    predictions_path = Path(predictions_path).resolve()
+    header, predictions = load_predictions(predictions_path)
     if header['pairs_sha256'] != sha256(pairs_path):
         raise ValueError('Laya predictions were made on a different pairs file')
     out = Path(output)
@@ -300,7 +372,8 @@ def simulate(pairs_path, output, seeds=50, passes=3, label_sources=('reviewed', 
             'counting_approvals_to_allow': 2, 'counting_rejections_to_block': 1, 'expiry': 'none in simulation',
             'pairs_sha256': sha256(pairs_path), 'laya_predictions': header,
             'inputs': {str(p.relative_to(ROOT)): sha256(p) for p in sorted(
-                [DATA / 'provenance.jsonl', COMPACT / 'train.jsonl', COMPACT / 'test.jsonl', LABELS, PREDICTIONS])},
+                [DATA / 'provenance.jsonl', COMPACT / 'train.jsonl', COMPACT / 'test.jsonl', LABELS,
+                 predictions_path])},
             'labels': {'reviewed': 'reviewed by an LLM (Claude) against the adapted prompts, not by people',
                        'source': 'the release source_label: provisional LLM intent labels of the original rows'}}
     for source in label_sources:
@@ -325,13 +398,16 @@ def main(argv=None):
     parser.add_argument('--output', required=True)
     parser.add_argument('--seeds', type=int, default=50)
     parser.add_argument('--passes', type=int, default=3)
+    parser.add_argument('--method', choices=['rotated', 'single'], default='rotated',
+                        help='laya-predict: rotated option orders (team method) or the single dataset order')
+    parser.add_argument('--predictions', default=str(PREDICTIONS), help='simulate: recorded Laya predictions')
     args = parser.parse_args(argv)
     if args.operation == 'laya-predict':
         if not args.metadata:
             parser.error('laya-predict requires --metadata')
-        print(json.dumps(laya_predict(args.pairs, args.metadata, args.output), indent=2))
+        print(json.dumps(laya_predict(args.pairs, args.metadata, args.output, method=args.method), indent=2))
         return
     if args.seeds < 1 or args.passes < 1:
         sys.exit('--seeds and --passes must be at least 1')
-    simulate(args.pairs, args.output, args.seeds, args.passes)
+    simulate(args.pairs, args.output, args.seeds, args.passes, predictions_path=args.predictions)
     print(f'wrote {args.output}')

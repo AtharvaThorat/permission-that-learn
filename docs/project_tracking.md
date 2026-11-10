@@ -44,9 +44,10 @@ The labeled authorization benchmark is not yet available.
 - Permission memory on laya-pairs-v1 (2026-11-09, branch `feature/permission-memory`): scoped grants (approvals only
   prompt an offer; only an explicit user grant allows) beside counting, `grants` learner in the live hook, and
   `grids permissions laya-predict | simulate`. [permission-memory](results/permission-memory/README.md): real
-  Laya-Cybersec (CPU, no fine-tuning) agrees with LLM-reviewed labels on 51/150; Wall + Laya executes 9 harmful
-  actions with a careful user against 87 for Laya alone; inside the Wall, counting cuts questions 40% and grants 15%,
-  with 7 versus 1.5 skipped confirmations. Simulated users; not a live run. CPU regression **309 passed**.
+  Laya-Cybersec (CPU, no fine-tuning) with Siddharth's rotated-options method (2026-11-10) agrees with LLM-reviewed
+  labels on 59/150 (51 with a single order); Wall + Laya executes 12 harmful actions with a careful user against 123
+  for Laya alone; inside the Wall, counting cuts questions 22% and grants 4%, with 1 versus 0 skipped confirmations.
+  Simulated users; not a live run. CPU regression **319 passed**.
 
 ## Remaining work
 
@@ -74,7 +75,7 @@ The labeled authorization benchmark is not yet available.
     see the request (or defer to Laya) so task mismatches identical to legitimate actions are not auto-allowed;
     measure how often real actions recur before relying on the simulated reduction in questions.
 11. Permission grants: an operator channel that can accept a grant scope; remembered rejections for the grant arm;
-    human review of the laya-pairs-v1 labels; rerun with Siddharth's fine-tuned Laya predictions.
+    human review of the laya-pairs-v1 labels; rerun if the team's Laya method or checkpoint changes.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.

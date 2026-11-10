@@ -19,5 +19,5 @@ with `context` reduced by `compact_v1` for 1,024-token Laya checkpoints.
 and metrics use the LLM-reviewed labels; it is not a real-model or human-user result.
 
 `permission-memory/` compares counting memory with scoped grants on Siddharth Magesh's gated laya-pairs-v1 release
-(not redistributed; hashed). It holds LLM-reviewed labels, one real Laya-Cybersec CPU prediction run and a
+(not redistributed; hashed). It holds LLM-reviewed labels, real Laya-Cybersec CPU predictions (single order and the rotated-options method) and a
 simulated-user run; it is not a human-labelled or live result.

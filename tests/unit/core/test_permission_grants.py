@@ -175,3 +175,76 @@ def test_published_labels_and_predictions():
     assert header['checkpoint'] == 'TextCortex/laya-cybersec' and header['revision'].startswith('41fd5a2')
     assert {r['id'] for r in rows} == {r['id'] for r in labels}
     assert all(r['decision'] in ('ALLOW', 'ASK', 'BLOCK') or r['error'] for r in rows)
+
+
+QUESTION = {'decision': {'type': 'choice', 'instructions': 'Judge the action.',
+                         'criteria': {'ALLOW': 'fits', 'ASK': 'unclear', 'BLOCK': 'contradicts'}}}
+
+
+def rotated_response(*probabilities, **usage):
+    asked = sim.rotated_questions(QUESTION)
+    answers = {qid: {'type': 'choice', 'choice': max(p, key=p.get), 'probabilities': p}
+               for qid, p in zip(asked, probabilities)}
+    return {'answers': answers, 'usage': {'truncated': False, 'state_tokens_dropped': 0, 'truncated_questions': [],
+                                          **usage}}, asked
+
+
+def test_rotated_questions_keep_the_criteria_and_rotate_the_options():
+    asked = sim.rotated_questions(QUESTION)
+    assert [list(q['criteria']) for q in asked.values()] == [
+        ['ALLOW', 'ASK', 'BLOCK'], ['ASK', 'BLOCK', 'ALLOW'], ['BLOCK', 'ALLOW', 'ASK']]
+    assert all(q['criteria'] == QUESTION['decision']['criteria'] and q['instructions'] == 'Judge the action.'
+               for q in asked.values())
+    with pytest.raises(ValueError):
+        sim.rotated_questions({'decision': {'criteria': {'ALLOW': 'a', 'BLOCK': 'b'}}})
+
+
+def test_rotated_decision_averages_by_label_and_ties_to_ask():
+    raw, asked = rotated_response({'ALLOW': .6, 'ASK': .3, 'BLOCK': .1}, {'ALLOW': .2, 'ASK': .3, 'BLOCK': .5},
+                                  {'ALLOW': .5, 'ASK': .2, 'BLOCK': .3})
+    decision, mean, answers = sim.rotated_decision(raw, asked)
+    assert decision == 'ALLOW' and mean == pytest.approx({'ALLOW': 13 / 30, 'ASK': 8 / 30, 'BLOCK': 9 / 30})
+    assert [a['choice'] for a in answers.values()] == ['ALLOW', 'BLOCK', 'ALLOW']
+    tie = {'ALLOW': .45, 'ASK': .1, 'BLOCK': .45}
+    assert sim.rotated_decision(*rotated_response(tie, tie, tie))[0] == 'ASK'
+
+
+@pytest.mark.parametrize('broken', ['truncated', 'dropped', 'question', 'collapse', 'missing', 'probabilities',
+                                    'abstain'])
+def test_rotated_decision_fails_closed_on_any_invalid_answer_or_truncation(broken):
+    p = {'ALLOW': .7, 'ASK': .2, 'BLOCK': .1}
+    raw, asked = rotated_response(p, p, p)
+    usage, answers, last = raw['usage'], raw['answers'], list(asked)[-1]
+    if broken == 'truncated':
+        usage['truncated'] = True
+    elif broken == 'dropped':
+        usage['state_tokens_dropped'] = 3
+    elif broken == 'question':
+        usage['truncated_questions'] = [last]
+    elif broken == 'collapse':
+        usage['options'] = {last: 2}
+    elif broken == 'missing':
+        del answers[last]
+    elif broken == 'probabilities':
+        answers[last]['probabilities'] = {'ALLOW': .9, 'ASK': .9, 'BLOCK': .1}
+    else:
+        answers[last]['low_confidence'] = True
+    with pytest.raises(ValueError):
+        sim.rotated_decision(raw, asked)
+
+
+def test_published_rotated_predictions_follow_the_method():
+    lines = (ROOT / 'docs/results/permission-memory/laya_cybersec_rotated_predictions.jsonl').read_text().splitlines()
+    header, rows = json.loads(lines[0])['header'], [json.loads(line) for line in lines[1:]]
+    assert header['method'] == 'rotated' and header['questions_asked'] == ['decision_012', 'decision_120',
+                                                                           'decision_201']
+    assert len(rows) == len({r['id'] for r in rows}) == 150
+    for r in rows:
+        if r['error']:
+            assert r['decision'] is None
+            continue
+        mean = {d: sum(a['probabilities'][d] for a in r['answers'].values()) / 3 for d in sim.DECISIONS}
+        assert mean == pytest.approx(r['probabilities'])
+        top = max(mean.values())
+        winners = [d for d in sim.DECISIONS if top - mean[d] <= sim.TIE]
+        assert r['decision'] == (winners[0] if len(winners) == 1 else 'ASK')
