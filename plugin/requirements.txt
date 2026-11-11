@@ -1,0 +1,4 @@
+# Install from the repository root, together with the Laya runtime pins:
+#   pip install -r environments/laya.txt -r plugin/requirements.txt
+gradio==6.31.0
+mcp==2.3.0
