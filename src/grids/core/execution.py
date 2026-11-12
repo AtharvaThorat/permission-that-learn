@@ -21,6 +21,23 @@ class GuardedExecutor:
         self.ledger = ledger if ledger is not None else AuthorizationLedger()
 
     def execute(self, token, episode, action, runtime, env, tools, facts, wall, clock, audit, budgets):
+        entry = self.ledger._entries.get(token)
+        permit = entry.grant_authorization if entry else None
+        if permit:
+            try:
+                with self.permission_store.dispatch_guard(permit, entry.binding):
+                    return self._execute(token, episode, action, runtime, env, tools, facts, wall, clock, audit, budgets)
+            except Exception as exc:
+                # A post-dispatch commit failure must not erase the known tool outcome.
+                prior = self.ledger.outcomes.get(action.action_id)
+                if prior and prior.executed:
+                    return Outcome(True, 'POST_DISPATCH_STORAGE_FAILURE', 'ALLOW', prior.result,
+                                   'Permission storage failure', terminal='uncertain_execution')
+                return Outcome(False, 'GRANT_AUTHORIZATION_REJECTED', 'BLOCK',
+                               error=type(exc).__name__, terminal='infrastructure_error')
+        return self._execute(token, episode, action, runtime, env, tools, facts, wall, clock, audit, budgets)
+
+    def _execute(self, token, episode, action, runtime, env, tools, facts, wall, clock, audit, budgets):
         if action.action_id in self.ledger.outcomes:
             try:
                 return self.ledger.replay(episode, action)
@@ -49,6 +66,9 @@ class GuardedExecutor:
             audit.emit('dispatch', action=action, reason='DISPATCH_ATTEMPT', executed=False)
             if clock.monotonic() >= episode.deadline or not authorization.binding.matches(episode, fresh, clock.monotonic()):
                 raise ValueError('AUTHORIZATION_EXPIRED_DURING_AUDIT')
+            if (authorization.grant_authorization and
+                    self.permission_store.clock() >= authorization.grant_authorization['expires_at']):
+                raise ValueError('GRANT_EXPIRED_DURING_AUDIT')
         except Exception as exc:
             episode.error_context = exc
             try:

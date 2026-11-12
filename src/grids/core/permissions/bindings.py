@@ -26,6 +26,7 @@ class Authorization:
     binding: Binding
     decision_id: str
     consumed: bool = False
+    grant_authorization: dict | None = None
 
 class AuthorizationLedger:
     def __init__(self):
@@ -33,11 +34,11 @@ class AuthorizationLedger:
         self.outcomes = {}
         self.attempts = {}
 
-    def issue(self, binding, decision_id):
+    def issue(self, binding, decision_id, grant_authorization=None):
         if binding.action_id in self.attempts:
             raise ValueError('ATTEMPT_ALREADY_AUTHORIZED')
         token = uuid4().hex
-        self._entries[token] = Authorization(binding, decision_id)
+        self._entries[token] = Authorization(binding, decision_id, grant_authorization=grant_authorization)
         self.attempts[binding.action_id] = binding
         return token
 

@@ -15,9 +15,12 @@ class Services:
         self.approval_wait_seconds = approval_wait_seconds
         self.clients = {}
         self.lock = threading.Lock()
-        # One approval memory per run, shared by its episodes: that is where it learns.
-        from grids.core.permissions.memory import build_memory
-        self.memory = build_memory(spec.learning) if spec.learning.enabled else None
+        from grids.core.permissions.store import PermissionStore
+        self.memory = None
+        if spec.learning.enabled:
+            if spec.learning.learner != 'scoped' or not spec.learning.user_id or not spec.learning.store_path:
+                raise ValueError('Live learning requires scoped grants, trusted user_id and store_path; legacy learners are simulation-only')
+            self.memory = PermissionStore(spec.learning.store_path)
         self.memory_lock = threading.Lock()
         self.requests = {name: threading.BoundedSemaphore(p.max_concurrent_requests)
                          for name, p in spec.actors.items()}

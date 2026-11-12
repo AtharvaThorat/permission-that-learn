@@ -1,6 +1,6 @@
 """Bounded sequential episode loop. The actor only sees messages and schemas."""
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from grids.core.actions import bind, canonical, digest
 from grids.core.audit import AuditFailure, EpisodeAudit
 from grids.core.contracts import GateDecision, Outcome
@@ -13,6 +13,8 @@ class Controller:
         self.facts, self.approvals, self.executor = facts, approvals, executor
         self.clock, self.sink, self.codec = clock, sink, codec
         self.trace = trace
+        if hasattr(approvals, 'store'):
+            self.executor.permission_store = approvals.store
 
     def mediate(self, episode, proposal, action_id, tools, runtime, env, audit):
         if self.trace and self.trace.cancelled():
@@ -63,6 +65,13 @@ class Controller:
                     decision = GateDecision('ASK', 'MODEL_UNAVAILABLE', error_kind=type(exc).__name__)
         else:
             decision = GateDecision('ALLOW', 'EXPLICIT_MODE_BYPASS')
+        if episode.mode == 'wall_gatekeeper' and decision.decision != 'BLOCK':
+            if wall.confirmation_required:
+                decision = replace(decision, decision='ASK', reason='CONFIRMATION_REQUIRED')
+            elif not action.evidence_complete:
+                decision = replace(decision, decision='ASK', reason='INSUFFICIENT_EVIDENCE')
+            elif decision.error_kind:
+                decision = replace(decision, decision='ASK', reason='MODEL_UNAVAILABLE')
         audit.emit('gate_decision', action=action, **asdict(decision),
                    elapsed_seconds=self.clock.monotonic() - gate_started)
         if self.trace:
@@ -78,6 +87,7 @@ class Controller:
                        decision='ASK', policy_override=True)
             decision = GateDecision('ASK', reason)
         expires = min(episode.deadline, self.clock.monotonic() + budget.authorization_ttl_seconds)
+        grant_authorization = None
         decision_id = action.action_id + ':decision'
         if decision.decision == 'ASK':
             episode.asks += 1
@@ -93,18 +103,31 @@ class Controller:
                                terminal='pending_approval')
             valid = (isinstance(feedback, ApprovalEvent) and type(feedback.approved) is bool and feedback.pending_id == pending.pending_id and
                      feedback.binding == pending.binding and feedback.binding.matches(episode, action, self.clock.monotonic()))
+            if valid and feedback.grant_authorization is not None:
+                valid = feedback.grant_authorization.get('user') == getattr(self.approvals, 'user', None)
             if not valid:
                 audit.emit('invalid_approval', action=action, reason='INVALID_APPROVAL')
                 return Outcome(False, 'INVALID_APPROVAL', 'BLOCK', error='PermissionError: invalid approval')
             audit.emit('approval', action=action, reason='APPROVED' if feedback.approved else 'REJECTED')
             if not feedback.approved:
+                if hasattr(self.approvals, 'observe'):
+                    self.approvals.observe(Outcome(False, 'APPROVAL_REJECTED', 'BLOCK'))
                 return Outcome(False, 'APPROVAL_REJECTED', 'BLOCK', error='PermissionError: approval rejected')
+            grant_authorization = feedback.grant_authorization
             decision_id = pending.pending_id
         if self.clock.monotonic() >= episode.deadline:
             return Outcome(False, 'EPISODE_DEADLINE', 'CANCELLED', error='Not executed: episode deadline', terminal='budget_exceeded')
-        token = self.executor.ledger.issue(Binding.create(episode, action, expires), decision_id)
-        return self.executor.execute(token, episode, action, runtime, env, tools, self.facts,
-                                     self.wall, self.clock, audit, budget)
+        token = self.executor.ledger.issue(Binding.create(episode, action, expires), decision_id, grant_authorization)
+        outcome = self.executor.execute(token, episode, action, runtime, env, tools, self.facts,
+                                        self.wall, self.clock, audit, budget)
+        if decision.decision == 'ASK' and hasattr(self.approvals, 'observe'):
+            try:
+                self.approvals.observe(outcome)
+            except Exception:
+                return Outcome(outcome.executed, 'OUTCOME_STORAGE_FAILURE', outcome.decision, outcome.result,
+                               'Permission outcome storage failed',
+                               terminal='uncertain_execution' if outcome.executed else 'infrastructure_error')
+        return outcome
 
     def run(self, episode, runtime, env, messages, tools):
         audit = EpisodeAudit(self.sink, episode, self.clock)

@@ -138,11 +138,15 @@ class GrantStore:
     `record` returns True when an offer is due: the `offer_after`-th approval of one exact
     pattern with no rejection and no live grant (once per streak; any rejection ends offers for
     that pattern). Only `grant`, the user's own act, creates authority.
+
+    With `remember_rejections`, a rejected exact pattern is refused without asking from then on
+    (`denies`). That only tightens: it never allows anything, and a later explicit grant of the
+    same pattern lifts it.
     """
 
-    def __init__(self, offer_after=2, ttl=None):
-        self.offer_after, self.ttl = offer_after, ttl
-        self.stats, self.grants, self.tick = {}, {}, 0
+    def __init__(self, offer_after=2, ttl=None, remember_rejections=False):
+        self.offer_after, self.ttl, self.remember_rejections = offer_after, ttl, remember_rejections
+        self.stats, self.grants, self.denied, self.tick = {}, {}, set(), 0
 
     def _live(self, grant):
         return not grant.revoked and (grant.expires is None or self.tick <= grant.expires)
@@ -156,7 +160,11 @@ class GrantStore:
                 return True
         return False
 
-    def record(self, exact, approved):
+    def denies(self, exact):
+        return exact in self.denied
+
+    def record(self, exact, approved, broad=None):
+        """Count one user answer. A rejection revokes the exact grant and, if given, the class grant."""
         record = self.stats.setdefault(exact, Record())
         record.last = self.tick
         if approved:
@@ -164,14 +172,18 @@ class GrantStore:
         else:
             record.rejections += 1
             record.approvals = 0
-            if exact in self.grants:
-                self.grants[exact].revoked = True
+            for key in (exact, broad):
+                if key in self.grants:
+                    self.grants[key].revoked = True
+            if self.remember_rejections:
+                self.denied.add(exact)
         live = exact in self.grants and self._live(self.grants[exact])
         return approved and not live and record.rejections == 0 and record.approvals == self.offer_after
 
     def grant(self, key, scope):
         if scope not in ('exact', 'class'):
             raise ValueError('Unknown grant scope')
+        self.denied.discard(key)
         self.grants[key] = Grant(key, scope, self.tick, None if self.ttl is None else self.tick + self.ttl)
 
     def revoke(self, key):
@@ -261,7 +273,7 @@ class GrantApprovalProvider:
                 and event.pending_id == pending.pending_id and event.binding == pending.binding):
             return event
         with self.lock:
-            offer = self.store.record(keys[0], event.approved)
+            offer = self.store.record(keys[0], event.approved, keys[1])
         scope = None
         if offer and callable(getattr(self.inner, 'grant_offer', None)):
             scope = self.inner.grant_offer(pending)

@@ -1,6 +1,6 @@
 # Project tracking
 
-Updated 2026-11-09. Use the [documentation index](README.md) for commands and
+Updated 2026-11-11. Use the [documentation index](README.md) for commands and
 architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
 [training-data](milestones/2026-11-laya-training-data.md) and
 [compact_v1](milestones/2026-11-laya-compact.md) and
@@ -8,6 +8,21 @@ architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
 [permission memory](milestones/2026-11-permission-memory.md) milestones for evidence.
 
 ## Current objective
+
+Permission-layer update (branch `codex/scoped-permission-learning`, based on `19fe142`):
+- Implemented persistent exact grants, isolated per-user contextual learning, explicit operator
+  grant/revoke/review/export commands, and dispatch-time grant revalidation. Legacy counting
+  and broad grants remain historical simulation comparators; live learning requires `scoped`.
+- CPU regression: **362 passed**, Ruff passed. Constructed validation: 36 sequences,
+  three modes, zero forbidden dispatches; final holdout satisfies 36/36 enforcement expectations per mode.
+- Real pinned base Laya: **12/12 inference calls completed**, no truncation/errors; final controller
+  outcomes match 10/12 constructed expectations. All three mandatory confirmations withheld dispatch
+  despite raw Laya ALLOW. This is functional evidence, not independently reviewed benchmark accuracy.
+- Results: `results/permission-learning/final-20261111/report.html`. Details and commands:
+  [permission milestone](milestones/2026-11-permission-memory.md) and [experiment guide](guides/experiments.md).
+- Reused teammate contextual algorithms and synthetic Workspace comparisons, keeping unsafe ablations offline. Added durable prediction caching and small-run controls; real Cybersec smoke: 21/21 inputs, no errors. See the milestone for artifacts and limitations.
+- Remaining: human feedback review, broader live actor/AgentDojo validation, and later Laya fine-tuning.
+  No weights were trained, no actor APIs called, and nothing was pushed or merged.
 
 Evaluate authorization on identical frozen actions/context using independent
 ALLOW/BLOCK/ASK labels. Native AgentDojo utility and attack success remain secondary.

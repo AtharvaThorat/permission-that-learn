@@ -9,7 +9,7 @@ def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(prog='grids', description='Authorization evaluation and native AgentDojo experiments')
     parser.add_argument('command', choices=['setup', 'models', 'serve', 'validate', 'benchmark', 'dataset', 'evaluate', 'report',
-                                            'training-data', 'memory', 'permissions'])
+                                            'training-data', 'memory', 'permissions', 'learning'])
     if not argv or argv[0] in ('-h', '--help'):
         parser.print_help()
         return
@@ -50,8 +50,11 @@ def main(argv=None):
         from grids.evaluation.memory_sim import main as memory
         return memory(rest)
     if args.command == 'permissions':
-        from grids.evaluation.permission_sim import main as permissions
+        from .permissions import main as permissions
         return permissions(rest)
+    if args.command == 'learning':
+        from grids.evaluation.learning_cli import main as learning
+        return learning(rest)
     sub = argparse.ArgumentParser(prog='grids '+args.command)
     if args.command == 'dataset':
         sub.add_argument('operation', choices=['capture', 'validate', 'export-labels', 'import-labels'])

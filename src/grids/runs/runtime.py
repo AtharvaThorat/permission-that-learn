@@ -18,6 +18,10 @@ def learned_approvals(learning, services, inner, wall, writer):
     from grids.core.permissions.approvals import PendingApprovalProvider
     from grids.core.permissions.memory import GrantApprovalProvider, MemoryApprovalProvider
     record = lambda row: writer.append('memory.jsonl', row)
+    if learning.learner == 'scoped':
+        from grids.core.permissions.provider import ScopedApprovalProvider
+        return ScopedApprovalProvider(inner or PendingApprovalProvider(), services.memory, learning.user_id,
+                                      learning.mode, learning.frozen, record)
     if learning.learner == 'grants':
         return GrantApprovalProvider(inner or PendingApprovalProvider(), services.memory,
                                      classify=wall.context.classify, lock=services.memory_lock, record=record)

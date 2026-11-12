@@ -113,57 +113,75 @@ def rotated_decision(raw, questions):
     return (winners[0] if len(winners) == 1 else 'ASK'), mean, kept
 
 
-def laya_predict(pairs_path, metadata_path, output, profile='cybersec', method='rotated'):
-    """Run the pinned checkpoint on each pair with the dataset's own question; never dispatch tools."""
-    import importlib.metadata
-    import time
-    from huggingface_hub import snapshot_download
+def laya_agent(pin=None, model_dir=None, device='cpu'):
+    """The pinned Hub checkpoint, or a local fine-tuned checkpoint directory, as a Laya agent."""
     from laya import Agent
+    if model_dir is not None:
+        return Agent(model_id_or_path=str(model_dir), device=device, fast=False, compile=False, backend='eager')
+    from huggingface_hub import snapshot_download
+    # Only what the Laya agent loads; the checkpoint repository also carries a large ONNX export.
+    snapshot = snapshot_download(pin['checkpoint'], revision=pin['revision'],
+                                 allow_patterns=['*.json', 'model.safetensors', 'encoder/*', 'tokenizer/*'])
+    return Agent(model_id_or_path=snapshot, revision=pin['revision'], device=device, fast=False, compile=False,
+                 backend='eager')
+
+
+def asked_questions(question, method):
+    if method not in ('single', 'rotated'):
+        raise ValueError(f'Unknown method: {method}')
+    return rotated_questions(question) if method == 'rotated' else question
+
+
+def predict_state(agent, state, asked, method):
+    """One model call on one `laya_input`; a failed row is a gatekeeper error, never an ALLOW."""
+    import time
     from grids.gatekeeper.context import preflight
     from grids.gatekeeper.laya_adapter import parse_response
+    started, record = time.monotonic(), {}
+    try:
+        prepared, diagnostics = preflight(agent, state, asked, {}, profile='recorded_full', max_chars=None)
+        raw = agent.system_one(prepared, asked)  # one model call, all questions together
+        if method == 'single':
+            result = parse_response(raw, 'single')
+            record.update(decision=result.decision, raw_decision=result.raw_decision,
+                          probabilities=result.probabilities, error=result.error)
+        else:
+            try:
+                decision, mean, answers = rotated_decision(raw, asked)
+                record.update(decision=decision, probabilities=mean, answers=answers, error=None)
+            except ValueError as exc:
+                record.update(decision=None, probabilities=None, answers=None, error=f'ValueError: {exc}')
+        record.update(state_tokens=diagnostics.get('prepared_token_count'),
+                      sequence_tokens=diagnostics.get('sequence_tokens'))
+    except Exception as exc:  # recorded per row
+        record.update(decision=None, raw_decision=None, probabilities=None, error=f'{type(exc).__name__}: {exc}')
+    record['seconds'] = round(time.monotonic() - started, 3)
+    return record
+
+
+def package_versions():
+    import importlib.metadata
+    return {name: importlib.metadata.version(name) for name in ('laya', 'torch', 'transformers')}
+
+
+def laya_predict(pairs_path, metadata_path, output, profile='cybersec', method='rotated'):
+    """Run the pinned checkpoint on each pair with the dataset's own question; never dispatch tools."""
     rows = load_pairs(pairs_path)
     metadata = json.loads(Path(metadata_path).read_text(encoding='utf-8'))
     pin = metadata['question_and_checkpoint_provenance'][profile]
     question = metadata['laya_question']
-    if method not in ('single', 'rotated'):
-        raise ValueError(f'Unknown method: {method}')
-    asked = rotated_questions(question) if method == 'rotated' else question
-    # Only what the Laya agent loads; the checkpoint repository also carries a large ONNX export.
-    snapshot = snapshot_download(pin['checkpoint'], revision=pin['revision'],
-                                 allow_patterns=['*.json', 'model.safetensors', 'encoder/*', 'tokenizer/*'])
-    agent = Agent(model_id_or_path=snapshot, revision=pin['revision'], device='cpu', fast=False, compile=False,
-                  backend='eager')
+    asked = asked_questions(question, method)
+    agent = laya_agent(pin)
     out = Path(output)
     out.parent.mkdir(parents=True, exist_ok=True)
     header = {'checkpoint': pin['checkpoint'], 'revision': pin['revision'], 'device': 'cpu',
               'pairs_sha256': sha256(pairs_path), 'metadata_sha256': sha256(metadata_path),
               'question_sha256': hashlib.sha256(json.dumps(question, sort_keys=True).encode()).hexdigest(),
-              'method': method, 'questions_asked': list(asked),
-              'packages': {name: importlib.metadata.version(name) for name in ('laya', 'torch', 'transformers')}}
+              'method': method, 'questions_asked': list(asked), 'packages': package_versions()}
     lines = [json.dumps({'header': header}, sort_keys=True)]
     for row in sorted(rows, key=lambda r: r['id']):
-        started = time.monotonic()
-        record = {'id': row['id']}
-        try:
-            prepared, diagnostics = preflight(agent, row['laya_input'], asked, {}, profile='recorded_full',
-                                              max_chars=None)
-            raw = agent.system_one(prepared, asked)  # one model call, all questions together
-            if method == 'single':
-                result = parse_response(raw, 'single')
-                record.update(decision=result.decision, raw_decision=result.raw_decision,
-                              probabilities=result.probabilities, error=result.error)
-            else:
-                try:
-                    decision, mean, answers = rotated_decision(raw, asked)
-                    record.update(decision=decision, probabilities=mean, answers=answers, error=None)
-                except ValueError as exc:
-                    record.update(decision=None, probabilities=None, answers=None, error=f'ValueError: {exc}')
-            record.update(state_tokens=diagnostics.get('prepared_token_count'),
-                          sequence_tokens=diagnostics.get('sequence_tokens'))
-        except Exception as exc:  # recorded per row; a failed row is a gatekeeper error, never an ALLOW
-            record.update(decision=None, raw_decision=None, probabilities=None, error=f'{type(exc).__name__}: {exc}')
-        record['seconds'] = round(time.monotonic() - started, 3)
-        lines.append(json.dumps(record, sort_keys=True))
+        lines.append(json.dumps({'id': row['id'], **predict_state(agent, row['laya_input'], asked, method)},
+                                sort_keys=True))
     out.write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return header
 

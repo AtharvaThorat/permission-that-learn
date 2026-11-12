@@ -18,12 +18,14 @@ class PendingApproval:
     created_at: str = ''
     expires_at: str = ''
     continuation: str = 'live_process_only'
+    request: str = ''
 
 @dataclass(frozen=True)
 class ApprovalEvent:
     pending_id: str
     binding: Binding
     approved: bool
+    grant_authorization: dict | None = None
 
 class ApprovalProvider(Protocol):
     def request(self, pending: PendingApproval) -> ApprovalEvent | None: ...
@@ -46,7 +48,7 @@ def pending_record(episode, action, reason, expires, *, decision=None, remaining
     now = datetime.now(timezone.utc)
     return PendingApproval(uuid4().hex, Binding.create(episode, action, expires), action, reason,
         json.dumps(decision or {}, sort_keys=True), now.isoformat(),
-        (now + timedelta(seconds=max(0, remaining))).isoformat() if remaining is not None else '')
+        (now + timedelta(seconds=max(0, remaining))).isoformat() if remaining is not None else '', request=episode.task)
 
 
 def exclusive_json(path, value):
