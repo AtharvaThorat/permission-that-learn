@@ -159,11 +159,11 @@ def test_simulated_grants_versus_counting():
 
 
 def test_published_labels_and_predictions():
-    labels = list(csv.DictReader((ROOT / 'docs/results/permission-memory/reviewed_labels.csv').open(encoding='utf-8')))
+    labels = list(csv.DictReader((ROOT / 'experiments/reference/permission-memory/reviewed_labels.csv').open(encoding='utf-8')))
     assert len(labels) == len({r['id'] for r in labels}) == 150
     assert {r['reviewed_label'] for r in labels} == {'ALLOW', 'ASK', 'BLOCK'}
     assert all(r['reviewed_label'] == r['source_label'] for r in labels if r['rule'] == 'kept')
-    lines = (ROOT / 'docs/results/permission-memory/laya_cybersec_predictions.jsonl').read_text().splitlines()
+    lines = (ROOT / 'experiments/reference/permission-memory/laya_cybersec_predictions.jsonl').read_text().splitlines()
     header, rows = json.loads(lines[0])['header'], [json.loads(line) for line in lines[1:]]
     assert header['checkpoint'] == 'TextCortex/laya-cybersec' and header['revision'].startswith('41fd5a2')
     assert {r['id'] for r in rows} == {r['id'] for r in labels}
@@ -227,7 +227,7 @@ def test_rotated_decision_fails_closed_on_any_invalid_answer_or_truncation(broke
 
 
 def test_published_rotated_predictions_follow_the_method():
-    lines = (ROOT / 'docs/results/permission-memory/laya_cybersec_rotated_predictions.jsonl').read_text().splitlines()
+    lines = (ROOT / 'experiments/reference/permission-memory/laya_cybersec_rotated_predictions.jsonl').read_text().splitlines()
     header, rows = json.loads(lines[0])['header'], [json.loads(line) for line in lines[1:]]
     assert header['method'] == 'rotated' and header['questions_asked'] == ['decision_012', 'decision_120',
                                                                            'decision_201']

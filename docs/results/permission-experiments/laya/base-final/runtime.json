@@ -1,0 +1,730 @@
+{
+  "status": "completed",
+  "load_warnings": [
+    "laya: this checkpoint ships invalid temperatures or values outside [0.5, 5]; using choice:11+=0.10058280825614929 -> 0.5. Treat confidence from the affected entries as uncalibrated."
+  ],
+  "initialization_seconds": 3.7423898000006375,
+  "config": {
+    "encoder": "answerdotai/ModernBERT-large",
+    "head_layers": 2,
+    "max_len": 512,
+    "head_max_len": 192,
+    "max_prefixes": 6,
+    "act_costs": {
+      "escalate": 0.5
+    },
+    "cost_wrong_act": 3.0,
+    "amp_dtype": "bf16",
+    "model_name": "rl-agent",
+    "temperature": [
+      1.6369030475616455,
+      1.2514300346374512,
+      1.983399510383606
+    ],
+    "temperature_by_options": {
+      "choice:3-5": 1.7601518630981445,
+      "choice:6-10": 1.0000158548355103,
+      "score:3-5": 1.2514300346374512,
+      "noul:2": 1.983399510383606,
+      "choice:11+": 0.10058280825614929,
+      "choice:2": 1.9063563346862793
+    },
+    "training": {
+      "updates": 7313,
+      "epochs_completed": 1,
+      "hours": 1.96,
+      "world_size": 1,
+      "fine_tuned_from_checkpoint": true
+    }
+  },
+  "cpu_threads": 4,
+  "snapshot": "[REPO]\\workspace\\cache\\hub\\models--convaiinnovations--laya\\snapshots\\7b928d828b7b0e022f929d9bd2e44165aa270148",
+  "packages": {
+    "laya": "0.3.28",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.22.2"
+  },
+  "controls": {
+    "short": {
+      "decision": "ALLOW",
+      "raw": {
+        "model": "laya-rl-agent",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "ALLOW",
+            "probabilities": {
+              "ALLOW": 0.6885,
+              "ASK": 0.246,
+              "BLOCK": 0.0655
+            },
+            "confidence": 0.2895,
+            "answer_confidence": 0.6885,
+            "action": {
+              "act_probability": 1.0
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 241,
+          "output_tokens": 0,
+          "state_tokens": 91,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        }
+      },
+      "error_kind": null,
+      "error": null,
+      "diagnostics": {
+        "profile": "recorded_full",
+        "omitted_evidence": [],
+        "essential_evidence_omitted": false,
+        "original_characters": 293,
+        "prepared_characters": 293,
+        "encoder_limit": 8192,
+        "tokenizer_limit": 8192,
+        "checkpoint_max_len": 512,
+        "question_head_tokens": [
+          150
+        ],
+        "complete_question_head_tokens": [
+          150
+        ],
+        "original_token_count": 91,
+        "prepared_token_count": 91,
+        "questions": {
+          "decision": {
+            "state_tokens": 91,
+            "state_tokens_used": 91,
+            "state_tokens_dropped": 0,
+            "truncated": false
+          }
+        },
+        "sequence_tokens": [
+          241
+        ],
+        "effective_max_len": 512,
+        "head_max_len": 192
+      },
+      "seconds": 0.6545108999998774,
+      "timed_passes": [
+        {
+          "decision": "ALLOW",
+          "raw": {
+            "model": "laya-rl-agent",
+            "answers": {
+              "decision": {
+                "type": "choice",
+                "choice": "ALLOW",
+                "probabilities": {
+                  "ALLOW": 0.6885,
+                  "ASK": 0.246,
+                  "BLOCK": 0.0655
+                },
+                "confidence": 0.2895,
+                "answer_confidence": 0.6885,
+                "action": {
+                  "act_probability": 1.0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": 241,
+              "output_tokens": 0,
+              "state_tokens": 91,
+              "state_tokens_dropped": 0,
+              "truncated": false,
+              "truncated_questions": []
+            }
+          },
+          "error_kind": null,
+          "error": null,
+          "diagnostics": {
+            "profile": "recorded_full",
+            "omitted_evidence": [],
+            "essential_evidence_omitted": false,
+            "original_characters": 293,
+            "prepared_characters": 293,
+            "encoder_limit": 8192,
+            "tokenizer_limit": 8192,
+            "checkpoint_max_len": 512,
+            "question_head_tokens": [
+              150
+            ],
+            "complete_question_head_tokens": [
+              150
+            ],
+            "original_token_count": 91,
+            "prepared_token_count": 91,
+            "questions": {
+              "decision": {
+                "state_tokens": 91,
+                "state_tokens_used": 91,
+                "state_tokens_dropped": 0,
+                "truncated": false
+              }
+            },
+            "sequence_tokens": [
+              241
+            ],
+            "effective_max_len": 512,
+            "head_max_len": 192
+          },
+          "seconds": 0.6311989000005269
+        },
+        {
+          "decision": "ALLOW",
+          "raw": {
+            "model": "laya-rl-agent",
+            "answers": {
+              "decision": {
+                "type": "choice",
+                "choice": "ALLOW",
+                "probabilities": {
+                  "ALLOW": 0.6885,
+                  "ASK": 0.246,
+                  "BLOCK": 0.0655
+                },
+                "confidence": 0.2895,
+                "answer_confidence": 0.6885,
+                "action": {
+                  "act_probability": 1.0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": 241,
+              "output_tokens": 0,
+              "state_tokens": 91,
+              "state_tokens_dropped": 0,
+              "truncated": false,
+              "truncated_questions": []
+            }
+          },
+          "error_kind": null,
+          "error": null,
+          "diagnostics": {
+            "profile": "recorded_full",
+            "omitted_evidence": [],
+            "essential_evidence_omitted": false,
+            "original_characters": 293,
+            "prepared_characters": 293,
+            "encoder_limit": 8192,
+            "tokenizer_limit": 8192,
+            "checkpoint_max_len": 512,
+            "question_head_tokens": [
+              150
+            ],
+            "complete_question_head_tokens": [
+              150
+            ],
+            "original_token_count": 91,
+            "prepared_token_count": 91,
+            "questions": {
+              "decision": {
+                "state_tokens": 91,
+                "state_tokens_used": 91,
+                "state_tokens_dropped": 0,
+                "truncated": false
+              }
+            },
+            "sequence_tokens": [
+              241
+            ],
+            "effective_max_len": 512,
+            "head_max_len": 192
+          },
+          "seconds": 0.6362686999991638
+        },
+        {
+          "decision": "ALLOW",
+          "raw": {
+            "model": "laya-rl-agent",
+            "answers": {
+              "decision": {
+                "type": "choice",
+                "choice": "ALLOW",
+                "probabilities": {
+                  "ALLOW": 0.6885,
+                  "ASK": 0.246,
+                  "BLOCK": 0.0655
+                },
+                "confidence": 0.2895,
+                "answer_confidence": 0.6885,
+                "action": {
+                  "act_probability": 1.0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": 241,
+              "output_tokens": 0,
+              "state_tokens": 91,
+              "state_tokens_dropped": 0,
+              "truncated": false,
+              "truncated_questions": []
+            }
+          },
+          "error_kind": null,
+          "error": null,
+          "diagnostics": {
+            "profile": "recorded_full",
+            "omitted_evidence": [],
+            "essential_evidence_omitted": false,
+            "original_characters": 293,
+            "prepared_characters": 293,
+            "encoder_limit": 8192,
+            "tokenizer_limit": 8192,
+            "checkpoint_max_len": 512,
+            "question_head_tokens": [
+              150
+            ],
+            "complete_question_head_tokens": [
+              150
+            ],
+            "original_token_count": 91,
+            "prepared_token_count": 91,
+            "questions": {
+              "decision": {
+                "state_tokens": 91,
+                "state_tokens_used": 91,
+                "state_tokens_dropped": 0,
+                "truncated": false
+              }
+            },
+            "sequence_tokens": [
+              241
+            ],
+            "effective_max_len": 512,
+            "head_max_len": 192
+          },
+          "seconds": 0.6266372000000047
+        }
+      ],
+      "warm_median_seconds": 0.6311989000005269
+    },
+    "medium": {
+      "decision": "ALLOW",
+      "raw": {
+        "model": "laya-rl-agent",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "ALLOW",
+            "probabilities": {
+              "ALLOW": 0.405,
+              "ASK": 0.2872,
+              "BLOCK": 0.3078
+            },
+            "confidence": 0.0105,
+            "answer_confidence": 0.405,
+            "action": {
+              "act_probability": 1.0
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 442,
+          "output_tokens": 0,
+          "state_tokens": 292,
+          "state_tokens_dropped": 0,
+          "truncated": false,
+          "truncated_questions": []
+        }
+      },
+      "error_kind": null,
+      "error": null,
+      "diagnostics": {
+        "profile": "recorded_full",
+        "omitted_evidence": [],
+        "essential_evidence_omitted": false,
+        "original_characters": 1993,
+        "prepared_characters": 1993,
+        "encoder_limit": 8192,
+        "tokenizer_limit": 8192,
+        "checkpoint_max_len": 512,
+        "question_head_tokens": [
+          150
+        ],
+        "complete_question_head_tokens": [
+          150
+        ],
+        "original_token_count": 292,
+        "prepared_token_count": 292,
+        "questions": {
+          "decision": {
+            "state_tokens": 292,
+            "state_tokens_used": 292,
+            "state_tokens_dropped": 0,
+            "truncated": false
+          }
+        },
+        "sequence_tokens": [
+          442
+        ],
+        "effective_max_len": 512,
+        "head_max_len": 192
+      },
+      "seconds": 1.1584441000004517,
+      "timed_passes": [
+        {
+          "decision": "ALLOW",
+          "raw": {
+            "model": "laya-rl-agent",
+            "answers": {
+              "decision": {
+                "type": "choice",
+                "choice": "ALLOW",
+                "probabilities": {
+                  "ALLOW": 0.405,
+                  "ASK": 0.2872,
+                  "BLOCK": 0.3078
+                },
+                "confidence": 0.0105,
+                "answer_confidence": 0.405,
+                "action": {
+                  "act_probability": 1.0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": 442,
+              "output_tokens": 0,
+              "state_tokens": 292,
+              "state_tokens_dropped": 0,
+              "truncated": false,
+              "truncated_questions": []
+            }
+          },
+          "error_kind": null,
+          "error": null,
+          "diagnostics": {
+            "profile": "recorded_full",
+            "omitted_evidence": [],
+            "essential_evidence_omitted": false,
+            "original_characters": 1993,
+            "prepared_characters": 1993,
+            "encoder_limit": 8192,
+            "tokenizer_limit": 8192,
+            "checkpoint_max_len": 512,
+            "question_head_tokens": [
+              150
+            ],
+            "complete_question_head_tokens": [
+              150
+            ],
+            "original_token_count": 292,
+            "prepared_token_count": 292,
+            "questions": {
+              "decision": {
+                "state_tokens": 292,
+                "state_tokens_used": 292,
+                "state_tokens_dropped": 0,
+                "truncated": false
+              }
+            },
+            "sequence_tokens": [
+              442
+            ],
+            "effective_max_len": 512,
+            "head_max_len": 192
+          },
+          "seconds": 1.585293900000579
+        },
+        {
+          "decision": "ALLOW",
+          "raw": {
+            "model": "laya-rl-agent",
+            "answers": {
+              "decision": {
+                "type": "choice",
+                "choice": "ALLOW",
+                "probabilities": {
+                  "ALLOW": 0.405,
+                  "ASK": 0.2872,
+                  "BLOCK": 0.3078
+                },
+                "confidence": 0.0105,
+                "answer_confidence": 0.405,
+                "action": {
+                  "act_probability": 1.0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": 442,
+              "output_tokens": 0,
+              "state_tokens": 292,
+              "state_tokens_dropped": 0,
+              "truncated": false,
+              "truncated_questions": []
+            }
+          },
+          "error_kind": null,
+          "error": null,
+          "diagnostics": {
+            "profile": "recorded_full",
+            "omitted_evidence": [],
+            "essential_evidence_omitted": false,
+            "original_characters": 1993,
+            "prepared_characters": 1993,
+            "encoder_limit": 8192,
+            "tokenizer_limit": 8192,
+            "checkpoint_max_len": 512,
+            "question_head_tokens": [
+              150
+            ],
+            "complete_question_head_tokens": [
+              150
+            ],
+            "original_token_count": 292,
+            "prepared_token_count": 292,
+            "questions": {
+              "decision": {
+                "state_tokens": 292,
+                "state_tokens_used": 292,
+                "state_tokens_dropped": 0,
+                "truncated": false
+              }
+            },
+            "sequence_tokens": [
+              442
+            ],
+            "effective_max_len": 512,
+            "head_max_len": 192
+          },
+          "seconds": 1.5253388000000996
+        },
+        {
+          "decision": "ALLOW",
+          "raw": {
+            "model": "laya-rl-agent",
+            "answers": {
+              "decision": {
+                "type": "choice",
+                "choice": "ALLOW",
+                "probabilities": {
+                  "ALLOW": 0.405,
+                  "ASK": 0.2872,
+                  "BLOCK": 0.3078
+                },
+                "confidence": 0.0105,
+                "answer_confidence": 0.405,
+                "action": {
+                  "act_probability": 1.0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": 442,
+              "output_tokens": 0,
+              "state_tokens": 292,
+              "state_tokens_dropped": 0,
+              "truncated": false,
+              "truncated_questions": []
+            }
+          },
+          "error_kind": null,
+          "error": null,
+          "diagnostics": {
+            "profile": "recorded_full",
+            "omitted_evidence": [],
+            "essential_evidence_omitted": false,
+            "original_characters": 1993,
+            "prepared_characters": 1993,
+            "encoder_limit": 8192,
+            "tokenizer_limit": 8192,
+            "checkpoint_max_len": 512,
+            "question_head_tokens": [
+              150
+            ],
+            "complete_question_head_tokens": [
+              150
+            ],
+            "original_token_count": 292,
+            "prepared_token_count": 292,
+            "questions": {
+              "decision": {
+                "state_tokens": 292,
+                "state_tokens_used": 292,
+                "state_tokens_dropped": 0,
+                "truncated": false
+              }
+            },
+            "sequence_tokens": [
+              442
+            ],
+            "effective_max_len": 512,
+            "head_max_len": 192
+          },
+          "seconds": 1.6501649000001635
+        }
+      ],
+      "warm_median_seconds": 1.585293900000579
+    },
+    "overflow": {
+      "decision": null,
+      "raw": null,
+      "error_kind": "context_overflow",
+      "error": "context_overflow",
+      "diagnostics": {
+        "profile": "recorded_full",
+        "omitted_evidence": [],
+        "essential_evidence_omitted": false,
+        "original_characters": 170293,
+        "prepared_characters": 170293,
+        "encoder_limit": 8192,
+        "tokenizer_limit": 8192,
+        "checkpoint_max_len": 512,
+        "question_head_tokens": [
+          150
+        ],
+        "complete_question_head_tokens": [
+          150
+        ],
+        "original_token_count": 20092,
+        "prepared_token_count": 20092,
+        "questions": {
+          "decision": {
+            "state_tokens": 20092,
+            "state_tokens_used": 362,
+            "state_tokens_dropped": 19730,
+            "truncated": true
+          }
+        },
+        "sequence_tokens": [
+          512
+        ],
+        "effective_max_len": 512,
+        "head_max_len": 192
+      },
+      "seconds": 0.1261581999997361
+    }
+  },
+  "warmups": [
+    {
+      "decision": null,
+      "raw": null,
+      "error_kind": "context_overflow",
+      "error": "context_overflow",
+      "diagnostics": {
+        "profile": "recorded_full",
+        "omitted_evidence": [],
+        "essential_evidence_omitted": false,
+        "original_characters": 4862,
+        "prepared_characters": 4862,
+        "encoder_limit": 8192,
+        "tokenizer_limit": 8192,
+        "checkpoint_max_len": 512,
+        "question_head_tokens": [
+          150
+        ],
+        "complete_question_head_tokens": [
+          150
+        ],
+        "original_token_count": 1483,
+        "prepared_token_count": 1483,
+        "questions": {
+          "decision": {
+            "state_tokens": 1483,
+            "state_tokens_used": 362,
+            "state_tokens_dropped": 1121,
+            "truncated": true
+          }
+        },
+        "sequence_tokens": [
+          512
+        ],
+        "effective_max_len": 512,
+        "head_max_len": 192
+      },
+      "seconds": 0.0058821000002353685
+    },
+    {
+      "decision": null,
+      "raw": null,
+      "error_kind": "context_overflow",
+      "error": "context_overflow",
+      "diagnostics": {
+        "profile": "recorded_full",
+        "omitted_evidence": [],
+        "essential_evidence_omitted": false,
+        "original_characters": 4862,
+        "prepared_characters": 4862,
+        "encoder_limit": 8192,
+        "tokenizer_limit": 8192,
+        "checkpoint_max_len": 512,
+        "question_head_tokens": [
+          150
+        ],
+        "complete_question_head_tokens": [
+          150
+        ],
+        "original_token_count": 1483,
+        "prepared_token_count": 1483,
+        "questions": {
+          "decision": {
+            "state_tokens": 1483,
+            "state_tokens_used": 362,
+            "state_tokens_dropped": 1121,
+            "truncated": true
+          }
+        },
+        "sequence_tokens": [
+          512
+        ],
+        "effective_max_len": 512,
+        "head_max_len": 192
+      },
+      "seconds": 0.004807000000255357
+    },
+    {
+      "decision": null,
+      "raw": null,
+      "error_kind": "context_overflow",
+      "error": "context_overflow",
+      "diagnostics": {
+        "profile": "recorded_full",
+        "omitted_evidence": [],
+        "essential_evidence_omitted": false,
+        "original_characters": 4862,
+        "prepared_characters": 4862,
+        "encoder_limit": 8192,
+        "tokenizer_limit": 8192,
+        "checkpoint_max_len": 512,
+        "question_head_tokens": [
+          150
+        ],
+        "complete_question_head_tokens": [
+          150
+        ],
+        "original_token_count": 1483,
+        "prepared_token_count": 1483,
+        "questions": {
+          "decision": {
+            "state_tokens": 1483,
+            "state_tokens_used": 362,
+            "state_tokens_dropped": 1121,
+            "truncated": true
+          }
+        },
+        "sequence_tokens": [
+          512
+        ],
+        "effective_max_len": 512,
+        "head_max_len": 192
+      },
+      "seconds": 0.00469980000070791
+    }
+  ],
+  "process_cpu_seconds": 67.171875,
+  "peak_process_tree_rss_bytes": 2873114624,
+  "memory_sampling_seconds": 0.02,
+  "energy_joules": null,
+  "monetary_compute_cost": null,
+  "total_seconds": 19.18960100000004,
+  "warm_latency_median": null,
+  "warm_latency_p95": null,
+  "successful_calls_per_second": null
+}

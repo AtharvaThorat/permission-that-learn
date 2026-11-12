@@ -1,0 +1,9 @@
+{
+  "status": "failed",
+  "error_kind": "initialization_failure",
+  "error": "FileNotFoundError: LOCAL_LAYA_SNAPSHOT_INVALID: [REPO]\\workspace\\cache\\hub\\models--TextCortex--laya-cybersec\\snapshots\\41fd5a2dfced0fb357974afd780a3ed6e7c43838; missing config.json",
+  "total_seconds": 0.9295232999998007,
+  "warm_latency_median": null,
+  "warm_latency_p95": null,
+  "successful_calls_per_second": null
+}

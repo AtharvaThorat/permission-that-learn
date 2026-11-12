@@ -106,8 +106,8 @@ class Layout:
     config: Path = ROOT / 'configs' / 'datasets' / NAME
     raw: Path = ROOT / 'results' / NAME / 'raw'
     work: Path = ROOT / 'results' / NAME / 'work'
-    published: Path = ROOT / 'docs' / 'results' / NAME
-    compact: Path = ROOT / 'docs' / 'results' / (NAME + '-compact')
+    published: Path = ROOT / 'experiments' / 'reference' / NAME
+    compact: Path = ROOT / 'experiments' / 'reference' / (NAME + '-compact')
 
     @property
     def review(self):

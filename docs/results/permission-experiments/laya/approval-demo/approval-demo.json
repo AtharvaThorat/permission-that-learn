@@ -1,0 +1,40 @@
+{
+  "kind": "controlled_not_real_laya",
+  "scenarios": [
+    {
+      "scenario": "allow",
+      "simulated_dispatches": 1,
+      "status": "completed"
+    },
+    {
+      "scenario": "block",
+      "simulated_dispatches": 0,
+      "status": "completed"
+    },
+    {
+      "scenario": "pending",
+      "simulated_dispatches": 0,
+      "status": "pending_approval"
+    },
+    {
+      "scenario": "approve",
+      "simulated_dispatches": 1,
+      "status": "completed"
+    },
+    {
+      "scenario": "reject",
+      "simulated_dispatches": 0,
+      "status": "completed"
+    },
+    {
+      "scenario": "stale",
+      "simulated_dispatches": 0,
+      "status": "completed"
+    },
+    {
+      "scenario": "wall_denied",
+      "simulated_dispatches": 0,
+      "status": "completed"
+    }
+  ]
+}

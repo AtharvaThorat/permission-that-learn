@@ -1,0 +1,213 @@
+{
+  "family": "laya",
+  "run_id": "base-pairs-concise-20261110T152741Z-4bea2cb1",
+  "source_directory": "workspace/artifacts/base-pairs-concise-20261110T152741Z-4bea2cb1",
+  "published_directory": "docs/results/permission-experiments/laya/base-pairs-concise-20261110T152741Z-4bea2cb1",
+  "files": [
+    {
+      "file": "calls.csv",
+      "source_sha256": "35bfa8b267beb11c8d4d55bd1f959956fece93343ddb0529532937472e7ef51a",
+      "published_sha256": "f09ea473e88732f6b71217a46b2ef8ef7d4f27a67e0751e27ebc4343749d2158",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "class_summary.csv",
+      "source_sha256": "9f5f6d85434c18cc87795168c5090e6b0cf8ae41677731fdabd1f4824ad43b55",
+      "published_sha256": "e8c0ac7371ebe2bd1a61f7e658efe67624df38d6861f45e0a0693309d593e722",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "compute_summary.json",
+      "source_sha256": "0bb23252e71285e55bd9ae08e1743d4766ccabdc5d9504e7f75481865de3f97a",
+      "published_sha256": "d81cfb1712ff39a4339027e35c69a4db062db9901e97932b0557336f74611b05",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "examples.csv",
+      "source_sha256": "b63940750db1def32a65c84edb84253efbfaf5ef648a8a9aa8f48904890e5a3f",
+      "published_sha256": "4d647521277bdc698fe478d47634c8bd11282d937ffbc4e2f2e9d202e3d2e546",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "manifest.json",
+      "source_sha256": "5e12493ac9ac27def3d6a600a5109f9917aca604dfb7912904bf54478b60ada7",
+      "published_sha256": "fb3870797240560b713486d79f13a76edff68f4bac1e5373b635898495ebbb26",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "predictions.jsonl",
+      "source_sha256": "aeb3ff7ae0dec9719e6493e501294280c34b9d662e851f0ee678d7e9b0fb689f",
+      "published_sha256": "7584b70be926ffb79064718bbc330091416fdf1848fb9ccb5b38a2e460835135",
+      "transformation": "projection; raw contexts/events excluded, decisions and diagnostic data retained"
+    },
+    {
+      "file": "runtime.json",
+      "source_sha256": "407832c689e57047e9b13583f780939cd9c606614ba9c9a28148bdb814439b49",
+      "published_sha256": "407832c689e57047e9b13583f780939cd9c606614ba9c9a28148bdb814439b49",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "calls.jsonl",
+      "sha256": "b697671e8d92161ebf9fff5e0c6a13525c5e1a5395ca1b1a35929efb48822b48",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_008.json",
+      "sha256": "d180624a71edcc408afef2c6e57d25445c67dde753156b75fadde49526aadd2b",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_017.json",
+      "sha256": "72d8839518f7ce99f5630e419aecfce37855b15e6b37f16c606cb56f1c8dd3d6",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_024.json",
+      "sha256": "ed699c24efaf808e8a5893ecf9ac0f6b29f6b0c93c2b2b3947c409c9a9f7bdd7",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_070.json",
+      "sha256": "9d1693ad1a62ed73e54ba8b0cb88d319162a75dd6332b0ed7fa8b10aed8c86e8",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_072.json",
+      "sha256": "4ef8c5d13bb3c73e221a4acea9780d769bd40d2843108b093641152f843c48a8",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_077.json",
+      "sha256": "80639096c62e10115eebe21df1c9a550e15457bb842813c28f4986ff27306b29",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_080.json",
+      "sha256": "34adc5a45b7d56f380a99c3030bbda70834aef9da7b401aec045c08b633d0243",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_096.json",
+      "sha256": "bf114e9bcefc8f036b9dbfe239c064feb17a77d139a91768e4fe9d9a2987191c",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_127.json",
+      "sha256": "e78575d97e84ddfa55b3ea22f0789cae1e53d87a0c1a599cf45835a16e881534",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_131.json",
+      "sha256": "c5602dda97d7ccc5708eedde7de7188d1e21d1d2aee6a020f374db7396718f0a",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_139.json",
+      "sha256": "887cc4e5830419f635a0cb00668e6ab6f54efd319aa9e8d4e6e51f79129e76ea",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_154.json",
+      "sha256": "53cd48fad2dbcc4136c406b38d3130b9e718c21108426a199acc73b69d988c04",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_172.json",
+      "sha256": "2aa7f600fd7a95ffa3658ba1306ffe4c4df7bfa005e59ebb2cb4c625a30a162f",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_176.json",
+      "sha256": "d1cbd4b0d5412b27ec760de5fed87f7271501e08eb69f8bde851f31e62eb9659",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_195.json",
+      "sha256": "598efc66cacb08b99e1ca3d166e7cdc602234b56445e971dfe29169162a990b8",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_263.json",
+      "sha256": "22c1f015d60cf73a62fee3b11d311a9994d461d5bfed29966f7e9695ecef0af6",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_292.json",
+      "sha256": "4a3b0746e0ea5e3017f1a6c7aaea86f8b65b07e4e646d9cadccac9f49bd69c3c",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_301.json",
+      "sha256": "f70524c807027092d191720193ef646930245c177ef16e83c48fd9bda83948f0",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_305.json",
+      "sha256": "d0d6bcce1a645065d8b29414076644aff002f7728f27ba4cc93a818ad83b8ff1",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_326.json",
+      "sha256": "8fbd313e61c671d26eeba9e686159d678978773c81e278dafd61b30662c0278c",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_328.json",
+      "sha256": "58bb7bd8c2f412f36576fa428076a2ed10e5c39d7d8b7d559a04c1318412a954",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_354.json",
+      "sha256": "3bac07a63de6a1015216a52bcf0da58cdb9b2baba8856251aa0ac5113f08a780",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_367.json",
+      "sha256": "476b9f3936110135aebc548f1bf79ae15423677e9608cde9a800300ebcd5380f",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_368.json",
+      "sha256": "15e54e71ec672f01004df88701058f8592a73970d32871b92865e0a66a857272",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_373.json",
+      "sha256": "ff1f9e2b6fb1c6c59d9879c746d2964307a1e07b9e6070b7a12bfbacbd37382d",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_395.json",
+      "sha256": "cacfba64aadd73a4acd5771a75372e4cbd69f5000b2018000b1eb219ab6cbbf5",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_409.json",
+      "sha256": "be38484bebdf1fbd37a90b9faa55efc8f6f1a6098769a0202d8474f3c69b0121",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_416.json",
+      "sha256": "3b736a28f4a94f7d64aba57542970aadd4295f350a2e36726b36b99c37dc70bb",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_423.json",
+      "sha256": "842a40ed3052b15fb41dcd3fb71e517362814b11f30bfe05b2d7a3dbfaaa1800",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_430.json",
+      "sha256": "edfc9cf3f36a014466fc4aabda674e1ed0b7848136b0bd99715d0824dfb7ae66",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "results.html",
+      "sha256": "69ee8179aadab5bb7fc9f20756adad8cf71ed38e6be028c0bc76198aad2db532",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

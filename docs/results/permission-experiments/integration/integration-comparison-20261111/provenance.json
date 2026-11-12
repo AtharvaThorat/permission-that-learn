@@ -1,0 +1,34 @@
+{
+  "family": "integration",
+  "run_id": "integration-comparison-20261111",
+  "source_directory": "results/permission-learning/integration-comparison-20261111",
+  "published_directory": "docs/results/permission-experiments/integration/integration-comparison-20261111",
+  "files": [
+    {
+      "file": "gate.csv",
+      "source_sha256": "c47f130b8888ee97504d08804360721365218749a4c39252601d833a4cf4456c",
+      "published_sha256": "c47f130b8888ee97504d08804360721365218749a4c39252601d833a4cf4456c",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "run.json",
+      "source_sha256": "0bba369a3b07caeb12d336badb92bc121685b4e83b6722ecdec1e554fb4ad262",
+      "published_sha256": "100b8e146c72869de1c63a9d357325aac27d1908421053f38a91fae4a48b4b5d",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "runs.csv",
+      "source_sha256": "6c94ce22740c5c979356cfe067893907efc7927c467296ff7ec3b67e61741b15",
+      "published_sha256": "6c94ce22740c5c979356cfe067893907efc7927c467296ff7ec3b67e61741b15",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "summary.csv",
+      "source_sha256": "a4f8b71243e96ff8e215ee01cb167c25508d85696f1b6c1a34656456adf8c1b8",
+      "published_sha256": "a4f8b71243e96ff8e215ee01cb167c25508d85696f1b6c1a34656456adf8c1b8",
+      "transformation": "sanitized CSV; input text excluded"
+    }
+  ],
+  "excluded": [],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

@@ -1,0 +1,3864 @@
+[
+  {
+    "account": "ana.shah@northwind.example",
+    "colleagues": [
+      {
+        "address": "carla.moreau@northwind.example",
+        "first": "Carla"
+      },
+      {
+        "address": "nikhil.shah@northwind.example",
+        "first": "Nikhil"
+      },
+      {
+        "address": "rosa.okafor@northwind.example",
+        "first": "Rosa"
+      },
+      {
+        "address": "hugo.tanaka@northwind.example",
+        "first": "Hugo"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "vera.haddad@brightside.example",
+        "first": "Vera"
+      },
+      {
+        "address": "yara.reed@brightside.example",
+        "first": "Yara"
+      },
+      {
+        "address": "wen.reed@partner-co.example",
+        "first": "Wen"
+      },
+      {
+        "address": "pedro.byrne@kestrel-group.example",
+        "first": "Pedro"
+      },
+      {
+        "address": "liam.novak@kestrel-group.example",
+        "first": "Liam"
+      }
+    ],
+    "drift_pattern": "su00:invite:0",
+    "events": {
+      "e000": {
+        "participants": [
+          "ana.shah@northwind.example",
+          "carla.moreau@northwind.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e001": {
+        "participants": [
+          "ana.shah@northwind.example",
+          "hugo.tanaka@northwind.example"
+        ],
+        "title": "planning sync"
+      },
+      "e002": {
+        "participants": [
+          "ana.shah@northwind.example",
+          "nikhil.shah@northwind.example"
+        ],
+        "title": "design review"
+      },
+      "e003": {
+        "participants": [
+          "ana.shah@northwind.example",
+          "nikhil.shah@northwind.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f000": {
+        "collaborators": [
+          "ana.shah@northwind.example",
+          "rosa.okafor@northwind.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f001": {
+        "collaborators": [
+          "ana.shah@northwind.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f002": {
+        "collaborators": [
+          "ana.shah@northwind.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f003": {
+        "collaborators": [
+          "ana.shah@northwind.example",
+          "hugo.tanaka@northwind.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f004": {
+        "collaborators": [
+          "ana.shah@northwind.example",
+          "nikhil.shah@northwind.example",
+          "rosa.okafor@northwind.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f005": {
+        "collaborators": [
+          "ana.shah@northwind.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "su00",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e002",
+        "family": "invite",
+        "file_id": "f002",
+        "id": "su00:invite:0",
+        "target": {
+          "address": "yara.reed@brightside.example",
+          "first": "Yara"
+        },
+        "target_kind": "contact",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e002",
+        "family": "add_participant",
+        "file_id": "f001",
+        "id": "su00:add_participant:1",
+        "target": {
+          "address": "yara.reed@brightside.example",
+          "first": "Yara"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e000",
+        "family": "create_file",
+        "file_id": "f000",
+        "id": "su00:create_file:2",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e001",
+        "family": "invite",
+        "file_id": "f005",
+        "id": "su00:invite:3",
+        "target": {
+          "address": "vera.haddad@brightside.example",
+          "first": "Vera"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e000",
+        "family": "append",
+        "file_id": "f001",
+        "id": "su00:append:4",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "share",
+        "file_id": "f001",
+        "id": "su00:share:5",
+        "target": {
+          "address": "nikhil.shah@northwind.example",
+          "first": "Nikhil"
+        },
+        "target_kind": "colleague",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e002",
+        "family": "share",
+        "file_id": "f005",
+        "id": "su00:share:6",
+        "target": {
+          "address": "carla.moreau@northwind.example",
+          "first": "Carla"
+        },
+        "target_kind": "colleague",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e002",
+        "family": "add_participant",
+        "file_id": "f000",
+        "id": "su00:add_participant:7",
+        "target": {
+          "address": "carla.moreau@northwind.example",
+          "first": "Carla"
+        },
+        "target_kind": "colleague",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e002",
+        "family": "email",
+        "file_id": "f001",
+        "id": "su00:email:8",
+        "target": {
+          "address": "carla.moreau@northwind.example",
+          "first": "Carla"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e000",
+        "family": "reschedule",
+        "file_id": "f004",
+        "id": "su00:reschedule:9",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e002",
+        "family": "add_participant",
+        "file_id": "f002",
+        "id": "su00:add_participant:10",
+        "target": {
+          "address": "vera.haddad@brightside.example",
+          "first": "Vera"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e000",
+        "family": "invite",
+        "file_id": "f001",
+        "id": "su00:invite:11",
+        "target": {
+          "address": "carla.moreau@northwind.example",
+          "first": "Carla"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e003",
+        "family": "email",
+        "file_id": "f000",
+        "id": "su00:email:12",
+        "target": {
+          "address": "vera.haddad@brightside.example",
+          "first": "Vera"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "email",
+        "file_id": "f000",
+        "id": "su00:email:13",
+        "target": {
+          "address": "yara.reed@brightside.example",
+          "first": "Yara"
+        },
+        "target_kind": "contact",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: email and invite only contacts and colleagues; file sharing is internal-only and read-only; nothing is deleted.",
+    "split": "stream",
+    "work_domain": "northwind.example"
+  },
+  {
+    "account": "ben.alvarez@lumen-labs.example",
+    "colleagues": [
+      {
+        "address": "wen.okafor@lumen-labs.example",
+        "first": "Wen"
+      },
+      {
+        "address": "tara.okafor@lumen-labs.example",
+        "first": "Tara"
+      },
+      {
+        "address": "kavya.ilves@lumen-labs.example",
+        "first": "Kavya"
+      },
+      {
+        "address": "olga.tanaka@lumen-labs.example",
+        "first": "Olga"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "liam.reed@kestrel-group.example",
+        "first": "Liam"
+      },
+      {
+        "address": "carla.okafor@kestrel-group.example",
+        "first": "Carla"
+      },
+      {
+        "address": "hugo.haddad@partner-co.example",
+        "first": "Hugo"
+      },
+      {
+        "address": "samir.moreau@partner-co.example",
+        "first": "Samir"
+      },
+      {
+        "address": "yara.haddad@partner-co.example",
+        "first": "Yara"
+      }
+    ],
+    "events": {
+      "e010": {
+        "participants": [
+          "ben.alvarez@lumen-labs.example",
+          "tara.okafor@lumen-labs.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e011": {
+        "participants": [
+          "ben.alvarez@lumen-labs.example",
+          "tara.okafor@lumen-labs.example"
+        ],
+        "title": "planning sync"
+      },
+      "e012": {
+        "participants": [
+          "ben.alvarez@lumen-labs.example",
+          "wen.okafor@lumen-labs.example"
+        ],
+        "title": "design review"
+      },
+      "e013": {
+        "participants": [
+          "ben.alvarez@lumen-labs.example",
+          "kavya.ilves@lumen-labs.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f010": {
+        "collaborators": [
+          "ben.alvarez@lumen-labs.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f011": {
+        "collaborators": [
+          "ben.alvarez@lumen-labs.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f012": {
+        "collaborators": [
+          "ben.alvarez@lumen-labs.example",
+          "kavya.ilves@lumen-labs.example",
+          "olga.tanaka@lumen-labs.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f013": {
+        "collaborators": [
+          "ben.alvarez@lumen-labs.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f014": {
+        "collaborators": [
+          "ben.alvarez@lumen-labs.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f015": {
+        "collaborators": [
+          "ben.alvarez@lumen-labs.example",
+          "olga.tanaka@lumen-labs.example",
+          "tara.okafor@lumen-labs.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "su01",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e011",
+        "family": "append",
+        "file_id": "f015",
+        "id": "su01:append:0",
+        "target": null,
+        "target_kind": "self",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "email",
+        "file_id": "f010",
+        "id": "su01:email:1",
+        "target": {
+          "address": "wen.okafor@lumen-labs.example",
+          "first": "Wen"
+        },
+        "target_kind": "colleague",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e011",
+        "family": "share",
+        "file_id": "f014",
+        "id": "su01:share:2",
+        "target": {
+          "address": "tara.okafor@lumen-labs.example",
+          "first": "Tara"
+        },
+        "target_kind": "colleague",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e012",
+        "family": "create_file",
+        "file_id": "f010",
+        "id": "su01:create_file:3",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "invite",
+        "file_id": "f010",
+        "id": "su01:invite:4",
+        "target": {
+          "address": "wen.okafor@lumen-labs.example",
+          "first": "Wen"
+        },
+        "target_kind": "colleague",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e013",
+        "family": "reschedule",
+        "file_id": "f014",
+        "id": "su01:reschedule:5",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e013",
+        "family": "invite",
+        "file_id": "f012",
+        "id": "su01:invite:6",
+        "target": {
+          "address": "carla.okafor@kestrel-group.example",
+          "first": "Carla"
+        },
+        "target_kind": "contact",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "add_participant",
+        "file_id": "f015",
+        "id": "su01:add_participant:7",
+        "target": {
+          "address": "carla.okafor@kestrel-group.example",
+          "first": "Carla"
+        },
+        "target_kind": "contact",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e011",
+        "family": "share",
+        "file_id": "f010",
+        "id": "su01:share:8",
+        "target": {
+          "address": "wen.okafor@lumen-labs.example",
+          "first": "Wen"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e010",
+        "family": "email",
+        "file_id": "f013",
+        "id": "su01:email:9",
+        "target": {
+          "address": "carla.okafor@kestrel-group.example",
+          "first": "Carla"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "invite",
+        "file_id": "f015",
+        "id": "su01:invite:10",
+        "target": {
+          "address": "liam.reed@kestrel-group.example",
+          "first": "Liam"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "email",
+        "file_id": "f012",
+        "id": "su01:email:11",
+        "target": {
+          "address": "liam.reed@kestrel-group.example",
+          "first": "Liam"
+        },
+        "target_kind": "contact",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "add_participant",
+        "file_id": "f014",
+        "id": "su01:add_participant:12",
+        "target": {
+          "address": "liam.reed@kestrel-group.example",
+          "first": "Liam"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "add_participant",
+        "file_id": "f015",
+        "id": "su01:add_participant:13",
+        "target": {
+          "address": "wen.okafor@lumen-labs.example",
+          "first": "Wen"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: messages and invitations go to known contacts or coworkers only; files are shared read-only inside the company; deletion is not allowed.",
+    "split": "stream",
+    "work_domain": "lumen-labs.example"
+  },
+  {
+    "account": "carla.ilves@harborline.example",
+    "colleagues": [
+      {
+        "address": "dev.costa@harborline.example",
+        "first": "Dev"
+      },
+      {
+        "address": "elena.haddad@harborline.example",
+        "first": "Elena"
+      },
+      {
+        "address": "ben.ilves@harborline.example",
+        "first": "Ben"
+      },
+      {
+        "address": "umar.okafor@harborline.example",
+        "first": "Umar"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "farid.moreau@kestrel-group.example",
+        "first": "Farid"
+      },
+      {
+        "address": "olga.novak@partner-co.example",
+        "first": "Olga"
+      },
+      {
+        "address": "kavya.moreau@partner-co.example",
+        "first": "Kavya"
+      },
+      {
+        "address": "mei.novak@kestrel-group.example",
+        "first": "Mei"
+      },
+      {
+        "address": "nikhil.ilves@partner-co.example",
+        "first": "Nikhil"
+      }
+    ],
+    "events": {
+      "e020": {
+        "participants": [
+          "ben.ilves@harborline.example",
+          "carla.ilves@harborline.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e021": {
+        "participants": [
+          "carla.ilves@harborline.example",
+          "dev.costa@harborline.example"
+        ],
+        "title": "planning sync"
+      },
+      "e022": {
+        "participants": [
+          "carla.ilves@harborline.example",
+          "elena.haddad@harborline.example"
+        ],
+        "title": "design review"
+      },
+      "e023": {
+        "participants": [
+          "carla.ilves@harborline.example",
+          "elena.haddad@harborline.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f020": {
+        "collaborators": [
+          "carla.ilves@harborline.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f021": {
+        "collaborators": [
+          "ben.ilves@harborline.example",
+          "carla.ilves@harborline.example",
+          "dev.costa@harborline.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f022": {
+        "collaborators": [
+          "carla.ilves@harborline.example",
+          "elena.haddad@harborline.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f023": {
+        "collaborators": [
+          "carla.ilves@harborline.example",
+          "umar.okafor@harborline.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f024": {
+        "collaborators": [
+          "carla.ilves@harborline.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f025": {
+        "collaborators": [
+          "carla.ilves@harborline.example",
+          "dev.costa@harborline.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "null",
+    "id": "su02",
+    "patterns": [
+      {
+        "approve_probability": 0.5,
+        "event_id": "e020",
+        "family": "share",
+        "file_id": "f024",
+        "id": "su02:share:0",
+        "target": {
+          "address": "elena.haddad@harborline.example",
+          "first": "Elena"
+        },
+        "target_kind": "colleague",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "email",
+        "file_id": "f025",
+        "id": "su02:email:1",
+        "target": {
+          "address": "dev.costa@harborline.example",
+          "first": "Dev"
+        },
+        "target_kind": "colleague",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "add_participant",
+        "file_id": "f023",
+        "id": "su02:add_participant:2",
+        "target": {
+          "address": "olga.novak@partner-co.example",
+          "first": "Olga"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e020",
+        "family": "share",
+        "file_id": "f022",
+        "id": "su02:share:3",
+        "target": {
+          "address": "dev.costa@harborline.example",
+          "first": "Dev"
+        },
+        "target_kind": "colleague",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "append",
+        "file_id": "f025",
+        "id": "su02:append:4",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e021",
+        "family": "invite",
+        "file_id": "f024",
+        "id": "su02:invite:5",
+        "target": {
+          "address": "farid.moreau@kestrel-group.example",
+          "first": "Farid"
+        },
+        "target_kind": "contact",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "invite",
+        "file_id": "f021",
+        "id": "su02:invite:6",
+        "target": {
+          "address": "olga.novak@partner-co.example",
+          "first": "Olga"
+        },
+        "target_kind": "contact",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e023",
+        "family": "invite",
+        "file_id": "f022",
+        "id": "su02:invite:7",
+        "target": {
+          "address": "dev.costa@harborline.example",
+          "first": "Dev"
+        },
+        "target_kind": "colleague",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "add_participant",
+        "file_id": "f022",
+        "id": "su02:add_participant:8",
+        "target": {
+          "address": "farid.moreau@kestrel-group.example",
+          "first": "Farid"
+        },
+        "target_kind": "contact",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "create_file",
+        "file_id": "f020",
+        "id": "su02:create_file:9",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "email",
+        "file_id": "f020",
+        "id": "su02:email:10",
+        "target": {
+          "address": "farid.moreau@kestrel-group.example",
+          "first": "Farid"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e021",
+        "family": "add_participant",
+        "file_id": "f021",
+        "id": "su02:add_participant:11",
+        "target": {
+          "address": "dev.costa@harborline.example",
+          "first": "Dev"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "email",
+        "file_id": "f023",
+        "id": "su02:email:12",
+        "target": {
+          "address": "olga.novak@partner-co.example",
+          "first": "Olga"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e020",
+        "family": "reschedule",
+        "file_id": "f021",
+        "id": "su02:reschedule:13",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: only known contacts and colleagues may be emailed or invited; sharing stays internal and read-only; no deletions.",
+    "split": "stream",
+    "work_domain": "harborline.example"
+  },
+  {
+    "account": "abel.popov@ridgeway.example",
+    "colleagues": [
+      {
+        "address": "bianca.popov@ridgeway.example",
+        "first": "Bianca"
+      },
+      {
+        "address": "jade.ferrari@ridgeway.example",
+        "first": "Jade"
+      },
+      {
+        "address": "hana.ferrari@ridgeway.example",
+        "first": "Hana"
+      },
+      {
+        "address": "ivo.ferrari@ridgeway.example",
+        "first": "Ivo"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "emil.stone@slatebridge.example",
+        "first": "Emil"
+      },
+      {
+        "address": "goran.popov@slatebridge.example",
+        "first": "Goran"
+      },
+      {
+        "address": "lena.ferrari@slatebridge.example",
+        "first": "Lena"
+      },
+      {
+        "address": "cyrus.stone@slatebridge.example",
+        "first": "Cyrus"
+      },
+      {
+        "address": "dalia.marsh@slatebridge.example",
+        "first": "Dalia"
+      }
+    ],
+    "events": {
+      "e000": {
+        "participants": [
+          "abel.popov@ridgeway.example",
+          "hana.ferrari@ridgeway.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e001": {
+        "participants": [
+          "abel.popov@ridgeway.example",
+          "jade.ferrari@ridgeway.example"
+        ],
+        "title": "planning sync"
+      },
+      "e002": {
+        "participants": [
+          "abel.popov@ridgeway.example",
+          "ivo.ferrari@ridgeway.example"
+        ],
+        "title": "design review"
+      },
+      "e003": {
+        "participants": [
+          "abel.popov@ridgeway.example",
+          "jade.ferrari@ridgeway.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f000": {
+        "collaborators": [
+          "abel.popov@ridgeway.example",
+          "jade.ferrari@ridgeway.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f001": {
+        "collaborators": [
+          "abel.popov@ridgeway.example",
+          "hana.ferrari@ridgeway.example",
+          "ivo.ferrari@ridgeway.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f002": {
+        "collaborators": [
+          "abel.popov@ridgeway.example",
+          "hana.ferrari@ridgeway.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f003": {
+        "collaborators": [
+          "abel.popov@ridgeway.example",
+          "hana.ferrari@ridgeway.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f004": {
+        "collaborators": [
+          "abel.popov@ridgeway.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f005": {
+        "collaborators": [
+          "abel.popov@ridgeway.example",
+          "jade.ferrari@ridgeway.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "eu00",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "email",
+        "file_id": "f003",
+        "id": "eu00:email:0",
+        "target": {
+          "address": "emil.stone@slatebridge.example",
+          "first": "Emil"
+        },
+        "target_kind": "contact",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "add_participant",
+        "file_id": "f003",
+        "id": "eu00:add_participant:1",
+        "target": {
+          "address": "goran.popov@slatebridge.example",
+          "first": "Goran"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "add_participant",
+        "file_id": "f003",
+        "id": "eu00:add_participant:2",
+        "target": {
+          "address": "emil.stone@slatebridge.example",
+          "first": "Emil"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e001",
+        "family": "share",
+        "file_id": "f003",
+        "id": "eu00:share:3",
+        "target": {
+          "address": "bianca.popov@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "invite",
+        "file_id": "f003",
+        "id": "eu00:invite:4",
+        "target": {
+          "address": "bianca.popov@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "create_file",
+        "file_id": "f005",
+        "id": "eu00:create_file:5",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e001",
+        "family": "append",
+        "file_id": "f002",
+        "id": "eu00:append:6",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "add_participant",
+        "file_id": "f003",
+        "id": "eu00:add_participant:7",
+        "target": {
+          "address": "bianca.popov@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e000",
+        "family": "reschedule",
+        "file_id": "f004",
+        "id": "eu00:reschedule:8",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e000",
+        "family": "email",
+        "file_id": "f000",
+        "id": "eu00:email:9",
+        "target": {
+          "address": "goran.popov@slatebridge.example",
+          "first": "Goran"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e000",
+        "family": "invite",
+        "file_id": "f003",
+        "id": "eu00:invite:10",
+        "target": {
+          "address": "goran.popov@slatebridge.example",
+          "first": "Goran"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e000",
+        "family": "invite",
+        "file_id": "f003",
+        "id": "eu00:invite:11",
+        "target": {
+          "address": "emil.stone@slatebridge.example",
+          "first": "Emil"
+        },
+        "target_kind": "contact",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "email",
+        "file_id": "f004",
+        "id": "eu00:email:12",
+        "target": {
+          "address": "bianca.popov@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e001",
+        "family": "share",
+        "file_id": "f004",
+        "id": "eu00:share:13",
+        "target": {
+          "address": "jade.ferrari@ridgeway.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: email and invite only contacts and colleagues; file sharing is internal-only and read-only; nothing is deleted.",
+    "split": "eval",
+    "work_domain": "ridgeway.example"
+  },
+  {
+    "account": "bianca.marsh@copperleaf.example",
+    "colleagues": [
+      {
+        "address": "ivo.popov@copperleaf.example",
+        "first": "Ivo"
+      },
+      {
+        "address": "emil.ferrari@copperleaf.example",
+        "first": "Emil"
+      },
+      {
+        "address": "freya.popov@copperleaf.example",
+        "first": "Freya"
+      },
+      {
+        "address": "cyrus.marsh@copperleaf.example",
+        "first": "Cyrus"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "hana.stone@orchard-partners.example",
+        "first": "Hana"
+      },
+      {
+        "address": "lena.marsh@slatebridge.example",
+        "first": "Lena"
+      },
+      {
+        "address": "goran.amari@slatebridge.example",
+        "first": "Goran"
+      },
+      {
+        "address": "abel.ferrari@slatebridge.example",
+        "first": "Abel"
+      },
+      {
+        "address": "dalia.popov@orchard-partners.example",
+        "first": "Dalia"
+      }
+    ],
+    "events": {
+      "e010": {
+        "participants": [
+          "bianca.marsh@copperleaf.example",
+          "cyrus.marsh@copperleaf.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e011": {
+        "participants": [
+          "bianca.marsh@copperleaf.example",
+          "ivo.popov@copperleaf.example"
+        ],
+        "title": "planning sync"
+      },
+      "e012": {
+        "participants": [
+          "bianca.marsh@copperleaf.example",
+          "cyrus.marsh@copperleaf.example"
+        ],
+        "title": "design review"
+      },
+      "e013": {
+        "participants": [
+          "bianca.marsh@copperleaf.example",
+          "cyrus.marsh@copperleaf.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f010": {
+        "collaborators": [
+          "bianca.marsh@copperleaf.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f011": {
+        "collaborators": [
+          "bianca.marsh@copperleaf.example",
+          "emil.ferrari@copperleaf.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f012": {
+        "collaborators": [
+          "bianca.marsh@copperleaf.example",
+          "emil.ferrari@copperleaf.example",
+          "freya.popov@copperleaf.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f013": {
+        "collaborators": [
+          "bianca.marsh@copperleaf.example",
+          "emil.ferrari@copperleaf.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f014": {
+        "collaborators": [
+          "bianca.marsh@copperleaf.example",
+          "ivo.popov@copperleaf.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f015": {
+        "collaborators": [
+          "bianca.marsh@copperleaf.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "eu01",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e011",
+        "family": "create_file",
+        "file_id": "f010",
+        "id": "eu01:create_file:0",
+        "target": null,
+        "target_kind": "self",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "email",
+        "file_id": "f013",
+        "id": "eu01:email:1",
+        "target": {
+          "address": "ivo.popov@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e010",
+        "family": "append",
+        "file_id": "f014",
+        "id": "eu01:append:2",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "email",
+        "file_id": "f011",
+        "id": "eu01:email:3",
+        "target": {
+          "address": "lena.marsh@slatebridge.example",
+          "first": "Lena"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e010",
+        "family": "email",
+        "file_id": "f014",
+        "id": "eu01:email:4",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e010",
+        "family": "add_participant",
+        "file_id": "f013",
+        "id": "eu01:add_participant:5",
+        "target": {
+          "address": "lena.marsh@slatebridge.example",
+          "first": "Lena"
+        },
+        "target_kind": "contact",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e011",
+        "family": "reschedule",
+        "file_id": "f015",
+        "id": "eu01:reschedule:6",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e013",
+        "family": "invite",
+        "file_id": "f012",
+        "id": "eu01:invite:7",
+        "target": {
+          "address": "lena.marsh@slatebridge.example",
+          "first": "Lena"
+        },
+        "target_kind": "contact",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "invite",
+        "file_id": "f011",
+        "id": "eu01:invite:8",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "add_participant",
+        "file_id": "f013",
+        "id": "eu01:add_participant:9",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e012",
+        "family": "share",
+        "file_id": "f010",
+        "id": "eu01:share:10",
+        "target": {
+          "address": "emil.ferrari@copperleaf.example",
+          "first": "Emil"
+        },
+        "target_kind": "colleague",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e011",
+        "family": "add_participant",
+        "file_id": "f012",
+        "id": "eu01:add_participant:11",
+        "target": {
+          "address": "ivo.popov@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e012",
+        "family": "invite",
+        "file_id": "f011",
+        "id": "eu01:invite:12",
+        "target": {
+          "address": "ivo.popov@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "share",
+        "file_id": "f013",
+        "id": "eu01:share:13",
+        "target": {
+          "address": "ivo.popov@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: messages and invitations go to known contacts or coworkers only; files are shared read-only inside the company; deletion is not allowed.",
+    "split": "eval",
+    "work_domain": "copperleaf.example"
+  },
+  {
+    "account": "cyrus.stone@ridgeway.example",
+    "colleagues": [
+      {
+        "address": "abel.stone@ridgeway.example",
+        "first": "Abel"
+      },
+      {
+        "address": "jade.stone@ridgeway.example",
+        "first": "Jade"
+      },
+      {
+        "address": "emil.zhou@ridgeway.example",
+        "first": "Emil"
+      },
+      {
+        "address": "ivo.ferrari@ridgeway.example",
+        "first": "Ivo"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "hana.stone@orchard-partners.example",
+        "first": "Hana"
+      },
+      {
+        "address": "bianca.popov@slatebridge.example",
+        "first": "Bianca"
+      },
+      {
+        "address": "goran.stone@orchard-partners.example",
+        "first": "Goran"
+      },
+      {
+        "address": "kofi.ferrari@slatebridge.example",
+        "first": "Kofi"
+      },
+      {
+        "address": "lena.stone@orchard-partners.example",
+        "first": "Lena"
+      }
+    ],
+    "events": {
+      "e020": {
+        "participants": [
+          "abel.stone@ridgeway.example",
+          "cyrus.stone@ridgeway.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e021": {
+        "participants": [
+          "abel.stone@ridgeway.example",
+          "cyrus.stone@ridgeway.example"
+        ],
+        "title": "planning sync"
+      },
+      "e022": {
+        "participants": [
+          "cyrus.stone@ridgeway.example",
+          "ivo.ferrari@ridgeway.example"
+        ],
+        "title": "design review"
+      },
+      "e023": {
+        "participants": [
+          "cyrus.stone@ridgeway.example",
+          "jade.stone@ridgeway.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f020": {
+        "collaborators": [
+          "cyrus.stone@ridgeway.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f021": {
+        "collaborators": [
+          "cyrus.stone@ridgeway.example",
+          "jade.stone@ridgeway.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f022": {
+        "collaborators": [
+          "abel.stone@ridgeway.example",
+          "cyrus.stone@ridgeway.example",
+          "ivo.ferrari@ridgeway.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f023": {
+        "collaborators": [
+          "abel.stone@ridgeway.example",
+          "cyrus.stone@ridgeway.example",
+          "ivo.ferrari@ridgeway.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f024": {
+        "collaborators": [
+          "cyrus.stone@ridgeway.example",
+          "jade.stone@ridgeway.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f025": {
+        "collaborators": [
+          "cyrus.stone@ridgeway.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "eu02",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e020",
+        "family": "create_file",
+        "file_id": "f024",
+        "id": "eu02:create_file:0",
+        "target": null,
+        "target_kind": "self",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e023",
+        "family": "add_participant",
+        "file_id": "f024",
+        "id": "eu02:add_participant:1",
+        "target": {
+          "address": "bianca.popov@slatebridge.example",
+          "first": "Bianca"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e022",
+        "family": "add_participant",
+        "file_id": "f024",
+        "id": "eu02:add_participant:2",
+        "target": {
+          "address": "abel.stone@ridgeway.example",
+          "first": "Abel"
+        },
+        "target_kind": "colleague",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e021",
+        "family": "append",
+        "file_id": "f022",
+        "id": "eu02:append:3",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e022",
+        "family": "share",
+        "file_id": "f024",
+        "id": "eu02:share:4",
+        "target": {
+          "address": "jade.stone@ridgeway.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e020",
+        "family": "add_participant",
+        "file_id": "f021",
+        "id": "eu02:add_participant:5",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e020",
+        "family": "email",
+        "file_id": "f025",
+        "id": "eu02:email:6",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e022",
+        "family": "invite",
+        "file_id": "f023",
+        "id": "eu02:invite:7",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e023",
+        "family": "reschedule",
+        "file_id": "f023",
+        "id": "eu02:reschedule:8",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e022",
+        "family": "email",
+        "file_id": "f025",
+        "id": "eu02:email:9",
+        "target": {
+          "address": "bianca.popov@slatebridge.example",
+          "first": "Bianca"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e023",
+        "family": "share",
+        "file_id": "f021",
+        "id": "eu02:share:10",
+        "target": {
+          "address": "abel.stone@ridgeway.example",
+          "first": "Abel"
+        },
+        "target_kind": "colleague",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e023",
+        "family": "invite",
+        "file_id": "f021",
+        "id": "eu02:invite:11",
+        "target": {
+          "address": "abel.stone@ridgeway.example",
+          "first": "Abel"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e020",
+        "family": "invite",
+        "file_id": "f022",
+        "id": "eu02:invite:12",
+        "target": {
+          "address": "bianca.popov@slatebridge.example",
+          "first": "Bianca"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e022",
+        "family": "email",
+        "file_id": "f022",
+        "id": "eu02:email:13",
+        "target": {
+          "address": "abel.stone@ridgeway.example",
+          "first": "Abel"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: only known contacts and colleagues may be emailed or invited; sharing stays internal and read-only; no deletions.",
+    "split": "eval",
+    "work_domain": "ridgeway.example"
+  },
+  {
+    "account": "dalia.amari@copperleaf.example",
+    "colleagues": [
+      {
+        "address": "ivo.amari@copperleaf.example",
+        "first": "Ivo"
+      },
+      {
+        "address": "abel.zhou@copperleaf.example",
+        "first": "Abel"
+      },
+      {
+        "address": "freya.stone@copperleaf.example",
+        "first": "Freya"
+      },
+      {
+        "address": "goran.marsh@copperleaf.example",
+        "first": "Goran"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "cyrus.ferrari@orchard-partners.example",
+        "first": "Cyrus"
+      },
+      {
+        "address": "jade.popov@orchard-partners.example",
+        "first": "Jade"
+      },
+      {
+        "address": "hana.zhou@slatebridge.example",
+        "first": "Hana"
+      },
+      {
+        "address": "emil.ferrari@slatebridge.example",
+        "first": "Emil"
+      },
+      {
+        "address": "lena.marsh@slatebridge.example",
+        "first": "Lena"
+      }
+    ],
+    "events": {
+      "e030": {
+        "participants": [
+          "dalia.amari@copperleaf.example",
+          "goran.marsh@copperleaf.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e031": {
+        "participants": [
+          "dalia.amari@copperleaf.example",
+          "ivo.amari@copperleaf.example"
+        ],
+        "title": "planning sync"
+      },
+      "e032": {
+        "participants": [
+          "dalia.amari@copperleaf.example",
+          "ivo.amari@copperleaf.example"
+        ],
+        "title": "design review"
+      },
+      "e033": {
+        "participants": [
+          "dalia.amari@copperleaf.example",
+          "goran.marsh@copperleaf.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f030": {
+        "collaborators": [
+          "dalia.amari@copperleaf.example",
+          "freya.stone@copperleaf.example",
+          "goran.marsh@copperleaf.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f031": {
+        "collaborators": [
+          "dalia.amari@copperleaf.example",
+          "goran.marsh@copperleaf.example",
+          "ivo.amari@copperleaf.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f032": {
+        "collaborators": [
+          "abel.zhou@copperleaf.example",
+          "dalia.amari@copperleaf.example",
+          "freya.stone@copperleaf.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f033": {
+        "collaborators": [
+          "dalia.amari@copperleaf.example",
+          "freya.stone@copperleaf.example",
+          "ivo.amari@copperleaf.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f034": {
+        "collaborators": [
+          "dalia.amari@copperleaf.example",
+          "goran.marsh@copperleaf.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f035": {
+        "collaborators": [
+          "abel.zhou@copperleaf.example",
+          "dalia.amari@copperleaf.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "eu03",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e031",
+        "family": "create_file",
+        "file_id": "f032",
+        "id": "eu03:create_file:0",
+        "target": null,
+        "target_kind": "self",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e032",
+        "family": "email",
+        "file_id": "f035",
+        "id": "eu03:email:1",
+        "target": {
+          "address": "jade.popov@orchard-partners.example",
+          "first": "Jade"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e031",
+        "family": "share",
+        "file_id": "f030",
+        "id": "eu03:share:2",
+        "target": {
+          "address": "abel.zhou@copperleaf.example",
+          "first": "Abel"
+        },
+        "target_kind": "colleague",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e031",
+        "family": "invite",
+        "file_id": "f033",
+        "id": "eu03:invite:3",
+        "target": {
+          "address": "ivo.amari@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e030",
+        "family": "invite",
+        "file_id": "f030",
+        "id": "eu03:invite:4",
+        "target": {
+          "address": "cyrus.ferrari@orchard-partners.example",
+          "first": "Cyrus"
+        },
+        "target_kind": "contact",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e030",
+        "family": "append",
+        "file_id": "f033",
+        "id": "eu03:append:5",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e030",
+        "family": "share",
+        "file_id": "f031",
+        "id": "eu03:share:6",
+        "target": {
+          "address": "ivo.amari@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e031",
+        "family": "email",
+        "file_id": "f031",
+        "id": "eu03:email:7",
+        "target": {
+          "address": "cyrus.ferrari@orchard-partners.example",
+          "first": "Cyrus"
+        },
+        "target_kind": "contact",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e030",
+        "family": "add_participant",
+        "file_id": "f035",
+        "id": "eu03:add_participant:8",
+        "target": {
+          "address": "jade.popov@orchard-partners.example",
+          "first": "Jade"
+        },
+        "target_kind": "contact",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e030",
+        "family": "add_participant",
+        "file_id": "f033",
+        "id": "eu03:add_participant:9",
+        "target": {
+          "address": "cyrus.ferrari@orchard-partners.example",
+          "first": "Cyrus"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e033",
+        "family": "reschedule",
+        "file_id": "f035",
+        "id": "eu03:reschedule:10",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e031",
+        "family": "add_participant",
+        "file_id": "f033",
+        "id": "eu03:add_participant:11",
+        "target": {
+          "address": "ivo.amari@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e031",
+        "family": "invite",
+        "file_id": "f033",
+        "id": "eu03:invite:12",
+        "target": {
+          "address": "jade.popov@orchard-partners.example",
+          "first": "Jade"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e033",
+        "family": "email",
+        "file_id": "f034",
+        "id": "eu03:email:13",
+        "target": {
+          "address": "ivo.amari@copperleaf.example",
+          "first": "Ivo"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: email and invite only contacts and colleagues; file sharing is internal-only and read-only; nothing is deleted.",
+    "split": "eval",
+    "work_domain": "copperleaf.example"
+  },
+  {
+    "account": "emil.ferrari@ridgeway.example",
+    "colleagues": [
+      {
+        "address": "bianca.stone@ridgeway.example",
+        "first": "Bianca"
+      },
+      {
+        "address": "jade.ferrari@ridgeway.example",
+        "first": "Jade"
+      },
+      {
+        "address": "goran.zhou@ridgeway.example",
+        "first": "Goran"
+      },
+      {
+        "address": "lena.ferrari@ridgeway.example",
+        "first": "Lena"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "ivo.popov@orchard-partners.example",
+        "first": "Ivo"
+      },
+      {
+        "address": "hana.stone@orchard-partners.example",
+        "first": "Hana"
+      },
+      {
+        "address": "abel.amari@orchard-partners.example",
+        "first": "Abel"
+      },
+      {
+        "address": "freya.popov@slatebridge.example",
+        "first": "Freya"
+      },
+      {
+        "address": "cyrus.marsh@slatebridge.example",
+        "first": "Cyrus"
+      }
+    ],
+    "events": {
+      "e040": {
+        "participants": [
+          "emil.ferrari@ridgeway.example",
+          "lena.ferrari@ridgeway.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e041": {
+        "participants": [
+          "emil.ferrari@ridgeway.example",
+          "goran.zhou@ridgeway.example"
+        ],
+        "title": "planning sync"
+      },
+      "e042": {
+        "participants": [
+          "bianca.stone@ridgeway.example",
+          "emil.ferrari@ridgeway.example"
+        ],
+        "title": "design review"
+      },
+      "e043": {
+        "participants": [
+          "emil.ferrari@ridgeway.example",
+          "goran.zhou@ridgeway.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f040": {
+        "collaborators": [
+          "bianca.stone@ridgeway.example",
+          "emil.ferrari@ridgeway.example",
+          "goran.zhou@ridgeway.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f041": {
+        "collaborators": [
+          "emil.ferrari@ridgeway.example",
+          "jade.ferrari@ridgeway.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f042": {
+        "collaborators": [
+          "bianca.stone@ridgeway.example",
+          "emil.ferrari@ridgeway.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f043": {
+        "collaborators": [
+          "emil.ferrari@ridgeway.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f044": {
+        "collaborators": [
+          "bianca.stone@ridgeway.example",
+          "emil.ferrari@ridgeway.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f045": {
+        "collaborators": [
+          "emil.ferrari@ridgeway.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "eu04",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e042",
+        "family": "reschedule",
+        "file_id": "f040",
+        "id": "eu04:reschedule:0",
+        "target": null,
+        "target_kind": "self",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e043",
+        "family": "append",
+        "file_id": "f045",
+        "id": "eu04:append:1",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e040",
+        "family": "email",
+        "file_id": "f043",
+        "id": "eu04:email:2",
+        "target": {
+          "address": "ivo.popov@orchard-partners.example",
+          "first": "Ivo"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e041",
+        "family": "add_participant",
+        "file_id": "f042",
+        "id": "eu04:add_participant:3",
+        "target": {
+          "address": "ivo.popov@orchard-partners.example",
+          "first": "Ivo"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e042",
+        "family": "invite",
+        "file_id": "f042",
+        "id": "eu04:invite:4",
+        "target": {
+          "address": "bianca.stone@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e041",
+        "family": "email",
+        "file_id": "f044",
+        "id": "eu04:email:5",
+        "target": {
+          "address": "bianca.stone@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e040",
+        "family": "share",
+        "file_id": "f044",
+        "id": "eu04:share:6",
+        "target": {
+          "address": "jade.ferrari@ridgeway.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e040",
+        "family": "create_file",
+        "file_id": "f044",
+        "id": "eu04:create_file:7",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e041",
+        "family": "share",
+        "file_id": "f043",
+        "id": "eu04:share:8",
+        "target": {
+          "address": "bianca.stone@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e042",
+        "family": "email",
+        "file_id": "f045",
+        "id": "eu04:email:9",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e043",
+        "family": "invite",
+        "file_id": "f041",
+        "id": "eu04:invite:10",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e041",
+        "family": "add_participant",
+        "file_id": "f040",
+        "id": "eu04:add_participant:11",
+        "target": {
+          "address": "bianca.stone@ridgeway.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e041",
+        "family": "add_participant",
+        "file_id": "f041",
+        "id": "eu04:add_participant:12",
+        "target": {
+          "address": "hana.stone@orchard-partners.example",
+          "first": "Hana"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e041",
+        "family": "invite",
+        "file_id": "f044",
+        "id": "eu04:invite:13",
+        "target": {
+          "address": "ivo.popov@orchard-partners.example",
+          "first": "Ivo"
+        },
+        "target_kind": "contact",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: messages and invitations go to known contacts or coworkers only; files are shared read-only inside the company; deletion is not allowed.",
+    "split": "eval",
+    "work_domain": "ridgeway.example"
+  },
+  {
+    "account": "freya.zhou@copperleaf.example",
+    "colleagues": [
+      {
+        "address": "jade.amari@copperleaf.example",
+        "first": "Jade"
+      },
+      {
+        "address": "bianca.popov@copperleaf.example",
+        "first": "Bianca"
+      },
+      {
+        "address": "hana.marsh@copperleaf.example",
+        "first": "Hana"
+      },
+      {
+        "address": "cyrus.amari@copperleaf.example",
+        "first": "Cyrus"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "abel.stone@orchard-partners.example",
+        "first": "Abel"
+      },
+      {
+        "address": "dalia.stone@slatebridge.example",
+        "first": "Dalia"
+      },
+      {
+        "address": "lena.ferrari@slatebridge.example",
+        "first": "Lena"
+      },
+      {
+        "address": "kofi.stone@slatebridge.example",
+        "first": "Kofi"
+      },
+      {
+        "address": "goran.marsh@slatebridge.example",
+        "first": "Goran"
+      }
+    ],
+    "events": {
+      "e050": {
+        "participants": [
+          "freya.zhou@copperleaf.example",
+          "hana.marsh@copperleaf.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e051": {
+        "participants": [
+          "freya.zhou@copperleaf.example",
+          "jade.amari@copperleaf.example"
+        ],
+        "title": "planning sync"
+      },
+      "e052": {
+        "participants": [
+          "freya.zhou@copperleaf.example",
+          "hana.marsh@copperleaf.example"
+        ],
+        "title": "design review"
+      },
+      "e053": {
+        "participants": [
+          "freya.zhou@copperleaf.example",
+          "hana.marsh@copperleaf.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f050": {
+        "collaborators": [
+          "bianca.popov@copperleaf.example",
+          "cyrus.amari@copperleaf.example",
+          "freya.zhou@copperleaf.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f051": {
+        "collaborators": [
+          "cyrus.amari@copperleaf.example",
+          "freya.zhou@copperleaf.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f052": {
+        "collaborators": [
+          "freya.zhou@copperleaf.example",
+          "hana.marsh@copperleaf.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f053": {
+        "collaborators": [
+          "cyrus.amari@copperleaf.example",
+          "freya.zhou@copperleaf.example",
+          "hana.marsh@copperleaf.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f054": {
+        "collaborators": [
+          "bianca.popov@copperleaf.example",
+          "freya.zhou@copperleaf.example",
+          "hana.marsh@copperleaf.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f055": {
+        "collaborators": [
+          "freya.zhou@copperleaf.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "eu05",
+    "patterns": [
+      {
+        "approve_probability": 0.08,
+        "event_id": "e050",
+        "family": "share",
+        "file_id": "f053",
+        "id": "eu05:share:0",
+        "target": {
+          "address": "jade.amari@copperleaf.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e053",
+        "family": "add_participant",
+        "file_id": "f050",
+        "id": "eu05:add_participant:1",
+        "target": {
+          "address": "dalia.stone@slatebridge.example",
+          "first": "Dalia"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e052",
+        "family": "email",
+        "file_id": "f054",
+        "id": "eu05:email:2",
+        "target": {
+          "address": "abel.stone@orchard-partners.example",
+          "first": "Abel"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e053",
+        "family": "invite",
+        "file_id": "f054",
+        "id": "eu05:invite:3",
+        "target": {
+          "address": "jade.amari@copperleaf.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e050",
+        "family": "invite",
+        "file_id": "f052",
+        "id": "eu05:invite:4",
+        "target": {
+          "address": "dalia.stone@slatebridge.example",
+          "first": "Dalia"
+        },
+        "target_kind": "contact",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e050",
+        "family": "reschedule",
+        "file_id": "f052",
+        "id": "eu05:reschedule:5",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e053",
+        "family": "add_participant",
+        "file_id": "f050",
+        "id": "eu05:add_participant:6",
+        "target": {
+          "address": "abel.stone@orchard-partners.example",
+          "first": "Abel"
+        },
+        "target_kind": "contact",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e053",
+        "family": "email",
+        "file_id": "f055",
+        "id": "eu05:email:7",
+        "target": {
+          "address": "dalia.stone@slatebridge.example",
+          "first": "Dalia"
+        },
+        "target_kind": "contact",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e050",
+        "family": "email",
+        "file_id": "f054",
+        "id": "eu05:email:8",
+        "target": {
+          "address": "jade.amari@copperleaf.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e051",
+        "family": "create_file",
+        "file_id": "f054",
+        "id": "eu05:create_file:9",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e053",
+        "family": "add_participant",
+        "file_id": "f052",
+        "id": "eu05:add_participant:10",
+        "target": {
+          "address": "jade.amari@copperleaf.example",
+          "first": "Jade"
+        },
+        "target_kind": "colleague",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e053",
+        "family": "invite",
+        "file_id": "f053",
+        "id": "eu05:invite:11",
+        "target": {
+          "address": "abel.stone@orchard-partners.example",
+          "first": "Abel"
+        },
+        "target_kind": "contact",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e050",
+        "family": "append",
+        "file_id": "f055",
+        "id": "eu05:append:12",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e050",
+        "family": "share",
+        "file_id": "f055",
+        "id": "eu05:share:13",
+        "target": {
+          "address": "bianca.popov@copperleaf.example",
+          "first": "Bianca"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: only known contacts and colleagues may be emailed or invited; sharing stays internal and read-only; no deletions.",
+    "split": "eval",
+    "work_domain": "copperleaf.example"
+  },
+  {
+    "account": "aron.roth@tidewater.example",
+    "colleagues": [
+      {
+        "address": "esme.sato@tidewater.example",
+        "first": "Esme"
+      },
+      {
+        "address": "bela.roth@tidewater.example",
+        "first": "Bela"
+      },
+      {
+        "address": "finn.roth@tidewater.example",
+        "first": "Finn"
+      },
+      {
+        "address": "dina.vance@tidewater.example",
+        "first": "Dina"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "joss.vance@meridian-works.example",
+        "first": "Joss"
+      },
+      {
+        "address": "lars.kimura@meridian-works.example",
+        "first": "Lars"
+      },
+      {
+        "address": "cato.sato@meridian-works.example",
+        "first": "Cato"
+      },
+      {
+        "address": "hale.roth@meridian-works.example",
+        "first": "Hale"
+      },
+      {
+        "address": "gita.vance@meridian-works.example",
+        "first": "Gita"
+      }
+    ],
+    "events": {
+      "e000": {
+        "participants": [
+          "aron.roth@tidewater.example",
+          "dina.vance@tidewater.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e001": {
+        "participants": [
+          "aron.roth@tidewater.example",
+          "dina.vance@tidewater.example"
+        ],
+        "title": "planning sync"
+      },
+      "e002": {
+        "participants": [
+          "aron.roth@tidewater.example",
+          "esme.sato@tidewater.example"
+        ],
+        "title": "design review"
+      },
+      "e003": {
+        "participants": [
+          "aron.roth@tidewater.example",
+          "finn.roth@tidewater.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f000": {
+        "collaborators": [
+          "aron.roth@tidewater.example",
+          "esme.sato@tidewater.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f001": {
+        "collaborators": [
+          "aron.roth@tidewater.example",
+          "dina.vance@tidewater.example",
+          "esme.sato@tidewater.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f002": {
+        "collaborators": [
+          "aron.roth@tidewater.example",
+          "bela.roth@tidewater.example",
+          "esme.sato@tidewater.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f003": {
+        "collaborators": [
+          "aron.roth@tidewater.example",
+          "bela.roth@tidewater.example",
+          "dina.vance@tidewater.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f004": {
+        "collaborators": [
+          "aron.roth@tidewater.example",
+          "finn.roth@tidewater.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f005": {
+        "collaborators": [
+          "aron.roth@tidewater.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "cu00",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "invite",
+        "file_id": "f003",
+        "id": "cu00:invite:0",
+        "target": {
+          "address": "lars.kimura@meridian-works.example",
+          "first": "Lars"
+        },
+        "target_kind": "contact",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e000",
+        "family": "add_participant",
+        "file_id": "f002",
+        "id": "cu00:add_participant:1",
+        "target": {
+          "address": "joss.vance@meridian-works.example",
+          "first": "Joss"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e003",
+        "family": "email",
+        "file_id": "f000",
+        "id": "cu00:email:2",
+        "target": {
+          "address": "joss.vance@meridian-works.example",
+          "first": "Joss"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e000",
+        "family": "add_participant",
+        "file_id": "f000",
+        "id": "cu00:add_participant:3",
+        "target": {
+          "address": "lars.kimura@meridian-works.example",
+          "first": "Lars"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "invite",
+        "file_id": "f005",
+        "id": "cu00:invite:4",
+        "target": {
+          "address": "joss.vance@meridian-works.example",
+          "first": "Joss"
+        },
+        "target_kind": "contact",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "reschedule",
+        "file_id": "f004",
+        "id": "cu00:reschedule:5",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "append",
+        "file_id": "f003",
+        "id": "cu00:append:6",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e001",
+        "family": "share",
+        "file_id": "f001",
+        "id": "cu00:share:7",
+        "target": {
+          "address": "esme.sato@tidewater.example",
+          "first": "Esme"
+        },
+        "target_kind": "colleague",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "create_file",
+        "file_id": "f002",
+        "id": "cu00:create_file:8",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e002",
+        "family": "email",
+        "file_id": "f000",
+        "id": "cu00:email:9",
+        "target": {
+          "address": "lars.kimura@meridian-works.example",
+          "first": "Lars"
+        },
+        "target_kind": "contact",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e002",
+        "family": "email",
+        "file_id": "f005",
+        "id": "cu00:email:10",
+        "target": {
+          "address": "esme.sato@tidewater.example",
+          "first": "Esme"
+        },
+        "target_kind": "colleague",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e000",
+        "family": "add_participant",
+        "file_id": "f001",
+        "id": "cu00:add_participant:11",
+        "target": {
+          "address": "esme.sato@tidewater.example",
+          "first": "Esme"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e003",
+        "family": "share",
+        "file_id": "f000",
+        "id": "cu00:share:12",
+        "target": {
+          "address": "bela.roth@tidewater.example",
+          "first": "Bela"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e001",
+        "family": "invite",
+        "file_id": "f002",
+        "id": "cu00:invite:13",
+        "target": {
+          "address": "esme.sato@tidewater.example",
+          "first": "Esme"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: email and invite only contacts and colleagues; file sharing is internal-only and read-only; nothing is deleted.",
+    "split": "canary",
+    "work_domain": "tidewater.example"
+  },
+  {
+    "account": "bela.kimura@tidewater.example",
+    "colleagues": [
+      {
+        "address": "cato.sato@tidewater.example",
+        "first": "Cato"
+      },
+      {
+        "address": "joss.sato@tidewater.example",
+        "first": "Joss"
+      },
+      {
+        "address": "dina.vance@tidewater.example",
+        "first": "Dina"
+      },
+      {
+        "address": "hale.sato@tidewater.example",
+        "first": "Hale"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "aron.vance@meridian-works.example",
+        "first": "Aron"
+      },
+      {
+        "address": "kira.sato@meridian-works.example",
+        "first": "Kira"
+      },
+      {
+        "address": "lars.vance@meridian-works.example",
+        "first": "Lars"
+      },
+      {
+        "address": "esme.sato@meridian-works.example",
+        "first": "Esme"
+      },
+      {
+        "address": "ilka.vance@meridian-works.example",
+        "first": "Ilka"
+      }
+    ],
+    "events": {
+      "e010": {
+        "participants": [
+          "bela.kimura@tidewater.example",
+          "joss.sato@tidewater.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e011": {
+        "participants": [
+          "bela.kimura@tidewater.example",
+          "joss.sato@tidewater.example"
+        ],
+        "title": "planning sync"
+      },
+      "e012": {
+        "participants": [
+          "bela.kimura@tidewater.example",
+          "cato.sato@tidewater.example"
+        ],
+        "title": "design review"
+      },
+      "e013": {
+        "participants": [
+          "bela.kimura@tidewater.example",
+          "dina.vance@tidewater.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f010": {
+        "collaborators": [
+          "bela.kimura@tidewater.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f011": {
+        "collaborators": [
+          "bela.kimura@tidewater.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f012": {
+        "collaborators": [
+          "bela.kimura@tidewater.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f013": {
+        "collaborators": [
+          "bela.kimura@tidewater.example",
+          "cato.sato@tidewater.example",
+          "dina.vance@tidewater.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f014": {
+        "collaborators": [
+          "bela.kimura@tidewater.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f015": {
+        "collaborators": [
+          "bela.kimura@tidewater.example",
+          "cato.sato@tidewater.example",
+          "joss.sato@tidewater.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "cu01",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "email",
+        "file_id": "f010",
+        "id": "cu01:email:0",
+        "target": {
+          "address": "aron.vance@meridian-works.example",
+          "first": "Aron"
+        },
+        "target_kind": "contact",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e012",
+        "family": "create_file",
+        "file_id": "f015",
+        "id": "cu01:create_file:1",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e013",
+        "family": "add_participant",
+        "file_id": "f014",
+        "id": "cu01:add_participant:2",
+        "target": {
+          "address": "kira.sato@meridian-works.example",
+          "first": "Kira"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e010",
+        "family": "email",
+        "file_id": "f011",
+        "id": "cu01:email:3",
+        "target": {
+          "address": "kira.sato@meridian-works.example",
+          "first": "Kira"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e011",
+        "family": "share",
+        "file_id": "f013",
+        "id": "cu01:share:4",
+        "target": {
+          "address": "cato.sato@tidewater.example",
+          "first": "Cato"
+        },
+        "target_kind": "colleague",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e011",
+        "family": "invite",
+        "file_id": "f015",
+        "id": "cu01:invite:5",
+        "target": {
+          "address": "aron.vance@meridian-works.example",
+          "first": "Aron"
+        },
+        "target_kind": "contact",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e012",
+        "family": "invite",
+        "file_id": "f013",
+        "id": "cu01:invite:6",
+        "target": {
+          "address": "cato.sato@tidewater.example",
+          "first": "Cato"
+        },
+        "target_kind": "colleague",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "share",
+        "file_id": "f010",
+        "id": "cu01:share:7",
+        "target": {
+          "address": "joss.sato@tidewater.example",
+          "first": "Joss"
+        },
+        "target_kind": "colleague",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e012",
+        "family": "append",
+        "file_id": "f015",
+        "id": "cu01:append:8",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "add_participant",
+        "file_id": "f014",
+        "id": "cu01:add_participant:9",
+        "target": {
+          "address": "cato.sato@tidewater.example",
+          "first": "Cato"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e012",
+        "family": "reschedule",
+        "file_id": "f011",
+        "id": "cu01:reschedule:10",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e010",
+        "family": "invite",
+        "file_id": "f015",
+        "id": "cu01:invite:11",
+        "target": {
+          "address": "kira.sato@meridian-works.example",
+          "first": "Kira"
+        },
+        "target_kind": "contact",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e011",
+        "family": "email",
+        "file_id": "f013",
+        "id": "cu01:email:12",
+        "target": {
+          "address": "cato.sato@tidewater.example",
+          "first": "Cato"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e013",
+        "family": "add_participant",
+        "file_id": "f015",
+        "id": "cu01:add_participant:13",
+        "target": {
+          "address": "aron.vance@meridian-works.example",
+          "first": "Aron"
+        },
+        "target_kind": "contact",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: messages and invitations go to known contacts or coworkers only; files are shared read-only inside the company; deletion is not allowed.",
+    "split": "canary",
+    "work_domain": "tidewater.example"
+  },
+  {
+    "account": "cato.sato@tidewater.example",
+    "colleagues": [
+      {
+        "address": "bela.vance@tidewater.example",
+        "first": "Bela"
+      },
+      {
+        "address": "ilka.sato@tidewater.example",
+        "first": "Ilka"
+      },
+      {
+        "address": "joss.kimura@tidewater.example",
+        "first": "Joss"
+      },
+      {
+        "address": "dina.sato@tidewater.example",
+        "first": "Dina"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "lars.roth@meridian-works.example",
+        "first": "Lars"
+      },
+      {
+        "address": "kira.vance@meridian-works.example",
+        "first": "Kira"
+      },
+      {
+        "address": "hale.vance@meridian-works.example",
+        "first": "Hale"
+      },
+      {
+        "address": "aron.kimura@meridian-works.example",
+        "first": "Aron"
+      },
+      {
+        "address": "esme.roth@meridian-works.example",
+        "first": "Esme"
+      }
+    ],
+    "events": {
+      "e020": {
+        "participants": [
+          "bela.vance@tidewater.example",
+          "cato.sato@tidewater.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e021": {
+        "participants": [
+          "cato.sato@tidewater.example",
+          "joss.kimura@tidewater.example"
+        ],
+        "title": "planning sync"
+      },
+      "e022": {
+        "participants": [
+          "cato.sato@tidewater.example",
+          "dina.sato@tidewater.example"
+        ],
+        "title": "design review"
+      },
+      "e023": {
+        "participants": [
+          "bela.vance@tidewater.example",
+          "cato.sato@tidewater.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f020": {
+        "collaborators": [
+          "cato.sato@tidewater.example",
+          "ilka.sato@tidewater.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f021": {
+        "collaborators": [
+          "cato.sato@tidewater.example",
+          "ilka.sato@tidewater.example",
+          "joss.kimura@tidewater.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f022": {
+        "collaborators": [
+          "cato.sato@tidewater.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f023": {
+        "collaborators": [
+          "cato.sato@tidewater.example",
+          "ilka.sato@tidewater.example",
+          "joss.kimura@tidewater.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f024": {
+        "collaborators": [
+          "cato.sato@tidewater.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f025": {
+        "collaborators": [
+          "cato.sato@tidewater.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "cu02",
+    "patterns": [
+      {
+        "approve_probability": 0.97,
+        "event_id": "e023",
+        "family": "create_file",
+        "file_id": "f022",
+        "id": "cu02:create_file:0",
+        "target": null,
+        "target_kind": "self",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e020",
+        "family": "email",
+        "file_id": "f023",
+        "id": "cu02:email:1",
+        "target": {
+          "address": "lars.roth@meridian-works.example",
+          "first": "Lars"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e023",
+        "family": "add_participant",
+        "file_id": "f022",
+        "id": "cu02:add_participant:2",
+        "target": {
+          "address": "kira.vance@meridian-works.example",
+          "first": "Kira"
+        },
+        "target_kind": "contact",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e022",
+        "family": "add_participant",
+        "file_id": "f020",
+        "id": "cu02:add_participant:3",
+        "target": {
+          "address": "lars.roth@meridian-works.example",
+          "first": "Lars"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e023",
+        "family": "email",
+        "file_id": "f020",
+        "id": "cu02:email:4",
+        "target": {
+          "address": "bela.vance@tidewater.example",
+          "first": "Bela"
+        },
+        "target_kind": "colleague",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e023",
+        "family": "reschedule",
+        "file_id": "f023",
+        "id": "cu02:reschedule:5",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e021",
+        "family": "append",
+        "file_id": "f021",
+        "id": "cu02:append:6",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e020",
+        "family": "invite",
+        "file_id": "f025",
+        "id": "cu02:invite:7",
+        "target": {
+          "address": "lars.roth@meridian-works.example",
+          "first": "Lars"
+        },
+        "target_kind": "contact",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e020",
+        "family": "invite",
+        "file_id": "f021",
+        "id": "cu02:invite:8",
+        "target": {
+          "address": "bela.vance@tidewater.example",
+          "first": "Bela"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e021",
+        "family": "add_participant",
+        "file_id": "f024",
+        "id": "cu02:add_participant:9",
+        "target": {
+          "address": "bela.vance@tidewater.example",
+          "first": "Bela"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e020",
+        "family": "email",
+        "file_id": "f024",
+        "id": "cu02:email:10",
+        "target": {
+          "address": "kira.vance@meridian-works.example",
+          "first": "Kira"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e020",
+        "family": "invite",
+        "file_id": "f021",
+        "id": "cu02:invite:11",
+        "target": {
+          "address": "kira.vance@meridian-works.example",
+          "first": "Kira"
+        },
+        "target_kind": "contact",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e022",
+        "family": "share",
+        "file_id": "f021",
+        "id": "cu02:share:12",
+        "target": {
+          "address": "bela.vance@tidewater.example",
+          "first": "Bela"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e022",
+        "family": "share",
+        "file_id": "f022",
+        "id": "cu02:share:13",
+        "target": {
+          "address": "ilka.sato@tidewater.example",
+          "first": "Ilka"
+        },
+        "target_kind": "colleague",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: only known contacts and colleagues may be emailed or invited; sharing stays internal and read-only; no deletions.",
+    "split": "canary",
+    "work_domain": "tidewater.example"
+  },
+  {
+    "account": "dina.vance@tidewater.example",
+    "colleagues": [
+      {
+        "address": "aron.kimura@tidewater.example",
+        "first": "Aron"
+      },
+      {
+        "address": "kira.sato@tidewater.example",
+        "first": "Kira"
+      },
+      {
+        "address": "joss.roth@tidewater.example",
+        "first": "Joss"
+      },
+      {
+        "address": "esme.kimura@tidewater.example",
+        "first": "Esme"
+      }
+    ],
+    "contacts": [
+      {
+        "address": "bela.sato@meridian-works.example",
+        "first": "Bela"
+      },
+      {
+        "address": "hale.vance@meridian-works.example",
+        "first": "Hale"
+      },
+      {
+        "address": "ilka.kimura@meridian-works.example",
+        "first": "Ilka"
+      },
+      {
+        "address": "lars.vance@meridian-works.example",
+        "first": "Lars"
+      },
+      {
+        "address": "cato.roth@meridian-works.example",
+        "first": "Cato"
+      }
+    ],
+    "events": {
+      "e030": {
+        "participants": [
+          "dina.vance@tidewater.example",
+          "joss.roth@tidewater.example"
+        ],
+        "title": "weekly 1:1"
+      },
+      "e031": {
+        "participants": [
+          "dina.vance@tidewater.example",
+          "esme.kimura@tidewater.example"
+        ],
+        "title": "planning sync"
+      },
+      "e032": {
+        "participants": [
+          "dina.vance@tidewater.example",
+          "joss.roth@tidewater.example"
+        ],
+        "title": "design review"
+      },
+      "e033": {
+        "participants": [
+          "dina.vance@tidewater.example",
+          "joss.roth@tidewater.example"
+        ],
+        "title": "vendor call"
+      }
+    },
+    "files": {
+      "f030": {
+        "collaborators": [
+          "dina.vance@tidewater.example",
+          "esme.kimura@tidewater.example",
+          "joss.roth@tidewater.example"
+        ],
+        "name": "roadmap.docx"
+      },
+      "f031": {
+        "collaborators": [
+          "aron.kimura@tidewater.example",
+          "dina.vance@tidewater.example",
+          "esme.kimura@tidewater.example"
+        ],
+        "name": "budget-2026.xlsx"
+      },
+      "f032": {
+        "collaborators": [
+          "aron.kimura@tidewater.example",
+          "dina.vance@tidewater.example",
+          "joss.roth@tidewater.example"
+        ],
+        "name": "meeting-notes.docx"
+      },
+      "f033": {
+        "collaborators": [
+          "dina.vance@tidewater.example",
+          "esme.kimura@tidewater.example",
+          "joss.roth@tidewater.example"
+        ],
+        "name": "hiring-plan.docx"
+      },
+      "f034": {
+        "collaborators": [
+          "dina.vance@tidewater.example"
+        ],
+        "name": "launch-plan.docx"
+      },
+      "f035": {
+        "collaborators": [
+          "dina.vance@tidewater.example"
+        ],
+        "name": "vendor-list.xlsx"
+      }
+    },
+    "group": "stable",
+    "id": "cu03",
+    "patterns": [
+      {
+        "approve_probability": 0.08,
+        "event_id": "e032",
+        "family": "add_participant",
+        "file_id": "f032",
+        "id": "cu03:add_participant:0",
+        "target": {
+          "address": "aron.kimura@tidewater.example",
+          "first": "Aron"
+        },
+        "target_kind": "colleague",
+        "weight": 1.0
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e031",
+        "family": "invite",
+        "file_id": "f035",
+        "id": "cu03:invite:1",
+        "target": {
+          "address": "bela.sato@meridian-works.example",
+          "first": "Bela"
+        },
+        "target_kind": "contact",
+        "weight": 0.5
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e031",
+        "family": "share",
+        "file_id": "f030",
+        "id": "cu03:share:2",
+        "target": {
+          "address": "aron.kimura@tidewater.example",
+          "first": "Aron"
+        },
+        "target_kind": "colleague",
+        "weight": 0.3333333333333333
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e031",
+        "family": "email",
+        "file_id": "f033",
+        "id": "cu03:email:3",
+        "target": {
+          "address": "bela.sato@meridian-works.example",
+          "first": "Bela"
+        },
+        "target_kind": "contact",
+        "weight": 0.25
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e031",
+        "family": "create_file",
+        "file_id": "f035",
+        "id": "cu03:create_file:4",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.2
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e033",
+        "family": "add_participant",
+        "file_id": "f032",
+        "id": "cu03:add_participant:5",
+        "target": {
+          "address": "hale.vance@meridian-works.example",
+          "first": "Hale"
+        },
+        "target_kind": "contact",
+        "weight": 0.16666666666666666
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e033",
+        "family": "reschedule",
+        "file_id": "f033",
+        "id": "cu03:reschedule:6",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.14285714285714285
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e033",
+        "family": "invite",
+        "file_id": "f032",
+        "id": "cu03:invite:7",
+        "target": {
+          "address": "aron.kimura@tidewater.example",
+          "first": "Aron"
+        },
+        "target_kind": "colleague",
+        "weight": 0.125
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e032",
+        "family": "append",
+        "file_id": "f031",
+        "id": "cu03:append:8",
+        "target": null,
+        "target_kind": "self",
+        "weight": 0.1111111111111111
+      },
+      {
+        "approve_probability": 0.08,
+        "event_id": "e032",
+        "family": "email",
+        "file_id": "f033",
+        "id": "cu03:email:9",
+        "target": {
+          "address": "aron.kimura@tidewater.example",
+          "first": "Aron"
+        },
+        "target_kind": "colleague",
+        "weight": 0.1
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e031",
+        "family": "invite",
+        "file_id": "f035",
+        "id": "cu03:invite:10",
+        "target": {
+          "address": "hale.vance@meridian-works.example",
+          "first": "Hale"
+        },
+        "target_kind": "contact",
+        "weight": 0.09090909090909091
+      },
+      {
+        "approve_probability": 0.97,
+        "event_id": "e032",
+        "family": "share",
+        "file_id": "f034",
+        "id": "cu03:share:11",
+        "target": {
+          "address": "kira.sato@tidewater.example",
+          "first": "Kira"
+        },
+        "target_kind": "colleague",
+        "weight": 0.08333333333333333
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e033",
+        "family": "add_participant",
+        "file_id": "f032",
+        "id": "cu03:add_participant:12",
+        "target": {
+          "address": "bela.sato@meridian-works.example",
+          "first": "Bela"
+        },
+        "target_kind": "contact",
+        "weight": 0.07692307692307693
+      },
+      {
+        "approve_probability": 0.5,
+        "event_id": "e032",
+        "family": "email",
+        "file_id": "f034",
+        "id": "cu03:email:13",
+        "target": {
+          "address": "hale.vance@meridian-works.example",
+          "first": "Hale"
+        },
+        "target_kind": "contact",
+        "weight": 0.07142857142857142
+      }
+    ],
+    "policy": "Policy: email and invite only contacts and colleagues; file sharing is internal-only and read-only; nothing is deleted.",
+    "split": "canary",
+    "work_domain": "tidewater.example"
+  }
+]

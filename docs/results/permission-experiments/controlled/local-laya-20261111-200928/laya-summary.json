@@ -1,0 +1,21 @@
+{
+  "attempted": 12,
+  "supported": 12,
+  "errors": 0,
+  "by_class": {
+    "ALLOW": {
+      "total": 3,
+      "controller_correct": 3
+    },
+    "ASK": {
+      "total": 6,
+      "controller_correct": 4
+    },
+    "BLOCK": {
+      "total": 3,
+      "controller_correct": 3
+    }
+  },
+  "controller_correct": 10,
+  "intent_agreement": 10
+}

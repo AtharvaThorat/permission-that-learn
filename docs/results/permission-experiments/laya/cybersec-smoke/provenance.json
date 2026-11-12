@@ -1,0 +1,34 @@
+{
+  "family": "laya",
+  "run_id": "cybersec-smoke",
+  "source_directory": "workspace/artifacts/cybersec-smoke",
+  "published_directory": "docs/results/permission-experiments/laya/cybersec-smoke",
+  "files": [
+    {
+      "file": "frozen-config.json",
+      "source_sha256": "e67c5567dadfa4d606355630e9c3cdf5fd600cbfa90b12522025cd2bf0774485",
+      "published_sha256": "e67c5567dadfa4d606355630e9c3cdf5fd600cbfa90b12522025cd2bf0774485",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "manifest.json",
+      "source_sha256": "4e8b2959f0b8cb1a7e8184c30629d7e35151366e49dabc2a736a517f385e62ab",
+      "published_sha256": "4e8b2959f0b8cb1a7e8184c30629d7e35151366e49dabc2a736a517f385e62ab",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "predictions.jsonl",
+      "source_sha256": "448f37b885334485bb64d100c05f43e6f507657f48a5f8f2302abc57a525a278",
+      "published_sha256": "a1159b3a89263c68c040588353ffb0fa2fc44f1913036f67165afcd9bd7ede54",
+      "transformation": "projection; raw contexts/events excluded, decisions and diagnostic data retained"
+    },
+    {
+      "file": "runtime.json",
+      "source_sha256": "ebe98ac357ed46ff73fa70f9b8fd28b3a7589398ea727a92be9bc425ebfcb3e9",
+      "published_sha256": "77ffbdd3b5825a161a7fdd264e0b0e81ff76eca97d6bf96aa9ab4a2ce1a0e073",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

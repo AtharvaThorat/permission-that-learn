@@ -1,0 +1,25 @@
+{
+  "status": "completed",
+  "selected_examples": 6,
+  "row_statuses": {
+    "complete": 6
+  },
+  "stable_decisions": {
+    "ALLOW": 6
+  },
+  "timed_calls": 6,
+  "successful_calls": 6,
+  "failed_calls": 0,
+  "median_success_latency_s": 0.7794038500001079,
+  "p95_success_latency_s": 0.8879948000003424,
+  "successful_calls_per_timed_wall_second": null,
+  "initialization_seconds": 5.023336100000051,
+  "total_seconds": 11.612997499999892,
+  "process_cpu_seconds": 28.203125,
+  "peak_process_tree_rss_MiB": 2742.703125,
+  "accuracy": null,
+  "macro_f1": null,
+  "energy_joules": null,
+  "monetary_cost": null,
+  "note": "No reviewed labels: accuracy/F1 unavailable. Repeats are timing samples, not additional examples. Latency includes encoding/preflight and inference. CPU time is current-process CPU; memory is sampled process-tree RSS, not VRAM. Warm-ups are excluded from timed metrics."
+}

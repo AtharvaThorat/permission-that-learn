@@ -1,0 +1,63 @@
+{
+  "status": "completed",
+  "device": "cpu",
+  "cpu_threads": 4,
+  "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+  "logical_cpu_count": 16,
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.10",
+  "warmup_calls": 1,
+  "calls_per_selected_row": 1,
+  "variant": "decomposed",
+  "questions_per_call": 2,
+  "accuracy": null,
+  "timed_wall_seconds": 43.84456969999883,
+  "packages": {
+    "laya": "0.3.28",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.22.2",
+    "tokenizers": "0.23.3"
+  },
+  "initialization_seconds": 4.178913499999908,
+  "config": {
+    "encoder": "jhu-clsp/mmBERT-base",
+    "head_layers": 2,
+    "max_len": 1024,
+    "head_max_len": 256,
+    "max_prefixes": 6,
+    "act_costs": {
+      "escalate": 0.5
+    },
+    "cost_wrong_act": 3.0,
+    "amp_dtype": "bf16",
+    "model_name": "rl-agent",
+    "temperature": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "temperature_by_options": {
+      "noul:2": 2.3,
+      "choice:2": 2.3,
+      "choice:6-10": 5.0
+    },
+    "training": {
+      "updates": 15987,
+      "epochs_completed": 4,
+      "hours": 4.97,
+      "world_size": 1,
+      "fine_tuned_from_checkpoint": false,
+      "pi_scanner_finetune": {
+        "rows": 235622,
+        "epochs": 4,
+        "best_epoch": 3,
+        "seed": 5,
+        "excluded": []
+      }
+    }
+  },
+  "precision": "torch.float32",
+  "process_cpu_seconds": 187.1875,
+  "peak_process_tree_rss_bytes": 2126057472,
+  "total_seconds": 49.87001450000389
+}

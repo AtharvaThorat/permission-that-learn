@@ -146,7 +146,7 @@ benchmark campaigns after smoke validation and resource budgeting, not initial t
 ## Laya fine-tuning data
 
 `grids training-data` builds the Laya ALLOW/ASK/BLOCK dataset in
-[`docs/results/laya-permission-v1/`](../results/laya-permission-v1/README.md) from
+[`experiments/reference/laya-permission-v1/`](../../experiments/reference/laya-permission-v1/README.md) from
 native AgentDojo actions, through the same replay path as frozen evaluation. Install
 `environments/training-data.txt`, then run `fetch`, `candidates`, `review`, `finalize
 --reviewer "<who>"` and `validate`. `candidates` refuses to run while that directory's
@@ -157,7 +157,7 @@ for the frozen-action comparison above.
 For 1,024-token checkpoints such as `TextCortex/laya-cybersec`, set the gatekeeper `input_profile`
 to `compact_v1` and `max_input_tokens` to 1024. `compact`, `compact-tokens` (in a `environments/laya.txt`
 environment) and `compact-validate` build and check
-[`docs/results/laya-permission-v1-compact/`](../results/laya-permission-v1-compact/README.md) with the
+[`experiments/reference/laya-permission-v1-compact/`](../../experiments/reference/laya-permission-v1-compact/README.md) with the
 same function.
 
 ## Approval memory
@@ -165,7 +165,7 @@ same function.
 `grids memory simulate --seeds 50 --passes 3 --output results/memory-sim/<run>` replays the 450 dataset actions as
 per-suite streams through the four setups (no protection, fixed rules, learning without the Wall, learning inside
 the Wall) with careful and careless simulated users. It needs no model and writes `runs.csv`, `summary.csv`,
-`curves.csv` and `run.json`. See [memory-sim](../results/memory-sim/README.md).
+`curves.csv` and `run.json`. See [memory-sim](../../experiments/reference/memory-sim/README.md).
 
 Historical counting/broad-grant modes are simulation-only. Live runs require the scoped
 configuration above; repeated approvals never create authority.
@@ -177,7 +177,7 @@ Download `data/laya-pairs-v1.jsonl` and `metadata/laya-pairs-v1.json` from the g
 `grids permissions laya-predict --pairs <pairs> --metadata <metadata> --output <file>` records Laya-Cybersec
 decisions (CPU is enough). `grids permissions simulate --pairs <pairs> --output results/permission-memory/<run>`
 then compares no memory, counting and grants with and without the Wall; it checks the pairs hash against the
-recorded predictions. See [permission-memory](../results/permission-memory/README.md). Live runs use the scoped grant commands above.
+recorded predictions. See [permission-memory](../../experiments/reference/permission-memory/README.md). Live runs use the scoped grant commands above.
 
 ## Offline contextual-policy comparisons
 

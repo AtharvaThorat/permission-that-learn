@@ -1,0 +1,52 @@
+{
+  "family": "laya",
+  "run_id": "base-pairs-report-preview",
+  "source_directory": "workspace/artifacts/base-pairs-report-preview",
+  "published_directory": "docs/results/permission-experiments/laya/base-pairs-report-preview",
+  "files": [
+    {
+      "file": "calls.csv",
+      "source_sha256": "42d499aacdb8b5f5b215b2fa1fd96ef7474f624810dd9283327320ec36765bed",
+      "published_sha256": "d27a6009a26eb8981d2fa13d17ae174a1771ecefcd72a0265312fa8b3a1be94d",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "compute_summary.json",
+      "source_sha256": "ce3588ffae2e8f08071e966004c31b8b4e0a01172a7351445168fe569cd93065",
+      "published_sha256": "ce3588ffae2e8f08071e966004c31b8b4e0a01172a7351445168fe569cd93065",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "examples.csv",
+      "source_sha256": "3cbf896e147d052a53a6d059c6628b67280bd2092f284cad892b8468bdfb13ad",
+      "published_sha256": "7a42f1283d569e49333c1ca030952da76ef4ae11c1ad73ef25defe02ff549d8d",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "manifest.json",
+      "source_sha256": "01a3553d07ef5e92a015a305d1c6eceec12217ebc4ed3cf77f69730ef1c4a7b0",
+      "published_sha256": "01a3553d07ef5e92a015a305d1c6eceec12217ebc4ed3cf77f69730ef1c4a7b0",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "predictions.jsonl",
+      "source_sha256": "194c478d72f68a10a656b3814a0f4a8e119aa4dd03b6fc0e544993c82d54dcb2",
+      "published_sha256": "0153dbd517db4224d01de36287c6e3d9b013e27b149188bfc78148dbb873a87f",
+      "transformation": "projection; raw contexts/events excluded, decisions and diagnostic data retained"
+    },
+    {
+      "file": "runtime.json",
+      "source_sha256": "e7212f803dc2c9a4953b8097b819a7aba3508223829253fc49df6430f2525d36",
+      "published_sha256": "e7212f803dc2c9a4953b8097b819a7aba3508223829253fc49df6430f2525d36",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "results.html",
+      "sha256": "5b6f57bbacce01a71769f8ea8e5d70734f4031cb57be4125383b921ec48ac47f",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

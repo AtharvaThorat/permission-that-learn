@@ -1,0 +1,115 @@
+{
+  "family": "sweeps",
+  "run_id": "question-trials-20261110T152520Z-2c7133a1",
+  "source_directory": "workspace/artifacts/question-trials-20261110T152520Z-2c7133a1",
+  "published_directory": "docs/results/permission-experiments/sweeps/question-trials-20261110T152520Z-2c7133a1",
+  "files": [
+    {
+      "file": "comparison.csv",
+      "source_sha256": "d809811593eb521ba927969f5e53296f13b094029d67f3861079ff87c9e3b5b2",
+      "published_sha256": "334f4b04aacb9207ea4b8491a96f38be47db63e927fad1c8bf774809db76c59a",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "comparison.json",
+      "source_sha256": "3d6a0afba12710181d926798722e08cca84b827f7c1fcae1b1c503683b9e570e",
+      "published_sha256": "fea4cd9dd9d8424bb7a16814a707eb5f54ac777dde4eaf9eacfcbf9f0669b7e5",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "screen_ids.json",
+      "source_sha256": "2620cc04f0a0165ff89541f70b3bcbd7481a5e3defef426bc20cdf5549891048",
+      "published_sha256": "2620cc04f0a0165ff89541f70b3bcbd7481a5e3defef426bc20cdf5549891048",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "selection.json",
+      "source_sha256": "b025b5c06b7d79427693987509cb1dc46b4afc36e8a6b748534927339ca62945",
+      "published_sha256": "b025b5c06b7d79427693987509cb1dc46b4afc36e8a6b748534927339ca62945",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "comparison.html",
+      "sha256": "33395577d53430398cd721b736d59c9130acda73b745f726434cd8d2c98dc1ca",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "full-cybersec-rotated.log",
+      "sha256": "682972ec6f25e72094d99a4a2c659dc2a7acda4fc36494e78fc9ee35056b8337",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "full-typed-decomposed.log",
+      "sha256": "b24a4d5b015a60f5d9ca304771ac598d075c4f795100864259f800a3315d3780",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "runs.jsonl",
+      "sha256": "ea22c04cecb2b25702b68d605a89aa9b30e3f1dd8d0e7fa0c7a74bbab8999196",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-base-baseline.log",
+      "sha256": "6e1dcd4a42a47e66c9d67e31e5ccc2934d725a8d2a6f956104f2df038f96b700",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-base-concise.log",
+      "sha256": "69a7ac27e80c0e721c8d0a3b4d814245c85f2edc39faa3791ddf618e9db47e5c",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-base-decomposed.log",
+      "sha256": "68d8e7461dc9e5baaafe73283dfb2c523ee63418b51de534359a49a1087158ec",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-base-rotated.log",
+      "sha256": "e01194e67d3439b3e36cb10b669bfdb51e3a17732c031bc13d209edf82e253ad",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-cybersec-baseline.log",
+      "sha256": "7793c65fca3bdfb4bb25c5942d31ec47b03e60c1eebcd5d311a2a6eaaecc0fca",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-cybersec-concise.log",
+      "sha256": "cadb671d37f5c3a129bcf8d32dd218f613ecf97b30e62e471a975cf47a5dda86",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-cybersec-decomposed.log",
+      "sha256": "f8a7cd699272aa69e49e9bd988526a3bfc07f8510fdddeb70b46cd6c2801933b",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-cybersec-rotated.log",
+      "sha256": "8ad1e433b1ab9c6b7f50a28236ae7d6a68fc19cf37b1a31b0f28a2e6afb40012",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-typed-baseline.log",
+      "sha256": "449be0f4cb6d7763b0ffc4a4e2b14a491701e83652299916664de85eaa63a070",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-typed-concise.log",
+      "sha256": "b9256b9b84795f16928f015071b10e7b67a2de4a40784ccc506613e075879c48",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-typed-decomposed.log",
+      "sha256": "1edaae8d23346f13ce42d2548d9474ccc515f5d084c26dff8c62161f7bc9831d",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "screen-typed-rotated.log",
+      "sha256": "6fbb2e735bccd42bae9e1bbeecfeac51bc74e7783310858a2dafec434ddb54c4",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

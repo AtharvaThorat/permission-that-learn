@@ -1,39 +1,25 @@
-# Research documentation
+# Documentation
 
-The [project overview](../README.md) describes the contribution and links the
-[manuscript](../paper/manuscript.pdf). This index is the entry point for detailed documentation.
+The shared authorization pipeline is the backbone of this project. Start with the [research site](index.html) and [architecture](architecture/system/overview.md).
 
-## Run and integrate
+## Use the pipeline
 
-- [Reproduce the pipeline](guides/reproduce.md): local simulated demonstration, real Laya check, saved results and validation.
-- [Machine setup](guides/setup.md): environments, model assets, Colab and serving.
-- [Experiments](guides/experiments.md): native AgentDojo, identical-action replay, grants and contextual learning.
-- [Application integration](guides/integration.md): use the shared controller in another application.
-- [Actor profiles](guides/models.md) and [CARC execution](guides/carc.md).
+- [Reproduction and demo benchmark](guides/reproduce.md)
+- [Machine setup](guides/setup.md), [actor profiles](guides/models.md), [CARC](guides/carc.md)
+- [Experiments and permission learning](guides/experiments.md)
+- [Application integration](guides/integration.md)
 
-## Architecture and evaluation
+## Research
 
-- [System](architecture/system/overview.md), [pipeline diagram](architecture/system/pipeline.png).
-- [Authorization contract](architecture/authorization/contract.md): trusted evidence and exact execution binding.
-- [Evaluation method](architecture/evaluation/method.md): paired observations and metric definitions.
-- [Permission-memory research](architecture/authorization/permission-memory.md): historical designs and comparisons;
-  current production behavior is described in the experiment guide.
+- [Authorization contract](architecture/authorization/contract.md) and [evaluation method](architecture/evaluation/method.md)
+- [Results page](results.html): latest local checks, accuracy, configurations and compute
+- [Current evidence](results/research-release/README.md): configuration comparisons, local-run catalog and source hashes
+- [Our Hugging Face dataset](https://huggingface.co/datasets/siddharth-magesh/grids-laya-permission-v1): gated prompt–action pairs and provisional labels
+- [Reference datasets and historical studies](../experiments/reference/README.md): reproducibility inputs, not headline results
+- [Manuscript](../paper/manuscript.pdf)
 
-## Evidence and research history
+## Contribute
 
-- [Results index](results/README.md): curated data, historical studies and current aggregate release.
-- [Release evidence](results/research-release/README.md): downloadable HTML, CSV, JSON and provenance.
-- [Permission-learning milestone](milestones/2026-11-permission-memory.md): actual checks and limitations.
-- Historical milestones: [refactor](milestones/2026-10-refactor.md),
-  [dataset](milestones/2026-11-laya-training-data.md), [compact contexts](milestones/2026-11-laya-compact.md),
-  [approval-memory study](milestones/2026-11-approval-memory.md).
+[Contribution guide](../CONTRIBUTING.md) · [Retained test coverage](development/testing.md)
 
-## Maintain the project
-
-- [PROJECT_GUIDELINES](PROJECT_GUIDELINES.md): contributor and coding-agent instructions.
-- [Project tracking](project_tracking.md): progress and remaining work.
-- [Test catalog](development/testing.md): retained security and integrity checks.
-
-`src/grids/` holds the reusable pipeline; `experiments/notebooks/` contains thin walkthroughs;
-`configs/` and `environments/` hold reproducible settings. Ignored `results/`, `workspace/` and
-`tmp/` hold local generated data and assets. Do not duplicate them into source or documentation.
+Development tracking is kept in `development/project_tracking.md`; historical implementation notes are in `archive/milestones/`. The separate `plugin/` work is maintained independently. Public results contain aggregate evidence, not raw private logs or model assets.

@@ -1,0 +1,17 @@
+{
+  "source_commit": "46aed6a",
+  "removed_redundant_tables": [
+    {
+      "path": "docs/results/memory-sim/runs.csv",
+      "sha256": "d26531f6ac241b7b8c0af4dc3c2ae08b582ea9cfff1db76f6747c2ee30ca240b"
+    },
+    {
+      "path": "docs/results/permission-memory/runs_reviewed.csv",
+      "sha256": "df911ec2dd7b9d0153d7ae44507b218293f8b29c7426ec8628f4637134f50731"
+    },
+    {
+      "path": "docs/results/permission-memory/runs_source.csv",
+      "sha256": "ab50283c1b707819c2c0bec3f433871c2ef59882418724a9ed309efbc0812c28"
+    }
+  ]
+}

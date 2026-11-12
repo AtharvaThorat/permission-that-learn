@@ -1,0 +1,33 @@
+{
+  "family": "laya",
+  "run_id": "viewer",
+  "source_directory": "workspace/artifacts/viewer",
+  "published_directory": "docs/results/permission-experiments/laya/viewer",
+  "files": [
+    {
+      "file": "metrics.csv",
+      "source_sha256": "9c16436b2fbdb640925a8ad2d411296ee29d6b79ca2be0416b8118da5f09b7ed",
+      "published_sha256": "9c16436b2fbdb640925a8ad2d411296ee29d6b79ca2be0416b8118da5f09b7ed",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "summary.json",
+      "source_sha256": "16fc7360c6d8b5bb89624944ee66e2586406c65cc248543c7430b843117e991f",
+      "published_sha256": "6aad328e0f230a9f7794e8668009a8ee741f87864fb4d68af0981783a808401c",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "report.html",
+      "sha256": "728b378c37fe8f4a0dd44144f38e938623aac52d434a407f9c1f866cbb72bac2",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "traces.json",
+      "sha256": "b35b175527cf435583b42ec744923c2dbd5aec957985fac287ae67c45cf0ce09",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

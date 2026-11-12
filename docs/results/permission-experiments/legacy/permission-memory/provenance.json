@@ -1,0 +1,73 @@
+{
+  "family": "legacy",
+  "run_id": "permission-memory",
+  "source_directory": "experiments/reference/permission-memory",
+  "published_directory": "docs/results/permission-experiments/legacy/permission-memory",
+  "files": [
+    {
+      "file": "gate_reviewed.csv",
+      "source_sha256": "3924f72dfd7207e285c9a6596e6a7e5f6e3ba50fb79165e6c0dcde38aa2143d3",
+      "published_sha256": "32aad635a36b7f4067bd0daac9658bf27a040b25fbf54ee2c6814cc75b918a11",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "gate_source.csv",
+      "source_sha256": "2bf046bf8aa01a3dfb4ed80960f76f1afb24a6ad87da747e76128090bf08db88",
+      "published_sha256": "4b94ba02e1de6cea1d93a59c28b296f9db762e52ec758669f6f9a3607fb13842",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "run.json",
+      "source_sha256": "683a7813396c409791c785e94be4f1167e2af0add62b9c80ba5762a941a773a7",
+      "published_sha256": "a15345a36a27f744c609e890e1c5e8f16058afec206648ba262a142767488ac3",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "summary_reviewed.csv",
+      "source_sha256": "3a2f1a0b8cee1e3d2641baecd283856512353c6086d4137e972b77e4076252b1",
+      "published_sha256": "19f7c378dc8d9e5977855370cc26441a88c91ca0ffeff393c8b112fcd99047b6",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "summary_source.csv",
+      "source_sha256": "3ced705e97124e29dc315021899bca790c242988aa0830286efe03962444fedb",
+      "published_sha256": "2619a2ff72c8481f460b1b82d6345ea260f552dd8595f83ab5fb781b568f792a",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "runs_reviewed.csv",
+      "source_sha256": "df911ec2dd7b9d0153d7ae44507b218293f8b29c7426ec8628f4637134f50731",
+      "published_sha256": "bc577549605eb5da84250e0dce108d2d0078a3a380eba3b89f392e2b35e63aca",
+      "transformation": "restored historical per-seed table; sanitized paths"
+    },
+    {
+      "file": "runs_source.csv",
+      "source_sha256": "ab50283c1b707819c2c0bec3f433871c2ef59882418724a9ed309efbc0812c28",
+      "published_sha256": "09447352ee74b16e21c07e592d04d603a41e4478b15a6dda66b81e50c612fcd6",
+      "transformation": "restored historical per-seed table; sanitized paths"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "laya_cybersec_predictions.jsonl",
+      "sha256": "2fe994d032e6161c0ff5a8882f47066f398cd5f3478005aa5dfb349d2869233f",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "laya_cybersec_rotated_predictions.jsonl",
+      "sha256": "76a273895ae2cc7972f8ee17b8af70c1ee56d6d02f23dd7a331660a1d6f939a1",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "README.md",
+      "sha256": "4f50b7e1b3ff9a3ec184f7c3f3519ce52535d71178fb6bec9b740d687dc7ed64",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "reviewed_labels.csv",
+      "sha256": "5778ac2315229d78a7de0808e063057511ea83704dd8684b1372b7022a905eee",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

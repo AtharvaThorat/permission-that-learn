@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "evidence": "constructed fixtures; simulated tools; production Wall/controller",
+  "seed": 42,
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "elapsed_seconds": 4.225288800000271,
+  "cpu_seconds": 2.609375,
+  "peak_process_tree_bytes": 48959488,
+  "memory_measurement": "sampled RSS sum, 50ms; not allocator high-water",
+  "process_tree_cpu_seconds": 2.546875,
+  "real_laya": {
+    "checkpoint": "convaiinnovations/laya",
+    "revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+    "device": "cpu",
+    "threads": 4,
+    "initialization_seconds": 3.702625799996895,
+    "metadata": {
+      "selected_checkpoint": "convaiinnovations/laya",
+      "requested_revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+      "question_mode": "single",
+      "question_template_version": "single-v1",
+      "cache_dir": "[REPO]\\workspace\\cache",
+      "load_timeout_seconds": 300,
+      "questions_per_call": 1,
+      "actual_checkpoint": "convaiinnovations/laya",
+      "revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+      "device": "cpu",
+      "requested_device": "cpu",
+      "initialization_seconds": 3.208085400001437,
+      "first_inference_seconds": 0.4793301999961841,
+      "smoke": {
+        "decision": "ALLOW",
+        "raw_decision": "ALLOW",
+        "raw": {
+          "model": "laya-rl-agent",
+          "answers": {
+            "decision": {
+              "type": "choice",
+              "choice": "ALLOW",
+              "probabilities": {
+                "ALLOW": 0.7134,
+                "ASK": 0.2176,
+                "BLOCK": 0.069
+              },
+              "confidence": 0.3106,
+              "answer_confidence": 0.7134,
+              "action": {
+                "act_probability": 1.0
+              }
+            }
+          },
+          "usage": {
+            "input_tokens": 233,
+            "output_tokens": 0,
+            "state_tokens": 83,
+            "state_tokens_dropped": 0,
+            "truncated": false,
+            "truncated_questions": []
+          }
+        },
+        "probabilities": {
+          "ALLOW": 0.7134,
+          "ASK": 0.2176,
+          "BLOCK": 0.069
+        },
+        "called": true,
+        "error": null,
+        "error_kind": null,
+        "elapsed_seconds": 0.47931119999702787,
+        "raw_answers": {
+          "decision": "ALLOW"
+        },
+        "probabilities_by_question": {
+          "decision": {
+            "ALLOW": 0.7134,
+            "ASK": 0.2176,
+            "BLOCK": 0.069
+          }
+        },
+        "ask_reason_code": null,
+        "truncated": false,
+        "model_call_count": 1,
+        "model_call_submissions": 1,
+        "context_diagnostics": {
+          "profile": "recorded_full",
+          "omitted_evidence": [],
+          "essential_evidence_omitted": false,
+          "original_characters": 266,
+          "prepared_characters": 266,
+          "encoder_limit": 8192,
+          "tokenizer_limit": 8192,
+          "checkpoint_max_len": 512,
+          "question_head_tokens": [
+            150
+          ],
+          "complete_question_head_tokens": [
+            150
+          ],
+          "original_token_count": 83,
+          "prepared_token_count": 83,
+          "questions": {
+            "decision": {
+              "state_tokens": 83,
+              "state_tokens_used": 83,
+              "state_tokens_dropped": 0,
+              "truncated": false
+            }
+          },
+          "sequence_tokens": [
+            233
+          ],
+          "effective_max_len": 512,
+          "head_max_len": 192
+        }
+      },
+      "thresholds": "none; uncalibrated development argmax",
+      "load_warnings": [
+        {
+          "message": "laya: this checkpoint ships invalid temperatures or values outside [0.5, 5]; using choice:11+=0.10058280825614929 -> 0.5. Treat confidence from the affected entries as uncalibrated.",
+          "category": "RuntimeWarning",
+          "filename": "[REPO]\\src\\grids\\gatekeeper\\laya_adapter.py",
+          "lineno": 192
+        }
+      ],
+      "checkpoint_download_and_load_seconds": 2.2112616000013077,
+      "inference_settings": {
+        "device": "cpu",
+        "backend": "eager",
+        "fast": false,
+        "compile": false,
+        "LAYA_CPU_AMP": "0",
+        "USE_TF": "0",
+        "warmup": "one identical notes-7 smoke request before fixtures",
+        "max_len_override": null,
+        "head_max_len_override": null,
+        "min_confidence": null
+      },
+      "inference_timeout_seconds": 120,
+      "local_snapshot": "[REPO]\\workspace\\cache\\hub\\models--convaiinnovations--laya\\snapshots\\7b928d828b7b0e022f929d9bd2e44165aa270148",
+      "agent_reported_revision": null,
+      "revision_source": "validated_local_snapshot_directory",
+      "config": {
+        "encoder": "answerdotai/ModernBERT-large",
+        "head_layers": 2,
+        "max_len": 512,
+        "head_max_len": 192,
+        "max_prefixes": 6,
+        "act_costs": {
+          "escalate": 0.5
+        },
+        "cost_wrong_act": 3.0,
+        "amp_dtype": "bf16",
+        "model_name": "rl-agent",
+        "temperature": [
+          1.6369030475616455,
+          1.2514300346374512,
+          1.983399510383606
+        ],
+        "temperature_by_options": {
+          "choice:3-5": 1.7601518630981445,
+          "choice:6-10": 1.0000158548355103,
+          "score:3-5": 1.2514300346374512,
+          "noul:2": 1.983399510383606,
+          "choice:11+": 0.10058280825614929,
+          "choice:2": 1.9063563346862793
+        },
+        "training": {
+          "updates": 7313,
+          "epochs_completed": 1,
+          "hours": 1.96,
+          "world_size": 1,
+          "fine_tuned_from_checkpoint": true
+        }
+      },
+      "context_profile": "recorded_full",
+      "packages": {
+        "laya": "0.3.28",
+        "torch": "2.15.0+cpu",
+        "transformers": "5.22.2",
+        "tokenizers": "0.23.3",
+        "huggingface-hub": "2.4.0"
+      },
+      "runtime": {
+        "dtype": "torch.float32",
+        "cpu_threads": 4,
+        "cpu_interop_threads": 16
+      },
+      "initialization_error": null,
+      "initialization_error_kind": null,
+      "warmup_error": null
+    },
+    "packages": {
+      "laya": "0.3.28",
+      "torch": "2.15.0+cpu",
+      "transformers": "5.22.2"
+    },
+    "peak_process_tree_bytes": 2895577088,
+    "process_tree_cpu_seconds": 32.1875,
+    "rows": 12,
+    "errors": 0
+  }
+}

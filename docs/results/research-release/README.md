@@ -15,6 +15,10 @@ records source paths and hashes. Raw local artifacts remain intact and are exclu
 The CSV keeps all configurations, failed/unscored denominators, false approvals and compute metrics.
 Option rotations are multiple questions forming one prediction, not additional independent samples.
 No temperature calibration or trained candidate is claimed. Model versions and run details are
-in the [permission milestone](../../milestones/2026-11-permission-memory.md); screening code from
+in the [permission milestone](../../archive/milestones/2026-11-permission-memory.md); screening code from
 an earlier local workspace is unavailable in this checkout, so those aggregates are historical evidence.
 Use the [reproduction guide](../../guides/reproduce.md) for currently executable workflows.
+
+## Latest local checks and website
+
+The [results page](../../results.html) distinguishes simulated learning checks from real inference. `latest-permission-check.json` records the 2026-11-11 local demo (504 actions per arm); `latest-laya-check.json` and `.csv` record all 12 real base-Laya inputs, raw predictions and final outcomes. Exports include source hashes and omit machine-local asset paths. `dataset-preview.json` contains three cached pairs with provisional source labels and review status. The static permission-state sequence is illustrative only and performs no inference or dispatch.

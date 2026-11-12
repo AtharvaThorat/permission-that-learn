@@ -1,0 +1,38 @@
+{
+  "family": "integration",
+  "run_id": "integration-world-20261111",
+  "source_directory": "results/permission-learning/integration-world-20261111",
+  "published_directory": "docs/results/permission-experiments/integration/integration-world-20261111",
+  "files": [
+    {
+      "file": "spec.json",
+      "source_sha256": "657d9cf8bac0392e1d081945a3a77c3616f26492b8bb3327ebcea6a7ec8756c1",
+      "published_sha256": "35b9416bbdcb9ae2bfe1d4da465fe1c6111aa96bc9ed3c213307de8527a7a1c1",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "users.json",
+      "source_sha256": "a76d1a4e9ad1530f3729fae70744ae3ec1dc7d946058cbc568aa7eaef61f65a5",
+      "published_sha256": "512eba2ce7daa543b1f22830acfc311de2ba5856a8a7b0724f5792d2239a96b1",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "canary.jsonl",
+      "sha256": "1644b253b7b9f243462e9ed874d83a13a0d7432ea74794f678be0cab66ea46bc",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "eval.jsonl",
+      "sha256": "5a1459357f6ebf344312296fca044ab16844ace1bcb599bf6417a838a91e363f",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "stream.jsonl",
+      "sha256": "9d1b84852c64639d0c5961cc3398911935a9412c27e2ea16aeb1e87525962977",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

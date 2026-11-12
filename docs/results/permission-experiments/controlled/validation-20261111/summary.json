@@ -1,0 +1,29 @@
+{
+  "off": {
+    "actions": 504,
+    "questions": 168,
+    "dispatches": 168,
+    "forbidden_dispatches": 0,
+    "permission_seconds": 1.137728599984257,
+    "cpu_seconds": 0.796875,
+    "questions_saved": 0
+  },
+  "grants": {
+    "actions": 504,
+    "questions": 126,
+    "dispatches": 210,
+    "forbidden_dispatches": 0,
+    "permission_seconds": 1.408731199990143,
+    "cpu_seconds": 0.75,
+    "questions_saved": 42
+  },
+  "active": {
+    "actions": 504,
+    "questions": 138,
+    "dispatches": 198,
+    "forbidden_dispatches": 0,
+    "permission_seconds": 1.3261450000281911,
+    "cpu_seconds": 0.65625,
+    "questions_saved": 30
+  }
+}

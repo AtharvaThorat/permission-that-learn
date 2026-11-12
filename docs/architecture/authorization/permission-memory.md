@@ -51,7 +51,7 @@ Counting memory turns repeated approvals into automatic allows. Three properties
    the gatekeeper's job.
 3. **Generalization multiplies both effects.** A class-level key ("send to any contact") learned from one approval
    covers attacker targets of the same class. The earlier simulation on the 450-row data
-   ([memory-sim](../../results/memory-sim/README.md)) found exactly this outside the Wall.
+   ([memory-sim](../../../experiments/reference/memory-sim/README.md)) found exactly this outside the Wall.
 
 ## 3. Design: grants, not counts (and counting as the comparison arm)
 
