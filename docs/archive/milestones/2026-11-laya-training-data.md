@@ -28,7 +28,7 @@ injected content.
 
 - `src/grids/gatekeeper/training_data.py` and `grids training-data fetch|extract|candidates|review|finalize|validate`.
 - `training-data` extra in `pyproject.toml` and `environments/training-data.txt`.
-- `docs/results/laya-permission-v1/`: `train.jsonl`, `test.jsonl`, `README.md` (dataset card
+- `experiments/reference/laya-permission-v1/`: `train.jsonl`, `test.jsonl`, `README.md` (dataset card
   with file hashes), `provenance.jsonl`, `label_guide.md`, `review.csv`.
 - `tests/unit/core/test_training_data.py` (11 tests).
 
@@ -65,7 +65,7 @@ git diff --check
   frozensets, and `model_dump` emits them in per-process hash order. For Slack `user_task_0`,
   `digest(wall.context.model_dump(mode='json'))` was `70b1e1c1f0f0` under `PYTHONHASHSEED=1` and
   `7c257c8732d0` under `2`. This affects `permission-context.json`, frozen-dataset `context_id`
-  values and the live Laya input string. `PROJECT_GUIDELINES.md` requires deterministic set
+  values and the live Laya input string. `CONTRIBUTING.md` requires deterministic set
   serialization. The builder sorts these lists itself; the production fix is a separate task.
 - AgentDojo stamps created files and sent emails with the wall clock. The builder pins it to
   2024-05-15 12:00, the Workspace suite's own current day.

@@ -2,7 +2,7 @@
 
 Input is Siddharth Magesh's gated `siddharth-magesh/grids-laya-permission-v1` release (150 adapted pairs), read
 from a local copy whose sha256 is recorded. Each pair keeps its original GRIDS id and exact action, so the Wall's
-replayed verdict and verified flags come from `docs/results/laya-permission-v1/provenance.jsonl`, and target trust
+replayed verdict and verified flags come from `experiments/reference/laya-permission-v1/provenance.jsonl`, and target trust
 classes from the compact rows. Gatekeeper decisions are either real Laya predictions (`laya-predict`, recorded
 once and replayed) or the deterministic rules stand-in.
 
@@ -39,9 +39,9 @@ from grids.gatekeeper.rules import rules_decision
 from grids.paths import ROOT
 from .memory_sim import ci95, read_jsonl, sha256, to_csv
 
-DATA = ROOT / 'docs' / 'results' / 'laya-permission-v1'
-COMPACT = ROOT / 'docs' / 'results' / 'laya-permission-v1-compact'
-RESULTS = ROOT / 'docs' / 'results' / 'permission-memory'
+DATA = ROOT / 'experiments' / 'reference' / 'laya-permission-v1'
+COMPACT = ROOT / 'experiments' / 'reference' / 'laya-permission-v1-compact'
+RESULTS = ROOT / 'experiments' / 'reference' / 'permission-memory'
 LABELS = RESULTS / 'reviewed_labels.csv'
 PREDICTIONS = RESULTS / 'laya_cybersec_rotated_predictions.jsonl'
 DECISIONS = ('ALLOW', 'ASK', 'BLOCK')

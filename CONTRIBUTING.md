@@ -1,7 +1,7 @@
-# Project guidelines
+# Contribution guide
 
 Use these instructions for coding agents and contributors. Read this file,
-[project_tracking.md](project_tracking.md), and the relevant architecture/guide
+[project_tracking.md](docs/development/project_tracking.md), and the relevant architecture/guide
 before editing. Follow the user's approved scope; do not replace it with a new roadmap.
 
 ## Workflow
@@ -39,8 +39,8 @@ before editing. Follow the user's approved scope; do not replace it with a new r
 
 ## Organization and coding
 
-- Follow the [documentation index](README.md). Root docs contain only the index,
-  this prompt, and the project tracker. Architecture, guides, tests, milestones,
+- Follow the [documentation index](docs/README.md). Root docs contain only the index,
+  the public guides, and the evidence index. Architecture, guides, tests, milestones,
   and curated results each have one authoritative home.
 - Tests go in `tests/unit` and `tests/integration`, fixtures in `tests/fixtures`;
   document meaningful coverage in `docs/development/testing.md`.
@@ -66,3 +66,9 @@ Run `python -m ruff check src tests`, focused tests, and `python -m pytest -q
 tests. Separate controlled fixtures, real Laya inference, actor serving, and native
 end-to-end evidence. Never claim GPU compatibility, model quality, authorization
 accuracy, or resolved truncation based only on CPU fixtures.
+
+## Publication
+
+The authorization pipeline in `src/grids/` is the project core. Plugin development is separate in `plugin/`; change it only within an explicitly requested plugin task.
+Public evidence belongs in `docs/results/research-release/`. Reference datasets and historical studies live in `experiments/reference/`; development history stays under `docs/archive/`. Never select only favorable runs. Label synthetic cases, provisional labels and real inference separately.
+Rebuild the paper-style site with `python scripts/build_research_site.py`. GitHub Pages publishes `main:/docs`; CPU tests remain manual-only.

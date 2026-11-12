@@ -11,7 +11,7 @@
 [![Evaluation](https://img.shields.io/badge/Evaluation-AgentDojo-d4b83f?style=for-the-badge)](#research-results)
 [![License](https://img.shields.io/badge/License-Apache%202.0-91cf60?style=for-the-badge)](LICENSE)
 
-[**Paper**](paper/manuscript.pdf) · [**Results**](docs/results/research-release/README.md) · [**Demo**](#demonstration)
+[**Research page**](https://AtharvaThorat.github.io/permission-that-learn/) · [**Dataset**](https://huggingface.co/datasets/siddharth-magesh/grids-laya-permission-v1) · [**Paper**](paper/manuscript.pdf) Â· [**Results**](docs/results/research-release/README.md) Â· [**Demo**](#demonstration)
 
 </div>
 
@@ -72,7 +72,7 @@ The [results page](docs/results/research-release/README.md) provides the saved H
 
 ## Demonstration
 
-A separate demonstration-software branch and hosted demo are planned. Links will be added here when available. The research repository includes a [local simulated demonstration](docs/guides/reproduce.md); it does not connect to real email, banking, or file-changing services.
+The plugin is under separate development in `plugin/`. The research repository includes a [local simulated demonstration](docs/guides/reproduce.md); it does not connect to real email, banking, or file-changing services.
 
 ## License and acknowledgment
 
@@ -88,6 +88,6 @@ Developed with Graduates Rising in Data Science at USC.
   <a href="https://github.com/kaustubhadhe1206"><img src="https://images.weserv.nl/?url=github.com%2Fkaustubhadhe1206.png&amp;w=100&amp;h=100&amp;fit=cover&amp;mask=circle" width="100" height="100" alt="Kaustubh Adhe" /></a>
 </p>
 
-[Siddharth Magesh](https://github.com/Siddharth-magesh) · [Atharva Thorat](https://github.com/AtharvaThorat) · [Kaustubh Adhe](https://github.com/kaustubhadhe1206)
+[Siddharth Magesh](https://github.com/Siddharth-magesh) Â· [Atharva Thorat](https://github.com/AtharvaThorat) Â· [Kaustubh Adhe](https://github.com/kaustubhadhe1206)
 
 <p align="right"><a href="#permissions-that-learn">Back to top</a></p>

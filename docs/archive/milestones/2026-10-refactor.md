@@ -48,7 +48,7 @@ valid local links; notebook code compiles with no saved outputs.
 ## Migration and limits
 
 Old package names, script paths and historical schema assumptions are not compatibility
-APIs. Use `python -m grids --help` and the [setup guide](../guides/setup.md).
+APIs. Use `python -m grids --help` and the [setup guide](../../guides/setup.md).
 The actor credential variable is `GRIDS_ACTOR_API_KEY`. Recollect actions: old
 traces lack complete decision-time snapshots and cannot be silently converted.
 
@@ -60,7 +60,7 @@ No weights were downloaded, no real Laya/actor inference was run, and no Colab/C
 session or job was started. Official metadata and vLLM parser documentation were
 researched; GPU loading and memory fit remain unverified. Independent labels,
 real-model regression, semantic quality and CARC site validation remain open in
-the [tracker](../project_tracking.md). No task-specific security exception, automatic
+the [tracker](../../development/project_tracking.md). No task-specific security exception, automatic
 ASK approval or benchmark-score tuning was introduced.
 
 ## Research release preparation â€” 2026-11-11

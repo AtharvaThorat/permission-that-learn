@@ -30,8 +30,8 @@ from grids.core.permissions.memory import ELIGIBLE_REASONS, build_memory, patter
 from grids.gatekeeper.rules import rules_decision
 from grids.paths import ROOT
 
-DATA = ROOT / 'docs' / 'results' / 'laya-permission-v1'
-COMPACT = ROOT / 'docs' / 'results' / 'laya-permission-v1-compact'
+DATA = ROOT / 'experiments' / 'reference' / 'laya-permission-v1'
+COMPACT = ROOT / 'experiments' / 'reference' / 'laya-permission-v1-compact'
 SETUPS = ('no_protection', 'fixed_rules', 'learning_no_wall', 'learning_inside_wall')
 USERS = {'careful': 0.0, 'careless_10': 0.1, 'careless_20': 0.2, 'careless_40': 0.4}
 LEARNING = [(setup, learner, granularity) for setup in ('learning_no_wall', 'learning_inside_wall')

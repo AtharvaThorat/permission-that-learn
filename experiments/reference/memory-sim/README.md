@@ -1,3 +1,5 @@
+> Historical study. Per-seed CSV tables are archived in Git at `46aed6a`; retained aggregates and predictions remain here.
+
 # Approval memory: offline simulation (run_01)
 
 The question: does an approval memory that learns from a user's answers cut interruptions without letting
@@ -9,8 +11,8 @@ This compares the proposal's four setups on the same action streams. No model or
 - Code: branch `feature/approval-memory`, based on `main` at `a4af015`.
 - Command: `python -m grids memory simulate --seeds 50 --passes 3 --output results/memory-sim/run_01`.
   A second run into a new directory produced byte-identical files.
-- Inputs (sha256 values in `run.json`): `docs/results/laya-permission-v1/provenance.jsonl` and
-  `docs/results/laya-permission-v1-compact/{train,test}.jsonl`. These are 450 actions, 150 per label, from three suites
+- Inputs (sha256 values in `run.json`): `experiments/reference/laya-permission-v1/provenance.jsonl` and
+  `experiments/reference/laya-permission-v1-compact/{train,test}.jsonl`. These are 450 actions, 150 per label, from three suites
   (banking 139, slack 161, workspace 150). 119 BLOCK rows are injected attacks.
 - Files: `summary.csv` (mean and 95% CI per setup, learner, granularity and user), `runs.csv` (one row per seed),
   `curves.csv` (questions and auto-allowed patterns after each pass) and `run.json` (settings and input hashes).
@@ -59,8 +61,8 @@ Notes on the columns:
 - "Harmful actions executed" counts every BLOCK-labeled action that ran, whether it was an attack or a task mismatch.
 - "Wrong auto-allows" counts BLOCK-labeled actions that memory allowed without asking.
 - Rows that carry a 95% CI in `summary.csv`:
-  - learning inside the Wall, counting exact, attacks executed: ±1.5;
-  - learning without the Wall, counting class, attacks executed: ±18.3.
+  - learning inside the Wall, counting exact, attacks executed: Â±1.5;
+  - learning without the Wall, counting class, attacks executed: Â±18.3.
 
 Questions per pass (careless 20%):
 
@@ -88,7 +90,7 @@ How results change with the careless rate (counting, exact):
    questions left per pass are the forced confirmations (for example, payments) that memory never answers.
 2. **Without the Wall, permission creep reaches attacks.**
    - With class keys, memory stops asking after the first pass, and attacks executed reach 96.1 at 20% careless.
-   - Even a careful user lets 57.1 attacks through (CI ±13.7). One approval of a legitimate send to an external
+   - Even a careful user lets 57.1 attacks through (CI Â±13.7). One approval of a legitimate send to an external
      contact teaches "send to external contacts", and attacker targets share that class.
    - With exact keys and a careful user, the attack count is 0, but careless approvals still grow it to 29.6 and 79.5.
 3. **The bandit asks more and creeps less.** It is still learning after three passes (139.6 to 123.4 questions per

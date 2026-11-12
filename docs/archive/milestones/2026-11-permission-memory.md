@@ -85,7 +85,7 @@ preserved at `results/permission-learning/validation-20261111/`. Across both smo
   explicit checkpoint promotion and rollback remain the next milestone. This delivery only collects
   reviewed training candidates. A reviewer must independently assess source policy and intent.
 - No native live actor benchmark, CARC submission, GPU validation, or model-quality claim.
-- Reproduction and review/export formats: [experiment guide](../guides/experiments.md#scoped-permission-learning-local-research).
+- Reproduction and review/export formats: [experiment guide](../../guides/experiments.md#scoped-permission-learning-local-research).
 
 ## Historical implementation and experiments
 
@@ -115,8 +115,8 @@ Atharva Thorat (2026-11-09):
   - the live decision order;
   - no memory, counting (exact and class) and grants;
   - each with and without the Wall, with the Laya and rules gatekeepers, and under two label sets.
-- [Research note and design](../architecture/authorization/permission-memory.md).
-- [`docs/results/permission-memory/`](../results/permission-memory/README.md): reviewed labels, Laya predictions,
+- [Research note and design](../../architecture/authorization/permission-memory.md).
+- [`experiments/reference/permission-memory/`](../../../experiments/reference/permission-memory/README.md): reviewed labels, Laya predictions,
   curated run and findings.
 - `tests/unit/core/test_permission_grants.py` (11 tests).
 
@@ -202,7 +202,7 @@ than the simulator's cold-start period. No training, actor APIs or full benchmar
 Evidence: `results/permission-learning/integration-world-20261111/`,
 `integration-predictions-20261111.jsonl`, and `integration-comparison-20261111/` under the same
 permission-learning directory. The earlier three-suite HTML remains `final-20261111/report.html`.
-Commands are in the [experiment guide](../guides/experiments.md#offline-contextual-policy-comparisons).
+Commands are in the [experiment guide](../../guides/experiments.md#offline-contextual-policy-comparisons).
 
 The installed Laya exposes `TrainConfig`, `dry_run`, and `finetune` with encoder freezing and
 option shuffling, but training compatibility has not been exercised. Fine-tuning, calibration,

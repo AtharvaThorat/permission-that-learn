@@ -1,11 +1,11 @@
 # Project tracking
 
-Updated 2026-11-11. Use the [documentation index](README.md) for commands and
-architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
-[training-data](milestones/2026-11-laya-training-data.md) and
-[compact_v1](milestones/2026-11-laya-compact.md) and
-[approval memory](milestones/2026-11-approval-memory.md) and
-[permission memory](milestones/2026-11-permission-memory.md) milestones for evidence.
+Updated 2026-11-11. Use the [documentation index](../README.md) for commands and
+architecture, and the [refactor milestone](../archive/milestones/2026-10-refactor.md) and
+[training-data](../archive/milestones/2026-11-laya-training-data.md) and
+[compact_v1](../archive/milestones/2026-11-laya-compact.md) and
+[approval memory](../archive/milestones/2026-11-approval-memory.md) and
+[permission memory](../archive/milestones/2026-11-permission-memory.md) milestones for evidence.
 
 ## Local research release preparation
 
@@ -33,7 +33,7 @@ Permission-layer update (branch `codex/scoped-permission-learning`, based on `19
   outcomes match 10/12 constructed expectations. All three mandatory confirmations withheld dispatch
   despite raw Laya ALLOW. This is functional evidence, not independently reviewed benchmark accuracy.
 - Results: `results/permission-learning/final-20261111/report.html`. Details and commands:
-  [permission milestone](milestones/2026-11-permission-memory.md) and [experiment guide](guides/experiments.md).
+  [permission milestone](../archive/milestones/2026-11-permission-memory.md) and [experiment guide](../guides/experiments.md).
 - Reused teammate contextual algorithms and synthetic Workspace comparisons, keeping unsafe ablations offline. Added durable prediction caching and small-run controls; real Cybersec smoke: 21/21 inputs, no errors. See the milestone for artifacts and limitations.
 - Remaining: human feedback review, broader live actor/AgentDojo validation, and later Laya fine-tuning.
   No weights were trained, no actor APIs called, and nothing was pushed or merged.
@@ -56,23 +56,23 @@ The labeled authorization benchmark is not yet available.
   panels and reports. Local raw results, environments and caches retained.
 - Final CPU regression: **262 passed**; Ruff passed. No real models run in this refactor.
 - Laya fine-tuning data (2026-11-02, branch `data/laya-permission-v1`): `grids training-data`
-  and [laya-permission-v1](results/laya-permission-v1/README.md), 300 train (Slack, Banking) and
+  and [laya-permission-v1](../../experiments/reference/laya-permission-v1/README.md), 300 train (Slack, Banking) and
   150 test (Workspace) rows, 100/50 per label, exact Laya input in `context`, deterministic
   builds. Labels reviewed by Claude, not a human. CPU regression **273 passed**.
 - compact_v1 Laya input (2026-11-03, branch `data/laya-permission-v1-compact`): `compact()` in
   `gatekeeper/context.py` as input profile `compact_v1`, and
-  [laya-permission-v1-compact](results/laya-permission-v1-compact/README.md). All 450 rows fit 1,024 tokens
+  [laya-permission-v1-compact](../../experiments/reference/laya-permission-v1-compact/README.md). All 450 rows fit 1,024 tokens
   with Laya-Cybersec and pinned Laya tokenizers (max 764 context tokens); injected evidence kept in 119/119.
   CPU regression **282 passed**.
 - Approval memory (2026-11-09, branch `feature/approval-memory`): counting and bandit memory behind the Wall as an
   approval-provider wrapper (judgment asks only), a live per-run hook, a rules gatekeeper and `grids memory simulate`
-  for the proposal's four setups with careful and careless users. [memory-sim](results/memory-sim/README.md): inside
+  for the proposal's four setups with careful and careless users. [memory-sim](../../experiments/reference/memory-sim/README.md): inside
   the Wall, questions fall from 474 to 170.5 per 1,350 actions with 1.2 attacks executed at 20% careless; without the
   Wall, class-level memory executes 96.1. Simulated users and LLM-reviewed labels; live hook not run with real models.
   CPU regression **298 passed**.
 - Permission memory on laya-pairs-v1 (2026-11-09, branch `feature/permission-memory`): scoped grants (approvals only
   prompt an offer; only an explicit user grant allows) beside counting, `grants` learner in the live hook, and
-  `grids permissions laya-predict | simulate`. [permission-memory](results/permission-memory/README.md): real
+  `grids permissions laya-predict | simulate`. [permission-memory](../../experiments/reference/permission-memory/README.md): real
   Laya-Cybersec (CPU, no fine-tuning) with Siddharth's rotated-options method (2026-11-10) agrees with LLM-reviewed
   labels on 59/150 (51 with a single order); Wall + Laya executes 12 harmful actions with a careful user against 123
   for Laya alone; inside the Wall, counting cuts questions 22% and grants 4%, with 1 versus 0 skipped confirmations.
@@ -110,3 +110,9 @@ Historical task details remain in Git. Retained local raw artifacts are not proo
 of real-model validation of the refactor.
 
 Release verification: Ruff passed; **352 CPU tests passed** after removing 10 redundant/obsolete checks. The documented simulated demo completed 504 actions per strategy (off, grants, active), with zero forbidden dispatches and zero errors. Evidence: `results/research-release-smoke-20261111/report.html`. No new real inference was performed during release preparation.
+
+## Paper-style publication page — 2026-11-11
+
+Reorganized reference datasets/historical studies into `experiments/reference`, development history into `docs/archive`, and contributor guidance into root `CONTRIBUTING.md`. Archived three redundant per-seed CSV files locally with hashes and retained Git revision. Preserved all comparison rows, including weak results, and cataloged 19 local compute summaries. The public page uses the supplied manuscript and links the gated 150-pair dataset. Added a thin demo benchmark and deterministic static site builder. Plugin files were excluded from all edits.
+
+Verification: Ruff passed; 352 CPU tests passed in 18.42s. The new benchmark wrapper completed 504 actions per strategy with zero forbidden dispatches/errors at results/pages-demo-20261111/report.html. Local Markdown links resolved; desktop/mobile page checked. No new inference or plugin edits.

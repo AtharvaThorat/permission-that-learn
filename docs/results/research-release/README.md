@@ -15,6 +15,6 @@ records source paths and hashes. Raw local artifacts remain intact and are exclu
 The CSV keeps all configurations, failed/unscored denominators, false approvals and compute metrics.
 Option rotations are multiple questions forming one prediction, not additional independent samples.
 No temperature calibration or trained candidate is claimed. Model versions and run details are
-in the [permission milestone](../../milestones/2026-11-permission-memory.md); screening code from
+in the [permission milestone](../../archive/milestones/2026-11-permission-memory.md); screening code from
 an earlier local workspace is unavailable in this checkout, so those aggregates are historical evidence.
 Use the [reproduction guide](../../guides/reproduce.md) for currently executable workflows.

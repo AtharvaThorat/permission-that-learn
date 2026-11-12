@@ -22,7 +22,7 @@ The Wall identity registry was 29% (train) and 58% (test) of tokens; tool histor
 - `compact()` and the `compact_v1` profile in `src/grids/gatekeeper/context.py`, accepted by `GateConfig`, run
   specs, the live adapter and `LayaBackend` (which adds the Wall field as for `evidence_v2`).
 - `grids training-data compact | compact-tokens | compact-validate`.
-- `docs/results/laya-permission-v1-compact/`: `train.jsonl`, `test.jsonl`, `token_report.json`, `README.md`.
+- `experiments/reference/laya-permission-v1-compact/`: `train.jsonl`, `test.jsonl`, `token_report.json`, `README.md`.
 - `tests/unit/core/test_context_compaction.py` (9 tests).
 
 ## Verification on 2026-11-03

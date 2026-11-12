@@ -1,9 +1,11 @@
+> Historical study. Per-seed CSV tables are archived in Git at `46aed6a`; retained aggregates and predictions remain here.
+
 # Permission memory on laya-pairs-v1: counting versus scoped grants (run_02, rotated Laya-Cybersec)
 
 The question: inside the Wall and Laya, does remembering a user's answers reduce interruptions without letting
 permissions creep, and how do counting memory and explicit scoped grants compare? This is an exploratory offline
 experiment. It is separate from the A/B/C AgentDojo benchmark (unprotected, Wall only, Wall + Laya). Design and
-related work are in the [research note](../../architecture/authorization/permission-memory.md).
+related work are in the [research note](../../../docs/architecture/authorization/permission-memory.md).
 
 ## Provenance
 
@@ -12,9 +14,9 @@ related work are in the [research note](../../architecture/authorization/permiss
 - **Data:** `siddharth-magesh/grids-laya-permission-v1` (gated, Hugging Face revision `9659e45`), file
   `data/laya-pairs-v1.jsonl`, sha256 `78560d3f...4c68`. It is read from a local copy and not redistributed here.
 - **Joined repository files:**
-  - `docs/results/laya-permission-v1/provenance.jsonl`: replayed Wall verdicts and verified flags of the same
+  - `experiments/reference/laya-permission-v1/provenance.jsonl`: replayed Wall verdicts and verified flags of the same
     actions;
-  - `docs/results/laya-permission-v1-compact/{train,test}.jsonl`: target trust classes.
+  - `experiments/reference/laya-permission-v1-compact/{train,test}.jsonl`: target trust classes.
 
   `run.json` lists their sha256 values. All 150 pairs keep the source action exactly, and the loader refuses to run
   otherwise.
@@ -71,8 +73,8 @@ both.
   | `unresolved` | 23 | ASK | Recipient, time, amount, content or resource unresolved or inferred |
   | `kept` | 5 | source label | Genuinely ambiguous cases, where the source label was kept |
 
-  The result is 35 ALLOW, 37 ASK and 78 BLOCK. 34 labels differ from the source: 19 ASK→BLOCK, 9 ALLOW→BLOCK and
-  6 ALLOW→ASK. Almost all of these follow the prompt's policy text.
+  The result is 35 ALLOW, 37 ASK and 78 BLOCK. 34 labels differ from the source: 19 ASKâ†’BLOCK, 9 ALLOWâ†’BLOCK and
+  6 ALLOWâ†’ASK. Almost all of these follow the prompt's policy text.
 - **`source`.** The release's provisional `source_label`.
 
 Both label sets are LLM-made. Neither is ground truth.
@@ -125,10 +127,10 @@ reported alongside it: reads are allowed, destructive actions blocked, everythin
 
 | Arm | Questions, careful | Confirmations skipped, careful | Wrong auto-allows, careless 40% | Attacks executed, careless 40% |
 |---|---:|---:|---:|---:|
-| no memory | 45.0 | 0 | 0 | 1.50 ± 0.26 |
-| counting, exact | 35.0 (-22%) | 1.0 | 0.96 | 0.96 ± 0.34 |
-| counting, class | 35.0 (-22%) | 1.0 | 0.96 | 0.96 ± 0.34 |
-| grants | 43.0 (-4%) | 0 | 0.44 | 1.52 ± 0.27 |
+| no memory | 45.0 | 0 | 0 | 1.50 Â± 0.26 |
+| counting, exact | 35.0 (-22%) | 1.0 | 0.96 | 0.96 Â± 0.34 |
+| counting, class | 35.0 (-22%) | 1.0 | 0.96 | 0.96 Â± 0.34 |
+| grants | 43.0 (-4%) | 0 | 0.44 | 1.52 Â± 0.27 |
 
 With a careful user, every arm executes the same 12 harmful actions and no attacks. These are the 4 BLOCK rows that
 pass the Wall and that Laya ALLOWs (unrequested side effects, none from an injection template), each seen in 3
@@ -146,10 +148,10 @@ Wall and 87 (36 attacks) without. Those files are in Git history at commit `1dd5
 
 | Arm | Questions, careful | Wrong auto-allows, careful | Attacks, careful | Wrong auto-allows, careless 40% | Attacks, careless 40% |
 |---|---:|---:|---:|---:|---:|
-| no memory | 384.0 | 0 | 0 | 0 | 55.5 ± 1.7 |
-| counting, exact | 84.5 | 4.8 | 0 | 28.1 | 31.3 ± 3.1 |
-| counting, class | 38.0 | 7.8 | 3.36 ± 2.61 | 43.2 | 30.8 ± 6.1 |
-| grants | 349.9 | 1.0 | 0 | 28.1 | 66.6 ± 3.2 |
+| no memory | 384.0 | 0 | 0 | 0 | 55.5 Â± 1.7 |
+| counting, exact | 84.5 | 4.8 | 0 | 28.1 | 31.3 Â± 3.1 |
+| counting, class | 38.0 | 7.8 | 3.36 Â± 2.61 | 43.2 | 30.8 Â± 6.1 |
+| grants | 349.9 | 1.0 | 0 | 28.1 | 66.6 Â± 3.2 |
 
 The rules gatekeeper does not use Laya, so this table is the same as in run_01.
 

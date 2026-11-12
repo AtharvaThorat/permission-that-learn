@@ -32,7 +32,7 @@ chosen: an offline simulator plus a live hook, with a deterministic rules gateke
   blocked, and anything else is asked. The simulator uses it. `RulesGate` has the gatekeeper interface but is not
   yet selectable in live runs.
 - `src/grids/evaluation/memory_sim.py` and `grids memory simulate`: the offline simulator.
-- [`docs/results/memory-sim/`](../results/memory-sim/README.md): the curated 50-seed run.
+- [`experiments/reference/memory-sim/`](../../../experiments/reference/memory-sim/README.md): the curated 50-seed run.
 - `tests/unit/core/test_memory.py` (16 tests). `test_config_lifecycle.py` now uses a non-boolean value as its
   invalid `learning_enabled` example.
 

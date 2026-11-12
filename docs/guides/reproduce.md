@@ -56,3 +56,17 @@ python -m pytest -q -p no:cacheprovider
 
 Retained tests protect authorization and reproducibility. They do not measure model quality.
 No full benchmark, GPU job or new model training is part of the publication cleanup.
+
+## Demo benchmark and research site
+
+```bash
+python scripts/benchmark.py --output results/demo-01
+# Existing Laya environment and cached weights:
+python scripts/benchmark.py --output results/demo-laya-01 --real-laya --cache workspace/cache
+python scripts/build_research_site.py
+```
+
+The benchmark script delegates to `grids permissions check`; it does not introduce another runner.
+The site builder reads committed aggregate evidence and performs no inference. GitHub Pages serves
+`main:/docs`; CPU checks remain manually triggered. Reference data is in `experiments/reference/`.
+The site's dataset link points to the gated `siddharth-magesh/grids-laya-permission-v1` release.
