@@ -1,0 +1,40 @@
+{
+  "family": "legacy",
+  "run_id": "memory-sim",
+  "source_directory": "experiments/reference/memory-sim",
+  "published_directory": "docs/results/permission-experiments/legacy/memory-sim",
+  "files": [
+    {
+      "file": "curves.csv",
+      "source_sha256": "62cb835f581a191b27e0e11bfdecad5d60ae377e829aea22f8c5432b7107dd3c",
+      "published_sha256": "a2eabb2a873b334c9451b9262c115aebe78fcbf091034756d2d830b713dbb8e5",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "run.json",
+      "source_sha256": "4226469038b8cfc88680743d140907ae84d951e5212e3263d6307eedadc530ac",
+      "published_sha256": "f6c77d2d79b0c9324a4a62df13dd9cddb2f4d38c3cf0efd4f6a34cfe3c52698b",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "summary.csv",
+      "source_sha256": "c3721165e9d266b137885f400a5aa4668088cbcb9a12225d67b657a0838d37f6",
+      "published_sha256": "9dc3b38ce946eed51b70d5e9248ce112b30e7c3a9f8d448c068398f12312de1b",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "runs.csv",
+      "source_sha256": "d26531f6ac241b7b8c0af4dc3c2ae08b582ea9cfff1db76f6747c2ee30ca240b",
+      "published_sha256": "1c8f2a5801e0b04f321f657c5e746680f5d9884e63d0abbc3b135134fbe03782",
+      "transformation": "restored historical per-seed table; sanitized paths"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "README.md",
+      "sha256": "91315962705165dc26f057e44a57d2664636942cfa35a1120ebf19a618c0d436",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

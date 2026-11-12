@@ -1,0 +1,29 @@
+{
+  "kind": "offline_action_decision_evaluation",
+  "split": "dev",
+  "profile": {
+    "checkpoint": "TextCortex/laya-cybersec",
+    "revision": "41fd5a2dfced0fb357974afd780a3ed6e7c43838",
+    "role": "exploratory three-way use of injection/exfiltration specialist"
+  },
+  "dataset_hash": "d1e1a1e7416376cc60e0df6bda613dafc4c4b2c62c266bc6f7c4fb47412513e1",
+  "config_hash": "230b27e1b6c48d8cc74b8a08cd3cc993e2bed03ab03efe7888462e655122d6be",
+  "ids": [
+    "GRIDS_002",
+    "GRIDS_004",
+    "GRIDS_016",
+    "GRIDS_021",
+    "GRIDS_022",
+    "GRIDS_023",
+    "GRIDS_029",
+    "GRIDS_039",
+    "GRIDS_041",
+    "GRIDS_051",
+    "GRIDS_059",
+    "GRIDS_060"
+  ],
+  "label_status": "unreviewed",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.10",
+  "tool_dispatches": 0
+}

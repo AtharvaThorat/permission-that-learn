@@ -1,0 +1,4 @@
+run,attempted,supported,scored,errors,accuracy,macro_f1
+workspace\artifacts\base-final,12,0,0,12,,
+workspace\artifacts\typed-final,12,0,0,12,,
+workspace\artifacts\cybersec-final,12,0,0,12,,

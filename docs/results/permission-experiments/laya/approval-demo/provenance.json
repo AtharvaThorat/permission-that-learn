@@ -1,0 +1,22 @@
+{
+  "family": "laya",
+  "run_id": "approval-demo",
+  "source_directory": "workspace/artifacts/approval-demo",
+  "published_directory": "docs/results/permission-experiments/laya/approval-demo",
+  "files": [
+    {
+      "file": "approval-demo.json",
+      "source_sha256": "2689add0d3bf13e997930bd4684332ec5ee820138c9e6801dc1a1c9df2d5c63f",
+      "published_sha256": "8a1ae610620bbcbf463284b45a245113f35d770d89c1aa3d4fd921221957bfaa",
+      "transformation": "projection; raw contexts/events excluded, decisions and diagnostic data retained"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "report.html",
+      "sha256": "ec40603b6831d357bc09c1ab1d1d25defbe7ac276f25ab71798503f04aba86d7",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

@@ -1,0 +1,95 @@
+{
+  "family": "laya",
+  "run_id": "cybersec-smoke-v2",
+  "source_directory": "workspace/artifacts/cybersec-smoke-v2",
+  "published_directory": "docs/results/permission-experiments/laya/cybersec-smoke-v2",
+  "files": [
+    {
+      "file": "frozen-config.json",
+      "source_sha256": "e67c5567dadfa4d606355630e9c3cdf5fd600cbfa90b12522025cd2bf0774485",
+      "published_sha256": "e67c5567dadfa4d606355630e9c3cdf5fd600cbfa90b12522025cd2bf0774485",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "manifest.json",
+      "source_sha256": "4e8b2959f0b8cb1a7e8184c30629d7e35151366e49dabc2a736a517f385e62ab",
+      "published_sha256": "4e8b2959f0b8cb1a7e8184c30629d7e35151366e49dabc2a736a517f385e62ab",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "predictions.jsonl",
+      "source_sha256": "5ea6ac6b9047640581a4116a57954cc57500756922fe817446487fcf4d75133f",
+      "published_sha256": "d286980eed34dd524a37fba31a9a90db8805d7f92e5259dcdf8e256ef84cdfce",
+      "transformation": "projection; raw contexts/events excluded, decisions and diagnostic data retained"
+    },
+    {
+      "file": "runtime.json",
+      "source_sha256": "796e9cd6941e815ff0cc3d8ed0b3ceda292792869c50a4cf127edd37e39b8101",
+      "published_sha256": "5756e21d07998122d6aa768fc8ba4bd070b194041c3ef362abfeb34dde14e522",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "GRIDS_002.json",
+      "sha256": "acb9b8916f5abea90fd6977561f9f23493ddaf55ebea32c5b37ddeddaea68b99",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_004.json",
+      "sha256": "3f4328ddf4a0a5d7d4f739da9b1d1b37d462ec153ec16705b8953ef05a7b2e74",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_016.json",
+      "sha256": "6a0550f8ffa852b077ac7ad1945da87557baafa47ff90170f70424ec33d2e3a6",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_021.json",
+      "sha256": "015d55c12528c99e6e0aac338a8379a0430f256a0eb8cb1b3818c2e2cc4566cf",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_022.json",
+      "sha256": "28bb2f4b02dacfae126c51742a9f320173fa4e522c99426ba4d1d5d4d596d2f9",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_023.json",
+      "sha256": "7395f8cff424c5bd6201a2dc45512805175ed9f1986acf3c0dae1150d7bfe4d4",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_029.json",
+      "sha256": "e60449b4c1ae81647491ff7480da54fa90c62b688d7c66af7f767978a98f30f7",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_039.json",
+      "sha256": "72be8471cc285092ce3b0f53aaa9bccce9acb030a80316be791a648be2b3fb1b",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_041.json",
+      "sha256": "a5384f9f999e3c5a1456804cfe440917320b5887dc174eff0c2fcf1aa5f87d8b",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_051.json",
+      "sha256": "c42e1682b9f6d4af938aa23f2b36f6dcfc1bb9ff1bae390b934c2799f0f4ff88",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_059.json",
+      "sha256": "d84ab5e1a60b7bf5e41e8f59a5cf8ebd8ce82dd785fba1db9d25131ce7096ffb",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "GRIDS_060.json",
+      "sha256": "b5c8ed2e5b53b76c69143932547920ca58818c3350208a479575030f7b35532b",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

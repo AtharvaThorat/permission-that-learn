@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "evidence": "constructed fixtures; simulated tools; production Wall/controller",
+  "seed": 42,
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "elapsed_seconds": 4.1671473999958835,
+  "cpu_seconds": 2.296875,
+  "peak_process_tree_bytes": null,
+  "memory_measurement": "sampled RSS sum, 50ms; not allocator high-water",
+  "process_tree_cpu_seconds": null,
+  "real_laya": null
+}

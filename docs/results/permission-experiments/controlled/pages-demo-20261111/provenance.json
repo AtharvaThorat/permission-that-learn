@@ -1,0 +1,60 @@
+{
+  "family": "controlled",
+  "run_id": "pages-demo-20261111",
+  "source_directory": "results/pages-demo-20261111",
+  "published_directory": "docs/results/permission-experiments/controlled/pages-demo-20261111",
+  "files": [
+    {
+      "file": "actions.csv",
+      "source_sha256": "9ab5570bf6c2a399a316836be056027dde129b1d5c56baf555f0ee51d10c1325",
+      "published_sha256": "9ab5570bf6c2a399a316836be056027dde129b1d5c56baf555f0ee51d10c1325",
+      "transformation": "sanitized CSV; input text excluded"
+    },
+    {
+      "file": "actions.jsonl",
+      "source_sha256": "44628881c38f19b743bbc748677ec7a062300ab6b23b92b9a04376883104dd78",
+      "published_sha256": "7b4e3914a15e758e25e8ce9088df3d4c882f10255be60b9d1e583ef3781e3f0f",
+      "transformation": "projection; raw contexts/events excluded, decisions and diagnostic data retained"
+    },
+    {
+      "file": "run.json",
+      "source_sha256": "22641cdef7288b9aef69f7aff43846327e9f29a1bfaccde9e9d4c8af1b04f7aa",
+      "published_sha256": "22641cdef7288b9aef69f7aff43846327e9f29a1bfaccde9e9d4c8af1b04f7aa",
+      "transformation": "sanitized structured export"
+    },
+    {
+      "file": "summary.json",
+      "source_sha256": "5d344c9d7b1bc3a6c043e45fe8d31e27fb72f74a45779e26597110d61bb1c1a2",
+      "published_sha256": "5d344c9d7b1bc3a6c043e45fe8d31e27fb72f74a45779e26597110d61bb1c1a2",
+      "transformation": "sanitized structured export"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "active.sqlite",
+      "sha256": "76e5e8dcb9b0f786a0746e7199683866c6493d587fbb5e752c527a20ca1e765f",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "grants.sqlite",
+      "sha256": "34f62f4afb93881b10d858eec3cc8d3191433e26ffbf1dc684729cf0e2071dae",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "off.sqlite",
+      "sha256": "d264091d51d2ccd2b85b5b970d7fe6862cf938ae0c6c969ae75735a140c16796",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "report.html",
+      "sha256": "638cb2e59d340621bf66f27244f31652c3d9dfc89556b5188243293bbd90849d",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    },
+    {
+      "file": "scenarios.json",
+      "sha256": "406323bd3c1d0207184b840359f31789cc3a4084914b9f435670b9a33448903e",
+      "reason": "Generated display, raw input, log, database, or duplicate individual record; preserved locally"
+    }
+  ],
+  "note": "Exported from saved artifacts. Missing original revision or command is not reconstructed as fact."
+}

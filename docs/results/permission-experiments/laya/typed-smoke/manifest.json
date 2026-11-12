@@ -1,0 +1,29 @@
+{
+  "kind": "offline_action_decision_evaluation",
+  "split": "dev",
+  "profile": {
+    "checkpoint": "convaiinnovations/laya-typed-decisions",
+    "revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+    "role": "external specialist, no GRIDS fine-tuning"
+  },
+  "dataset_hash": "d1e1a1e7416376cc60e0df6bda613dafc4c4b2c62c266bc6f7c4fb47412513e1",
+  "config_hash": "7c69d80d55f2f81c4255b007714dda594674d9d305f5fa1a1659c98b21fe9436",
+  "ids": [
+    "GRIDS_002",
+    "GRIDS_004",
+    "GRIDS_016",
+    "GRIDS_021",
+    "GRIDS_022",
+    "GRIDS_023",
+    "GRIDS_029",
+    "GRIDS_039",
+    "GRIDS_041",
+    "GRIDS_051",
+    "GRIDS_059",
+    "GRIDS_060"
+  ],
+  "label_status": "unreviewed",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.10",
+  "tool_dispatches": 0
+}

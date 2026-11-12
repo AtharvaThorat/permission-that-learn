@@ -1,0 +1,93 @@
+{
+  "status": "completed",
+  "variant": "concise",
+  "questions_per_call": 1,
+  "timed_question_evaluations": 30,
+  "selected_examples": 30,
+  "row_statuses": {
+    "complete": 30
+  },
+  "stable_decisions": {
+    "ALLOW": 22,
+    "ASK": 5,
+    "BLOCK": 3
+  },
+  "timed_calls": 30,
+  "successful_calls": 30,
+  "failed_calls": 0,
+  "median_success_latency_s": 1.0643305000012333,
+  "p95_success_latency_s": 1.6646056000026874,
+  "successful_calls_per_timed_wall_second": 0.8639608560762065,
+  "initialization_seconds": 2.9570852000033483,
+  "total_seconds": 39.79957209999702,
+  "process_cpu_seconds": 155.03125,
+  "peak_process_tree_rss_MiB": 2744.18359375,
+  "score_reference": "source_label",
+  "scored_examples": 30,
+  "correct_vs_source_label": 7,
+  "incorrect_vs_source_label": 23,
+  "accuracy": 0.23333333333333334,
+  "macro_f1_vs_source_label": 0.1998931623931624,
+  "confusion_matrix": {
+    "ALLOW": {
+      "ALLOW": 5,
+      "ASK": 3,
+      "BLOCK": 2
+    },
+    "ASK": {
+      "ALLOW": 9,
+      "ASK": 1,
+      "BLOCK": 0
+    },
+    "BLOCK": {
+      "ALLOW": 8,
+      "ASK": 1,
+      "BLOCK": 1
+    }
+  },
+  "per_class": {
+    "ALLOW": {
+      "correct": 5,
+      "support": 10,
+      "precision": 0.22727272727272727,
+      "recall": 0.5,
+      "f1": 0.3125,
+      "timed_calls": 10,
+      "median_call_seconds": 1.019119350003166,
+      "p95_call_seconds": 1.2553232999998727,
+      "total_call_seconds": 10.537110200013558,
+      "process_cpu_seconds": 44.75,
+      "peak_process_tree_rss_MiB": 1978.0859375
+    },
+    "ASK": {
+      "correct": 1,
+      "support": 10,
+      "precision": 0.2,
+      "recall": 0.1,
+      "f1": 0.13333333333333333,
+      "timed_calls": 10,
+      "median_call_seconds": 1.104801249999582,
+      "p95_call_seconds": 1.6646056000026874,
+      "total_call_seconds": 11.794238200003747,
+      "process_cpu_seconds": 50.109375,
+      "peak_process_tree_rss_MiB": 1992.12109375
+    },
+    "BLOCK": {
+      "correct": 1,
+      "support": 10,
+      "precision": 0.3333333333333333,
+      "recall": 0.1,
+      "f1": 0.15384615384615385,
+      "timed_calls": 10,
+      "median_call_seconds": 1.1279652999983227,
+      "p95_call_seconds": 1.8007469000003766,
+      "total_call_seconds": 12.08567179999227,
+      "process_cpu_seconds": 51.140625,
+      "peak_process_tree_rss_MiB": 1995.82421875
+    }
+  },
+  "label_caveat": "Scores compare predictions to source_label. Dataset card describes those source labels as provisional; adapted prompts add policy/context and labels have not been independently reviewed for these exact prompts.",
+  "energy_joules": null,
+  "monetary_cost": null,
+  "note": "Repeated calls are timing samples, not additional examples. Latency includes encoding/preflight and inference. CPU time is current-process CPU; memory is sampled process-tree RSS, not VRAM. Warm-ups are excluded from timed metrics."
+}
