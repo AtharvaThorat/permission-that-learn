@@ -122,3 +122,5 @@ Published in `026b31d`. Pages activation remains blocked: authenticated account 
 ## Pipeline-first website — 2026-11-11
 
 Homepage now explains the shared pipeline with a six-stage native HTML architecture, interactive illustrative approval/grant/revocation walkthrough, model rationale/configuration, dataset excerpts and contributors. Separate results page preserves all comparisons and adds local-demo-20261111-200647 and local-laya-20261111-200928 evidence (12/12 inference, 10/12 controller agreement). No new inference or plugin changes. Ruff passed; 352 CPU tests passed in 17.96s. Desktop walkthrough and mobile dataset preview checked; local page/download links resolve. Pages is now enabled on main:/docs (API status built).
+
+Website correction: replaced interactive controls with a static five-stage permission-state timeline and a connected SVG architecture showing denial, approval, grant reuse, rechecks and reviewed feedback. Removed walkthrough JavaScript. Visually checked both figures; SVG parsing and static build passed. No runtime or plugin changes.
