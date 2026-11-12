@@ -46,3 +46,5 @@ assertion, and two obsolete live-provider-selection tests. The seeded properties
 exact-action dispatch, context/overflow, native-suite, storage and reporting checks remain essential.
 Historical test counts above describe their original revisions; the release check is recorded in
 project tracking. Deleting more tests solely to reduce file count would discard unique safeguards.
+
+GitHub CPU checks are manual-only: Actions > CPU checks > Run workflow. Pushes and pull requests no longer automatically install dependencies or run the suite. Local validation commands remain available above.
