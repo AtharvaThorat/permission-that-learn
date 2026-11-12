@@ -116,3 +116,5 @@ Release verification: Ruff passed; **352 CPU tests passed** after removing 10 re
 Reorganized reference datasets/historical studies into `experiments/reference`, development history into `docs/archive`, and contributor guidance into root `CONTRIBUTING.md`. Archived three redundant per-seed CSV files locally with hashes and retained Git revision. Preserved all comparison rows, including weak results, and cataloged 19 local compute summaries. The public page uses the supplied manuscript and links the gated 150-pair dataset. Added a thin demo benchmark and deterministic static site builder. Plugin files were excluded from all edits.
 
 Verification: Ruff passed; 352 CPU tests passed in 18.42s. The new benchmark wrapper completed 504 actions per strategy with zero forbidden dispatches/errors at results/pages-demo-20261111/report.html. Local Markdown links resolved; desktop/mobile page checked. No new inference or plugin edits.
+
+Published in `026b31d`. Pages activation remains blocked: authenticated account has push=true, maintain=false, admin=false; Pages API returned 404 and has_pages=false. Repository owner must enable main:/docs in Settings → Pages.

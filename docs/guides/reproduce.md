@@ -70,3 +70,5 @@ The benchmark script delegates to `grids permissions check`; it does not introdu
 The site builder reads committed aggregate evidence and performs no inference. GitHub Pages serves
 `main:/docs`; CPU checks remain manually triggered. Reference data is in `experiments/reference/`.
 The site's dataset link points to the gated `siddharth-magesh/grids-laya-permission-v1` release.
+
+Pages activation requires a repository maintainer/admin: Settings → Pages → Deploy from a branch → `main` → `/docs` → Save. The publication account has push access only, so the API activation was denied. Once enabled, the site is https://AtharvaThorat.github.io/permission-that-learn/.
