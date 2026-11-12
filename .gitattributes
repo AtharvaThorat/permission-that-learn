@@ -1,2 +1,8 @@
 # Stable fixture/provenance hashes across Windows and Unix checkouts.
 * text=auto eol=lf
+
+docs/results/research-release/laya-comparison.csv -text
+docs/results/research-release/laya-selection.json -text
+docs/results/research-release/laya-smoke-summary.json -text
+docs/results/research-release/permission-summary.json -text
+docs/results/research-release/screen-ids.json -text
