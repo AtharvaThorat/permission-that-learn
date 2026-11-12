@@ -162,8 +162,11 @@ def approve_console(directory, memory_store=None):
         for path in sorted(directory.glob('*.json')):
             if path.name.endswith('.response.json') or path in seen or path.with_name(path.stem + '.response.json').exists():
                 continue
+            try:
+                pending = json.loads(path.read_text(encoding='utf-8'))
+            except (OSError, ValueError):
+                continue   # still being written; read it on the next look
             seen.add(path)
-            pending = json.loads(path.read_text(encoding='utf-8'))
             action = pending['action']
             print(f"\n{action['tool']} {action['arguments_json']}\nreason: {pending['reason']}")
             can_remember = memory is not None and memory.rememberable(pending)

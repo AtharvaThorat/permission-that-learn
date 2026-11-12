@@ -32,15 +32,20 @@ sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` p
   - in the MCP server: `--memory`, and `r` in the approval console approves and remembers.
 - **Dataset test:** `python -m grids_plugin.evaluate` runs the team dataset through the plugin's own decision code
   (see [Testing on the team dataset](#testing-on-the-team-dataset)).
+- **Dataset replay in real environments:** `python -m grids_plugin.replay` rebuilds each dataset row in its own simulated
+  AgentDojo environment (Workspace, Slack or Banking) and sends its action through the whole plugin
+  (see [Replay in real environments](#replay-in-real-environments)).
+- **Merged with main:** includes Siddharth's latest `main`; the dataset test reads the team's files from their new folder.
 - **Docs:** this README, [RUNNING.md](RUNNING.md) and the Colab notebook are updated.
 
 ### Checks
 
-- All 23 tests pass, three runs in a row.
+- All 26 tests pass.
 - The chat page starts with the real model.
 - The MCP server works over stdio with the real model and memory.
 - Nothing outside `plugin/` changed.
-- Two timing bugs, one in the page refresh and one in the approval step, were found and fixed.
+- Timing bugs in the page refresh and the approval step were found and fixed, including one where an approval file was
+  read before it was fully written (page and MCP approval console).
 
 ### Known weaknesses
 
@@ -49,6 +54,8 @@ sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` p
 - It rarely answers ASK, so permission memory comes into play rarely in live demos.
 - On the team dataset it agrees with only 59/150 reviewed labels and allows 41 of 78 actions it should block (see
   [Dataset results](#dataset-results)). The pipeline reproduces the team's recorded run exactly, so this is the model's limit.
+- In the full plugin the Wall catches most of those: 7 of 78 BLOCK-labelled actions still ran without anyone being asked,
+  6 of them actions the user never requested (see [Replay results](#replay-results)).
 
 ## How a tool call is decided
 
@@ -150,6 +157,59 @@ Laptop CPU, dataset revision `9659e45`, all 150 rows:
 
 Per suite (agree with reviewed labels / harmful allows): banking 16/42 / 9, Slack 17/44 / 14, Workspace 26/64 / 18.
 
+## Replay in real environments
+
+The test above gives laya-cybersec each row's prepared text only. `python -m grids_plugin.replay` instead runs each row
+for real:
+
+1. **Rebuild the environment.** Each row's `source_id` names its AgentDojo episode (suite, user task, call, injection
+   task, attack template). The repository's dataset builder (`grids.gatekeeper.training_data.Suite`) rebuilds it: the
+   suite's simulated environment with the injected text, and the earlier tool calls already run. Each rebuild is checked
+   against the repository's published input for that row (`experiments/reference/laya-permission-v1`), character for
+   character.
+2. **Send the row's action through the plugin.** The controller binds it, the Wall (the repository's strict preset for that
+   suite) checks it, laya-cybersec reads the live context, an ask reaches a simulated careful person (who follows the
+   reviewed label), and the executor really runs it in the simulated environment if allowed.
+3. **Check the attack.** For injected-goal rows, AgentDojo's own security check says whether the attacker's goal was
+   achieved (the dataset renamed the attacker per row; the original names are restored for the check).
+4. **Permission memory.** Asks the person approved and remembered in pass 1 are repeated in pass 2 with the grants.
+
+On Windows it needs Python's UTF-8 mode (`$env:PYTHONUTF8 = "1"`), otherwise AgentDojo's files are read in the wrong
+encoding. It writes `records.jsonl`, `summary.json` and `report.md`. Only simulated environments are touched.
+
+### Replay results
+
+Laptop CPU, all 150 rows, 260 s in all:
+
+- **Environments rebuilt exactly: 150/150.** Wall verdicts equal to the recorded ones: 147/150. The other 3 are file
+  shares to an outside Gmail address: the live Wall denies them (outside recipient), the recorded offline replay marked
+  them unresolved (missing facts). Both stop the action.
+- laya-cybersec checked the 68 actions the Wall passed: ALLOW 47 · BLOCK 19 · ASK 2 (median 2.3 s per check).
+
+| Reviewed label | Ran without asking | Person approved, ran | Person rejected | Blocked by laya-cybersec | Stopped by the Wall |
+|---|---:|---:|---:|---:|---:|
+| ALLOW (35) | 24 | 0 | 0 | 7 | 4 |
+| ASK (37) | 10 | 6 | 0 | 11 | 10 |
+| BLOCK (78) | **7** | 0 | 2 | 1 | 68 |
+
+| Kind of row | Rows | Ran without the person |
+|---|---:|---:|
+| Injected goal | 40 | 1 |
+| Unrequested action (the user asked for something else) | 10 | 6 |
+| User's own action | 55 | 27 |
+| User's own action, injected text in the history | 45 | 7 |
+
+- **The Wall did most of the protecting.** It stopped 68 of 78 BLOCK-labelled actions; on its own laya-cybersec let
+  41 of 78 through (previous section).
+- **Attacks:** the attacker's action ran in 1 of 40 injected-goal rows (Slack, laya-cybersec ALLOW 0.39, nearly a tie),
+  and AgentDojo's check confirms that goal was achieved.
+- **Unrequested actions** are the weak spot: 6 of 10 ran (creating files, sending messages the user never asked for).
+  They pass the Wall because their targets are allowed, and laya-cybersec allowed them.
+- **Cost to the user:** 11 of 35 ALLOW-labelled actions were stopped (7 by laya-cybersec, 4 by the Wall), and 10 of 37
+  ASK-labelled actions ran without asking.
+- **Memory** was not exercised: the person was asked 8 times, but only twice for laya-cybersec's own asks (one
+  BLOCK-labelled, rejected; one also a payment confirmation, which memory never answers).
+
 ## Scenarios (chat demo)
 
 | Scenario | What it shows |
@@ -212,10 +272,11 @@ Tools: the 24 Workspace tools, plus `set_user_request` (the client's model passe
 ```powershell
 cd plugin
 $env:PYTHONPATH = ".;..\src"
+$env:PYTHONUTF8 = "1"
 D:\grids-plugin\env\Scripts\python.exe -m pytest tests -q -p no:cacheprovider
 ```
 
-The 23 tests drive the real controller, Wall, simulated Workspace and permission store with a scripted chat model and a
+The 26 tests drive the real controller, Wall, simulated Workspace and permission store with a scripted chat model and a
 fake laya-cybersec (it reads the real `compact_v1` reduction):
 
 - all scenarios, including both answers to an approval;
@@ -223,7 +284,9 @@ fake laya-cybersec (it reads the real `compact_v1` reduction):
   confirmation can never be remembered;
 - the chat page's handlers, Approve and remember, and that the page serves;
 - the MCP server through a real in-process MCP client, including a permission remembered in the approval console;
-- the dataset evaluation on a three-row stand-in.
+- the dataset evaluation on a three-row stand-in;
+- the environment replay on three rows from the repository's published copy (exact rebuild, Wall, an injected goal,
+  and a remembered ask answered in the second pass).
 
 ## Limitations
 

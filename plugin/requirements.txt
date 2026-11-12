@@ -2,3 +2,4 @@
 #   pip install -r environments/laya.txt -r plugin/requirements.txt
 gradio==6.31.0
 mcp==2.3.0
+pyarrow==26.0.1   # reads the neuralchemy texts some dataset rows use (grids_plugin.replay)

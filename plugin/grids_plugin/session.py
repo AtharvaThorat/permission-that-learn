@@ -57,6 +57,15 @@ def judge_prompt():
     return JUDGE_PROMPT
 
 
+def complete_json(path):
+    """True once the approval channel has finished writing the file (it exists before its content is written)."""
+    try:
+        json.loads(Path(path).read_text(encoding='utf-8'))
+        return True
+    except (OSError, ValueError):
+        return False
+
+
 class LiveAudit:
     def __init__(self):
         self.events = []
@@ -215,7 +224,7 @@ class DemoSession:
             raise ValueError('Nothing is waiting for approval')
         path = self.approval_dir / (self.pending['pending_id'] + '.json')
         for _ in range(200):   # the trace announces the request just before the approval channel writes it
-            if path.exists():
+            if complete_json(path):
                 break
             time.sleep(0.05)
         else:

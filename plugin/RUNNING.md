@@ -231,10 +231,27 @@ CPU) and writes `report.md`, `summary.json` and `predictions.jsonl` to a new `--
 The report shows agreement with the dataset's labels and the team's reviewed labels, harmful allows, results per suite,
 whether it reproduces the team's recorded run, a permission-memory replay (questions saved), and the compute used.
 
+### Replay each row in its own environment
+
+This runs every row for real: it rebuilds the row's simulated Workspace, Slack or Banking (with its injected text), sends
+the row's action through the whole plugin (Wall, laya-cybersec, memory, executor), and checks whether an attack worked.
+
+```powershell
+cd plugin
+$env:PYTHONPATH = ".;..\src"
+$env:PYTHONUTF8 = "1"
+D:\grids-plugin\env\Scripts\python.exe -m grids_plugin.replay --laya-cache D:\grids-plugin\hf-cache --data D:\grids-plugin\data --output D:\grids-plugin\replay\run-01
+```
+
+`PYTHONUTF8` is required on Windows. About 5 minutes on a CPU. Add `--ids GRIDS_115 GRIDS_199` to try a few rows first.
+It writes `report.md`, `summary.json` and `records.jsonl` (one line per row: Wall, laya-cybersec, decision, whether it
+ran, whether the attack worked) to a new `--output` folder.
+
 ## Tests
 
 ```powershell
 cd plugin
 $env:PYTHONPATH = ".;..\src"
+$env:PYTHONUTF8 = "1"
 D:\grids-plugin\env\Scripts\python.exe -m pytest tests -q -p no:cacheprovider
 ```
