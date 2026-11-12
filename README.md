@@ -31,6 +31,8 @@ acting models, and unprotected, Wall-only and Wall-plus-Gatekeeper modes. Actor-
 stay in model profiles. Application developers can supply their own actor, tool runtime and trusted
 fact resolver through the same [integration contracts](docs/guides/integration.md).
 
+This repository is released under the [Apache License 2.0](LICENSE). Model checkpoints, AgentDojo, datasets, figures and other external assets remain subject to their own licenses and terms; see the relevant model cards and data source before redistribution.
+
 ## Research questions and evidence
 
 The primary evaluation compares identical recorded actions and decision-time evidence across
