@@ -118,3 +118,7 @@ Reorganized reference datasets/historical studies into `experiments/reference`, 
 Verification: Ruff passed; 352 CPU tests passed in 18.42s. The new benchmark wrapper completed 504 actions per strategy with zero forbidden dispatches/errors at results/pages-demo-20261111/report.html. Local Markdown links resolved; desktop/mobile page checked. No new inference or plugin edits.
 
 Published in `026b31d`. Pages activation remains blocked: authenticated account has push=true, maintain=false, admin=false; Pages API returned 404 and has_pages=false. Repository owner must enable main:/docs in Settings â†’ Pages.
+
+## Pipeline-first website — 2026-11-11
+
+Homepage now explains the shared pipeline with a six-stage native HTML architecture, interactive illustrative approval/grant/revocation walkthrough, model rationale/configuration, dataset excerpts and contributors. Separate results page preserves all comparisons and adds local-demo-20261111-200647 and local-laya-20261111-200928 evidence (12/12 inference, 10/12 controller agreement). No new inference or plugin changes. Ruff passed; 352 CPU tests passed in 17.96s. Desktop walkthrough and mobile dataset preview checked; local page/download links resolve. Pages is now enabled on main:/docs (API status built).

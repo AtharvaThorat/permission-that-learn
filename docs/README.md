@@ -12,6 +12,7 @@ The shared authorization pipeline is the backbone of this project. Start with th
 ## Research
 
 - [Authorization contract](architecture/authorization/contract.md) and [evaluation method](architecture/evaluation/method.md)
+- [Results page](results.html): latest local checks, accuracy, configurations and compute
 - [Current evidence](results/research-release/README.md): configuration comparisons, local-run catalog and source hashes
 - [Our Hugging Face dataset](https://huggingface.co/datasets/siddharth-magesh/grids-laya-permission-v1): gated prompt–action pairs and provisional labels
 - [Reference datasets and historical studies](../experiments/reference/README.md): reproducibility inputs, not headline results
