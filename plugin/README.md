@@ -229,7 +229,7 @@ fake laya-cybersec (it reads the real `compact_v1` reduction):
 
 - **laya-cybersec is used as released, not fine-tuned for permissions.** On the team dataset it agreed with 59/150
   reviewed labels and allowed 41/78 reviewed-BLOCK rows (the plugin's run, identical to the team's recorded run in
-  `docs/results/permission-memory/`).
+  `experiments/reference/permission-memory/`).
   Its probabilities are uncalibrated, and its decision changes with small wording differences.
 - It rarely answers ASK (10/150 on the team dataset), so permission memory has few asks to answer in practice.
 - In the MCP form, the user's request comes from the client's model through `set_user_request`. It is not verified.

@@ -5,9 +5,9 @@
 1. **Gatekeeper.** Each row's `laya_input` goes through the plugin's own `Scanner.decide` (laya-cybersec, rotated
    ALLOW / ASK / BLOCK, the question pinned by the dataset) and the plugin gate's mapping to a controller decision.
    Compared with the dataset's `source_label` and with the team's `reviewed_label`
-   (`docs/results/permission-memory/reviewed_labels.csv`). Both label sets are LLM-made, not ground truth.
+   (`experiments/reference/permission-memory/reviewed_labels.csv`). Both label sets are LLM-made, not ground truth.
 2. **Reproduction.** The decisions are compared with the team's recorded run on the same rows
-   (`docs/results/permission-memory/laya_cybersec_rotated_predictions.jsonl`).
+   (`experiments/reference/permission-memory/laya_cybersec_rotated_predictions.jsonl`).
 3. **Permission memory.** Two passes over the rows through the repository's `PermissionStore` (Siddharth's scoped
    grants) with a simulated careful user who follows the reviewed label: in pass 1 every eligible ask goes to the user,
    who approves and remembers ALLOW / ASK rows and rejects BLOCK rows; in pass 2 the same requests are asked again.
@@ -36,11 +36,6 @@ QUESTION_SHA256 = '0ea28ad8b74e02a78a38ac926ea3044c6a64c723d7d78a3f171593b9c537f
 LABELS = ('ALLOW', 'ASK', 'BLOCK')
 
 
-def repo_root():
-    import grids
-    return Path(grids.__file__).resolve().parents[2]
-
-
 def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -63,13 +58,13 @@ def load(pairs_path, metadata_path):
 
 
 def reviewed_labels():
-    path = repo_root() / 'docs' / 'results' / 'permission-memory' / 'reviewed_labels.csv'
+    from grids.evaluation.permission_sim import LABELS as path   # the team's file, wherever the repository keeps it
     with open(path, encoding='utf-8-sig', newline='') as handle:
         return {row['id']: row for row in csv.DictReader(handle)}
 
 
 def recorded_predictions():
-    path = repo_root() / 'docs' / 'results' / 'permission-memory' / 'laya_cybersec_rotated_predictions.jsonl'
+    from grids.evaluation.permission_sim import PREDICTIONS as path
     lines = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip()]
     return lines[0]['header'], {row['id']: row for row in lines[1:]}
 
