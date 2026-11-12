@@ -1,10 +1,10 @@
-# GRIDS — Permissions That Learn
+# Permissions That Learn
 
-Research code for **Policy-Bounded Authorization and Approval Learning for Tool-Using LLM Agents**.
+Research project with Graduates Rising in Data Science, a club at the University of Southern California (USC).
 
 [Manuscript](paper/manuscript.pdf) · [Documentation](docs/README.md) · [Results](docs/results/research-release/README.md) · [Reproduction](docs/guides/reproduce.md)
 
-GRIDS studies whether an agent's proposed tool action is authorized by the authentic user request,
+This project studies whether an agent's proposed tool action is authorized by the authentic user request,
 fixed policy, and verified context. A deterministic Wall enforces hard boundaries; Laya evaluates
 contextual authorization; explicit grants and isolated user learning can reduce optional confirmations.
 The controller rechecks the exact action before dispatch. Learned behavior cannot override the Wall,
