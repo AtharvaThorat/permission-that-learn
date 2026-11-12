@@ -12,8 +12,6 @@
 [![Issues](https://img.shields.io/github/issues/AtharvaThorat/permission-that-learn?style=for-the-badge&color=d4b83f)](https://github.com/AtharvaThorat/permission-that-learn/issues)
 [![License](https://img.shields.io/badge/License-Apache%202.0-91cf60?style=for-the-badge)](LICENSE)
 
-**Authors:** [Siddharth Magesh](https://github.com/Siddharth-magesh) · [Atharva Thorat](https://github.com/AtharvaThorat)
-
 [**Paper**](paper/manuscript.pdf) · [**Results**](docs/results/research-release/README.md) · [**Demo**](#demonstration)
 
 </div>
@@ -26,6 +24,7 @@
 - [Research results](#research-results)
 - [Demonstration](#demonstration)
 - [License and acknowledgment](#license-and-acknowledgment)
+- [Authors](#authors)
 
 ## Research idea
 
@@ -81,3 +80,24 @@ A separate demonstration-software branch and hosted demo are planned. Links will
 This repository is released under the [Apache License 2.0](LICENSE). Model checkpoints, AgentDojo, datasets, and external assets retain their own licenses and terms.
 
 Developed with Graduates Rising in Data Science at USC.
+
+## Authors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/Siddharth-magesh"><img src="https://images.weserv.nl/?url=github.com%2FSiddharth-magesh.png&amp;w=100&amp;h=100&amp;fit=cover&amp;mask=circle" width="100" height="100" alt="Siddharth Magesh" /></a><br />
+      <a href="https://github.com/Siddharth-magesh"><b>Siddharth Magesh</b></a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/AtharvaThorat"><img src="https://images.weserv.nl/?url=github.com%2FAtharvaThorat.png&amp;w=100&amp;h=100&amp;fit=cover&amp;mask=circle" width="100" height="100" alt="Atharva Thorat" /></a><br />
+      <a href="https://github.com/AtharvaThorat"><b>Atharva Thorat</b></a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/kaustubhadhe1206"><img src="https://images.weserv.nl/?url=github.com%2Fkaustubhadhe1206.png&amp;w=100&amp;h=100&amp;fit=cover&amp;mask=circle" width="100" height="100" alt="Kaustubh Adhe" /></a><br />
+      <a href="https://github.com/kaustubhadhe1206"><b>Kaustubh Adhe</b></a>
+    </td>
+  </tr>
+</table>
+
+<p align="right"><a href="#permissions-that-learn">Back to top</a></p>
