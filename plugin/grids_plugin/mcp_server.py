@@ -1,4 +1,4 @@
-"""MCP server: AgentDojo's simulated Workspace tools, every call guarded by the Wall and laya-cybersec.
+"""MCP server: AgentDojo's simulated Workspace tools, every call guarded by the Wall, laya-cybersec and permission memory.
 
 Any MCP client (Claude Desktop, Claude Code and others) connects to it; the client's model proposes tool calls and this
 server decides each one with the repository's controller, exactly as in the chat demo. The data is simulated: nothing
@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-from .guard import CybersecGate, TimedWall, ledger
+from .guard import CybersecGate, TimedWall, gate_output, ledger
 from .session import INJECTION, SCENARIOS, LiveAudit
 
 INSTRUCTIONS = ("Tools act on a simulated workspace (Emma Johnson's email, calendar and cloud drive). Every call is checked by "
@@ -25,8 +25,8 @@ INSTRUCTIONS = ("Tools act on a simulated workspace (Emma Johnson's email, calen
 class GuardedWorkspace:
     """One simulated Workspace and one guarded episode at a time; `set_user_request` starts a new one."""
 
-    def __init__(self, scanner=None, *, scenario='Free chat', confirm_shares=True, approvals=None, approval_wait=60.0,
-                 threshold=0.95):
+    def __init__(self, scanner=None, *, memory=None, memory_mode='grants', scenario='Free chat', confirm_shares=True,
+                 approvals=None, approval_wait=60.0):
         from agentdojo.functions_runtime import FunctionsRuntime
         from agentdojo.task_suite.load_suites import get_suite
         from grids.benchmarks.agentdojo.codec import NativeCodec
@@ -48,14 +48,19 @@ class GuardedWorkspace:
         self.wall = TimedWall(PtlWall.from_clean_environment(wall_config, suite.load_and_inject_default_environment({}),
                                                              'workspace'))
         self.history, self.decisions, self.lock = [], [], threading.Lock()
-        self.gate = CybersecGate(scanner, self.wall, lambda: self.history, threshold) if scanner else None
+        self.gate = CybersecGate(scanner, self.wall, lambda: self.history) if scanner else None
         self.mode = 'wall_gatekeeper' if scanner else 'wall_only'
         self.clock, self.audit = Clock(), LiveAudit()
         self.approvals_dir = Path(approvals) if approvals else Path(__file__).resolve().parents[1] / 'approvals'
-        config = Config(mode=self.mode, wall=wall_config)
+        # Permission memory answers laya-cybersec's own asks, so it needs the Gatekeeper (as in the repository).
+        self.memory = memory if scanner and memory_mode != 'off' else None
+        self.memory_mode, self.memory_events = (memory_mode if self.memory else 'off'), []
+        config = Config(mode=self.mode, wall=wall_config, learning_enabled=self.memory is not None)
         facts = suite_facts('workspace', Metadata.model_validate(json.loads(Path(config.wall.metadata_path).read_text(encoding='utf-8'))))
-        self.controller = Controller(config, None, self.wall, self.gate, facts,
-                                     FileApprovalProvider(self.approvals_dir, wait_seconds=approval_wait),
+        approvals = FileApprovalProvider(self.approvals_dir, wait_seconds=approval_wait)
+        if self.memory:
+            approvals = self.memory.provider(approvals, self.memory_mode, record=self.memory_events.append)
+        self.controller = Controller(config, None, self.wall, self.gate, facts, approvals,
                                      GuardedExecutor(), self.clock, self.audit, NativeCodec())
         self.laya_device = getattr(scanner, 'device', 'cpu')
         self.set_user_request('(the MCP client did not state the request)')
@@ -87,20 +92,29 @@ class GuardedWorkspace:
             text = tool_result_to_str(outcome.result) if outcome.executed else (outcome.error or 'PermissionError: refused')
             self.history.append({'role': 'tool', 'tool_call_id': call_id, 'content': text})
             wall = self.wall.checks[checks]['verdict'] if len(self.wall.checks) > checks else None
-            score = self.gate.scans[scans]['score'] if self.gate and len(self.gate.scans) > scans else None
+            scan = self.gate.scans[scans] if self.gate and len(self.gate.scans) > scans else None
+            action_id = f'{episode.episode_id}:{episode.calls}:0'
+            remembered = [e for e in self.memory_events if e['binding']['action_id'] == action_id]
             approval = [e['reason_code'] for e in self.audit.events
                         if e['event'] == 'approval' and e['action_id'] == f'{episode.episode_id}:{episode.calls}:0']
             asked = any(e['event'] == 'pending_approval' and e['action_id'] == f'{episode.episode_id}:{episode.calls}:0'
                         for e in self.audit.events)
-            self.decisions.append({'tool': name, 'arguments': arguments, 'wall': wall, 'laya_score': score,
+            by_grant = bool(remembered) and remembered[-1]['action'] == 'USE_EXISTING_GRANT'
+            self.decisions.append({'tool': name, 'arguments': arguments, 'wall': wall,
+                                   'laya_cybersec': gate_output(scan['probabilities']) if scan else None,
+                                   'memory': ('answered by remembered permission' if by_grant else 'asked') if remembered else None,
                                    'decision': 'ASK' if asked else outcome.decision,
-                                   'person': (approval[0].lower() if approval else 'no answer') if asked else None,
+                                   'person': ('not asked: remembered permission' if by_grant else
+                                              approval[0].lower() if approval else 'no answer') if asked else None,
                                    'reason': outcome.reason, 'executed': outcome.executed})
             return text, not outcome.executed
 
     def report(self):
         compute = ledger(self.wall.checks, [], self.gate.scans if self.gate else [], laya_device=self.laya_device)
-        return {'decisions': self.decisions, 'compute': {k: v for k, v in compute.items() if not k.startswith(('agent', 'judge'))}}
+        used = sum(e['action'] == 'USE_EXISTING_GRANT' for e in self.memory_events)
+        return {'decisions': self.decisions, 'compute': {k: v for k, v in compute.items() if not k.startswith(('agent', 'judge'))},
+                'memory': {'mode': self.memory_mode, 'eligible_asks': len(self.memory_events), 'answered_by_grant': used,
+                           'grants': self.memory.grants() if self.memory else []}}
 
 
 def build_server(workspace):
@@ -133,9 +147,15 @@ def build_server(workspace):
                   on_list_tools=list_tools, on_call_tool=call_tool)
 
 
-def approve_console(directory):
-    """Second terminal: the person approves or rejects each waiting action. The MCP client's model cannot."""
+def approve_console(directory, memory_store=None):
+    """Second terminal: the person approves or rejects each waiting action. The MCP client's model cannot.
+
+    `r` approves and remembers (an exact grant in the same permission store as the server)."""
     from grids.core.permissions.approvals import respond
+    memory = None
+    if memory_store:
+        from .memory import Memory
+        memory = Memory(memory_store)
     directory, seen = Path(directory), set()
     print(f'Watching {directory} for actions that need approval. Ctrl+C to stop.')
     while True:
@@ -146,10 +166,13 @@ def approve_console(directory):
             pending = json.loads(path.read_text(encoding='utf-8'))
             action = pending['action']
             print(f"\n{action['tool']} {action['arguments_json']}\nreason: {pending['reason']}")
-            answer = input('Approve? [y/N] ').strip().lower()
+            can_remember = memory is not None and memory.rememberable(pending)
+            answer = input('Approve? [y = yes, r = yes and remember, N = no] ' if can_remember else 'Approve? [y/N] ').strip().lower()
             try:
-                respond(path, answer == 'y')
-                print('approved' if answer == 'y' else 'rejected')
+                if answer == 'r' and can_remember:
+                    print('remembered as grant', memory.remember(path)[:8])
+                respond(path, answer in ('y', 'r'))
+                print('approved' if answer in ('y', 'r') else 'rejected')
             except ValueError as exc:
                 print(f'not applied: {exc}')
         time.sleep(0.5)
@@ -162,16 +185,24 @@ def main(argv=None):
     parser.add_argument('--laya-cache', help='folder for the laya-cybersec download; omit for the Wall only')
     parser.add_argument('--scenario', default='Free chat', choices=list(SCENARIOS))
     parser.add_argument('--approval-wait', type=float, default=60.0)
+    parser.add_argument('--memory', default='grants', choices=['off', 'grants', 'shadow', 'active'],
+                        help='permission memory mode (needs --laya-cache)')
+    parser.add_argument('--memory-store', default=str(Path(__file__).resolve().parents[1] / 'memory' / 'permissions.sqlite'),
+                        help="SQLite file for remembered permissions (the repository's PermissionStore)")
     args = parser.parse_args(argv)
     if args.command == 'approve':
-        return approve_console(args.approvals)
+        return approve_console(args.approvals, args.memory_store)
     import anyio
     from mcp.server.stdio import stdio_server
-    scanner = None
+    scanner = memory = None
     if args.laya_cache:
         from .cybersec import Scanner, download
         scanner = Scanner(download(args.laya_cache))
-    workspace = GuardedWorkspace(scanner, scenario=args.scenario, approvals=args.approvals, approval_wait=args.approval_wait)
+        if args.memory != 'off':
+            from .memory import Memory
+            memory = Memory(args.memory_store)
+    workspace = GuardedWorkspace(scanner, memory=memory, memory_mode=args.memory, scenario=args.scenario,
+                                 approvals=args.approvals, approval_wait=args.approval_wait)
     server = build_server(workspace)
 
     async def serve():

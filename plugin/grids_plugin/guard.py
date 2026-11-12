@@ -3,16 +3,17 @@
 The controller is unchanged: it binds each proposed tool call, asks the Wall, and only on PASS calls the gate below.
 The gate builds the same decision context as the laya-permission-v1 data (request, action, policy, trusted identities and
 the untrusted tool history), reduces it with the repository's `compact_v1` (made for this model's 1,024 tokens) and asks
-laya-cybersec whether it holds a prompt injection or exfiltration attempt.
+laya-cybersec for ALLOW, ASK or BLOCK with the team's rotated-option method (see `cybersec.py`).
 """
 import json
 import time
 from grids.core.contracts import GateDecision
 from grids.gatekeeper.context import compact
-from .cybersec import MODEL_ID, PARAMETERS, REVISION, THRESHOLD
+from .cybersec import METHOD, MODEL_ID, PARAMETERS, REVISION
 
-SOURCE = ("a proposed AI assistant action: the user's request, the action, and excerpts of the tool outputs "
-          "it was based on")
+# The repository Gatekeeper's reason codes (grids.gatekeeper.policy). Siddharth's scoped grants may answer only the
+# model's own asks, NEEDS_CLARIFICATION and UNCERTAIN (grids.core.permissions.memory.ELIGIBLE_REASONS).
+REASONS = {'ALLOW': 'TASK_AUTHORIZED', 'BLOCK': 'TASK_MISMATCH', 'ASK': 'NEEDS_CLARIFICATION'}
 
 
 def plain(value):
@@ -32,8 +33,8 @@ def text_of(content):
     return '' if content is None else str(content)
 
 
-def decision_context(task, action, verdict, wall, history):
-    """The compact_v1 text laya-cybersec reads for one Wall-approved action."""
+def decision_state(task, action, verdict, wall, history):
+    """The full JSON state for one Wall-approved action; the gate reduces it with compact_v1 before the model reads it."""
     state = {'authentic_user_request': task,
              'untrusted_proposed_action': {'tool': action.tool, 'arguments': json.loads(action.arguments_json)},
              'verified_context': {'confirmation_required': verdict.confirmation_required,
@@ -46,7 +47,12 @@ def decision_context(task, action, verdict, wall, history):
                                                                   for m in history if m.get('role') in ('assistant', 'tool')]}},
              'wall': {'verdict': verdict.verdict, 'policy_version': verdict.policy_version,
                       'evaluated_action_id': action.action_id, 'reason_codes': [verdict.reason]}}
-    return compact(json.dumps(state, ensure_ascii=False))
+    return json.dumps(state, ensure_ascii=False)
+
+
+def decision_context(task, action, verdict, wall, history):
+    """The compact_v1 text laya-cybersec reads for one Wall-approved action, and its diagnostics."""
+    return compact(decision_state(task, action, verdict, wall, history))
 
 
 class RecordingActor:
@@ -91,36 +97,45 @@ class TimedWall:
 
 
 class CybersecGate:
-    """Gate protocol for the controller. Score above `threshold` gives `on_flag` (BLOCK by default), otherwise ALLOW."""
+    """Gate protocol for the controller: laya-cybersec's rotated-option ALLOW / ASK / BLOCK on the action's context.
 
-    def __init__(self, scanner, wall, history, threshold=THRESHOLD, on_flag='BLOCK'):
-        if on_flag not in ('BLOCK', 'ASK'):
-            raise ValueError('on_flag must be BLOCK or ASK')
+    ALLOW is TASK_AUTHORIZED, BLOCK is TASK_MISMATCH, ASK is NEEDS_CLARIFICATION, and a tie between labels is ASK
+    UNCERTAIN, as in the repository's Gatekeeper policy. A failed or truncated answer is ASK with its error kind, which
+    the controller turns into MODEL_UNAVAILABLE: a person decides, and no remembered grant may answer it.
+    """
+
+    def __init__(self, scanner, wall, history):
         self.scanner, self.wall, self.history = scanner, wall, history
-        self.threshold, self.on_flag = threshold, on_flag
         self.scans = []
 
     def set_native_schemas(self, runtime):
         pass   # the controller has already validated the arguments against the native schemas
 
     def evaluate(self, episode, action, verdict):
-        content, diagnostics = decision_context(episode.task, action, verdict, self.wall, self.history())
-        result = self.scanner.scan(content, SOURCE)
-        self.scans.append({'action_id': action.action_id, 'tool': action.tool, 'characters': len(content), **result})
-        common = dict(backend='laya_cybersec', prompt_version='cybersec-noul', checkpoint=MODEL_ID, revision=REVISION,
-                      probabilities={'injection_score': round(result['score'], 4)},
-                      diagnostics={'seconds': result['seconds'], 'input_tokens': result['input_tokens'],
-                                   'characters': len(content), 'evidence_excerpts': diagnostics['evidence_excerpts']})
-        if result['truncated']:
-            # Never decide on partial evidence: a person must look.
-            return GateDecision('ASK', 'LAYA_INPUT_TRUNCATED', error_kind='truncation', **common)
-        flagged = result['score'] > self.threshold
-        return GateDecision(self.on_flag if flagged else 'ALLOW', 'INJECTION_SUSPECTED' if flagged else 'NO_INJECTION_DETECTED',
-                            raw_recommendation='FLAG' if flagged else 'CLEAR',
-                            calibration=f'model card operating point, score > {self.threshold}', **common)
+        state = decision_state(episode.task, action, verdict, self.wall, self.history())
+        result = self.scanner.decide(state, profile='compact_v1')
+        self.scans.append({'action_id': action.action_id, 'tool': action.tool, **result})
+        common = dict(backend='laya_cybersec', prompt_version=METHOD, checkpoint=MODEL_ID, revision=REVISION,
+                      probabilities=result['probabilities'], raw_recommendation=result['decision'],
+                      calibration='uncalibrated; mean of three option orders',
+                      diagnostics={'seconds': result['seconds'], 'state_tokens': result['state_tokens'],
+                                   'sequence_tokens': result['sequence_tokens'],
+                                   'evidence_excerpts': result.get('evidence_excerpts')})
+        if result['error']:
+            return GateDecision('ASK', 'MODEL_UNAVAILABLE', error_kind=result['error_kind'], **common)
+        if result['tie']:
+            return GateDecision('ASK', 'UNCERTAIN', **common)
+        return GateDecision(result['decision'], REASONS[result['decision']], **common)
 
     def close(self):
         pass
+
+
+def gate_output(probabilities):
+    """laya-cybersec's averaged probabilities for the decisions table."""
+    if not probabilities:
+        return None
+    return ' · '.join(f'{label} {probabilities[label]:.2f}' for label in ('ALLOW', 'ASK', 'BLOCK') if label in probabilities)
 
 
 def ledger(wall_checks, actor_calls, scans, judge_calls=(), laya_device='cpu'):

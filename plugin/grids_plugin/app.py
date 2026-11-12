@@ -1,31 +1,39 @@
-"""Chat demo: an assistant acting on a simulated mailbox, calendar and drive, guarded by the Wall and laya-cybersec.
+"""Chat demo: an assistant acting on a simulated mailbox, calendar and drive, guarded by the Wall, laya-cybersec and
+the repository's permission memory.
 
-    python -m grids_plugin.app --model qwen2.5:7b --laya-cache /content/hf-cache --share
+    python -m grids_plugin.app --model qwen2.5:7b --laya-cache /content/hf-cache --memory-store /content/permissions.sqlite --share
 """
 import argparse
 import time
+from pathlib import Path
 
 import gradio as gr
 
+from .memory import MODES as MEMORY_MODES
 from .session import MODES, SCENARIOS, DemoSession
 
-HEADERS = ['#', 'Tool', 'Arguments', 'Wall', 'laya-cybersec score', 'Decision', 'Ran', 'LLM judge (comparison only)']
+HEADERS = ['#', 'Tool', 'Arguments', 'Wall', 'laya-cybersec (ALLOW · ASK · BLOCK)', 'Decision', 'Memory', 'Ran',
+           'LLM judge (comparison only)']
+GRANT_HEADERS = ['Grant', 'Tool', 'Target', 'Request', 'Uses', 'Expires', 'Active']
 INTRO = """
 # Permissions That Learn: guarded assistant demo
 The assistant works on AgentDojo's **simulated** Workspace (Emma Johnson's mailbox, calendar and drive). Every action it
 proposes passes the **Wall** (the user's fixed rules: *only email contacts, never share outside work, never delete*) and
-then **laya-cybersec**, a 322M-parameter model on the CPU that checks the action's context for injected instructions.
-Pick a scenario and a protection level, then send the message.
+then **laya-cybersec** (322M parameters, on the CPU), which answers **ALLOW, ASK or BLOCK** for whether your request
+authorizes the action. With **permission memory** on, "Approve and remember" stores an exact permission, so the same
+ask is answered without asking you again. Pick a scenario, a protection level and a memory mode, then send a message.
 """
 
 
+def seconds(value):
+    return f'{value * 1000:.1f} ms' if value < 1 else f'{value:.2f} s'
+
+
 def compute_markdown(c, laya_on):
-    def seconds(value):
-        return f'{value * 1000:.1f} ms' if value < 1 else f'{value:.2f} s'
     rows = [('Chat model (the assistant)', c['agent_calls'], seconds(c['agent_seconds']), f"{c['agent_tokens']:,} tokens"),
             ('Wall: rules, no model', c['wall_checks'], seconds(c['wall_seconds']), 'includes the recheck before an action runs'),
             ('laya-cybersec, 322M parameters on ' + c['laya_device'].upper(), c['laya_scans'] if laya_on else '-',
-             seconds(c['laya_seconds']) if laya_on else '-', 'only for actions the Wall passed')]
+             seconds(c['laya_seconds']) if laya_on else '-', 'only for actions the Wall passed; 3 option orders, one call')]
     if c['judge_calls']:
         rows.append(('LLM judge, same checks (comparison only)', c['judge_calls'], seconds(c['judge_seconds']),
                      f"{c['judge_tokens']:,} tokens"))
@@ -37,35 +45,67 @@ def compute_markdown(c, laya_on):
     return '### Compute\n' + table + '\n\n' + ' '.join(notes)
 
 
-def pending_markdown(session):
-    if not session or not session.pending:
+def memory_markdown(session):
+    if not session or session.memory is None:
+        return '### Permission memory\nOff. Every ask goes to you.'
+    m = session.memory_summary()
+    return ('### Permission memory\n'
+            f"Mode **{MEMORY_MODES[m['mode']]}**. In this session laya-cybersec asked **{m['eligible_asks']}** time(s) that "
+            f"memory could answer: **{m['answered_by_grant']}** answered by a remembered permission, "
+            f"**{m['asked_person']}** asked you"
+            + (f"; the learner would have reused a permission **{m['learner_would_reuse']}** time(s)" if m['mode'] != 'grants' else '')
+            + '. File-share confirmations always ask you.')
+
+
+def pending_markdown(session, waiting):
+    if not waiting:
         return ''
-    row = session.rows[session.pending['action_id']]
+    row = session.rows[waiting['action_id']]
+    remember = ('You can **approve and remember** it: the same request and action will not ask again.'
+                if waiting.get('rememberable') else 'This ask cannot be remembered (a mandatory confirmation, '
+                'or memory is off).')
     return (f"### Waiting for your approval\n**{row['tool']}** `{row['arguments']}`\n\nReason: `{row['reason']}`. "
-            'Nothing runs until you decide.')
+            f'Nothing runs until you decide. {remember}')
 
 
-def build_app(make_session, laya_available=True):
+def build_app(make_session, laya_available=True, memory=None):
+    """`make_session(mode, scenario, compare, memory_mode)`; `memory` is the shared Memory store, or None."""
     modes = [label for key, label in MODES.items() if key != 'wall_laya' or laya_available]
     by_label = {label: key for key, label in MODES.items()}
+    memory_labels = [MEMORY_MODES['off']] + ([label for key, label in MEMORY_MODES.items() if key != 'off'] if memory else [])
+    memory_by_label = {label: key for key, label in MEMORY_MODES.items()}
+
+    def grants_view():
+        rows = memory.grants() if memory else []
+        table = [[g['id'][:8], g['tool'], str(g['target'] or '-')[:60], g['request'][:80], f"{g['uses']}", g['expires'],
+                  'yes' if g['active'] else 'no'] for g in rows]
+        return table, gr.update(choices=[g['id'][:8] for g in rows if g['active']], value=None)
 
     def views(session, chat):
-        busy = bool(session and session.pending)
+        waiting = session.pending if session else None   # read once: the episode thread may change it meanwhile
+        pending = bool(waiting)
+        rememberable = pending and bool(waiting.get('rememberable'))
         compute = compute_markdown(session.compute(), session.gate is not None) if session else ''
-        return (chat, session.table() if session else [], compute, pending_markdown(session),
-                gr.update(interactive=busy), gr.update(interactive=busy))
+        grants, revoke_choices = grants_view()
+        return (chat, session.table() if session else [], compute, pending_markdown(session, waiting), gr.update(interactive=pending),
+                gr.update(interactive=rememberable), gr.update(interactive=pending), memory_markdown(session), grants,
+                revoke_choices)
 
-    def start(mode_label, scenario, compare):
-        session = make_session(by_label[mode_label], scenario, compare)
-        info = f"**{scenario}** — {SCENARIOS[scenario]['explain']}  \nProtection: **{mode_label}**. Workspace reset."
+    def new_session(mode_label, scenario, compare, memory_label):
+        return make_session(by_label[mode_label], scenario, compare, memory_by_label.get(memory_label, 'off'))
+
+    def start(mode_label, scenario, compare, memory_label):
+        session = new_session(mode_label, scenario, compare, memory_label)
+        info = (f"**{scenario}** — {SCENARIOS[scenario]['explain']}  \nProtection: **{mode_label}**. "
+                f"Memory: **{MEMORY_MODES[session.memory_mode]}**. Workspace reset; remembered permissions are kept.")
         return (session, [], SCENARIOS[scenario]['prompt'], info, *views(session, [])[1:])
 
-    def send(session, chat, prompt, mode_label, scenario, compare):
+    def send(session, chat, prompt, mode_label, scenario, compare, memory_label):
         if not prompt.strip():
             yield (session, chat, prompt, *views(session, chat)[1:])
             return
         if session is None:
-            session = make_session(by_label[mode_label], scenario, compare)
+            session = new_session(mode_label, scenario, compare, memory_label)
         chat = chat + [{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': '…working'}]
         thread = session.start(prompt)
         while thread.is_alive():
@@ -75,10 +115,17 @@ def build_app(make_session, laya_available=True):
                     else f'Error: {session.error}'}
         yield (session, chat, '', *views(session, chat)[1:])
 
-    def decide(session, approved):
+    def decide(session, approved, remember=False):
         if session and session.pending:
-            session.respond(approved)
-        return gr.update(interactive=False), gr.update(interactive=False)
+            session.respond(approved, remember=remember)
+        return gr.update(interactive=False), gr.update(interactive=False), gr.update(interactive=False)
+
+    def revoke(short_id):
+        if memory and short_id:
+            for g in memory.grants():
+                if g['id'].startswith(short_id) and g['active']:
+                    memory.revoke(g['id'])
+        return grants_view()
 
     with gr.Blocks(title='GRIDS permission demo') as app:
         state = gr.State(None)
@@ -86,6 +133,8 @@ def build_app(make_session, laya_available=True):
         with gr.Row():
             mode = gr.Radio(modes, value=modes[-1], label='Protection')
             scenario = gr.Dropdown(list(SCENARIOS), value='Attack only laya-cybersec catches', label='Scenario')
+            memory_mode = gr.Radio(memory_labels, value=MEMORY_MODES['grants'] if memory else memory_labels[0],
+                                   label='Permission memory', visible=memory is not None)
             compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
             reset = gr.Button('Start / reset Workspace')
         info = gr.Markdown()
@@ -99,14 +148,24 @@ def build_app(make_session, laya_available=True):
                 pending = gr.Markdown()
                 with gr.Row():
                     approve = gr.Button('Approve', interactive=False)
+                    remember = gr.Button('Approve and remember', interactive=False)
                     reject = gr.Button('Reject', variant='stop', interactive=False)
                 compute = gr.Markdown()
-        outputs = [table, compute, pending, approve, reject]
-        reset.click(start, [mode, scenario, compare], [state, chat, prompt, info, *outputs])
-        send_button.click(send, [state, chat, prompt, mode, scenario, compare], [state, chat, prompt, *outputs])
-        approve.click(lambda s: decide(s, True), [state], [approve, reject])
-        reject.click(lambda s: decide(s, False), [state], [approve, reject])
-        app.load(start, [mode, scenario, compare], [state, chat, prompt, info, *outputs])
+                memory_info = gr.Markdown()
+                grants = gr.Dataframe(headers=GRANT_HEADERS, label='Remembered permissions', wrap=True,
+                                      visible=memory is not None)
+                with gr.Row(visible=memory is not None):
+                    revoke_choice = gr.Dropdown([], label='Permission to revoke')
+                    revoke_button = gr.Button('Revoke')
+        outputs = [table, compute, pending, approve, remember, reject, memory_info, grants, revoke_choice]
+        buttons = [approve, remember, reject]
+        reset.click(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs])
+        send_button.click(send, [state, chat, prompt, mode, scenario, compare, memory_mode], [state, chat, prompt, *outputs])
+        approve.click(lambda s: decide(s, True), [state], buttons)
+        remember.click(lambda s: decide(s, True, remember=True), [state], buttons)
+        reject.click(lambda s: decide(s, False), [state], buttons)
+        revoke_button.click(revoke, [revoke_choice], [grants, revoke_choice])
+        app.load(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs])
     return app
 
 
@@ -116,21 +175,25 @@ def main(argv=None):
     parser.add_argument('--base-url', default='http://127.0.0.1:11434/v1')
     parser.add_argument('--laya-cache', help='folder for the laya-cybersec download; omit to run without it')
     parser.add_argument('--laya-device', default='cpu', choices=['cpu', 'cuda'])
-    parser.add_argument('--threshold', type=float, default=0.95)
+    parser.add_argument('--memory-store', default=str(Path(__file__).resolve().parents[1] / 'memory' / 'permissions.sqlite'),
+                        help="SQLite file for remembered permissions (the repository's PermissionStore)")
     parser.add_argument('--share', action='store_true', help='public gradio.live link (needed on Colab)')
     parser.add_argument('--port', type=int, default=7860)
     args = parser.parse_args(argv)
-    scanner = None
+    scanner = memory = None
     if args.laya_cache:
         from .cybersec import Scanner, download
+        from .memory import Memory
         scanner = Scanner(download(args.laya_cache), device=args.laya_device)
-        print(f'laya-cybersec loaded in {scanner.load_seconds:.1f} s on {args.laya_device}')
+        print(f'laya-cybersec loaded in {scanner.load_seconds:.1f} s on {args.laya_device}', flush=True)
+        memory = Memory(args.memory_store)
+        print(f'Permission memory: {memory.path}', flush=True)
 
-    def make_session(mode, scenario, compare):
-        return DemoSession(mode, scenario, scanner, model=args.model, base_url=args.base_url, threshold=args.threshold,
-                           compare_judge=compare)
+    def make_session(mode, scenario, compare, memory_mode):
+        return DemoSession(mode, scenario, scanner, memory=memory, memory_mode=memory_mode, model=args.model,
+                           base_url=args.base_url, compare_judge=compare)
 
-    build_app(make_session, laya_available=scanner is not None).queue().launch(
+    build_app(make_session, laya_available=scanner is not None, memory=memory).queue().launch(
         share=args.share, server_name='0.0.0.0' if args.share else '127.0.0.1', server_port=args.port)
 
 

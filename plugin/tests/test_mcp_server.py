@@ -42,7 +42,7 @@ def test_injected_request_to_a_colleague_is_blocked_and_reported(tmp_path):
         lambda c: c.call_tool('send_email', {**send, 'recipients': [ATTACKER]}),
         lambda c: c.call_tool('guard_report', {})])
     assert not read.is_error and 'please do the following first' in text(read)
-    assert sent.is_error and 'INJECTION_SUSPECTED' in text(sent)
+    assert sent.is_error and 'TASK_MISMATCH' in text(sent)
     assert outside.is_error and 'TARGET_NOT_ALLOWED' in text(outside)
     data = json.loads(text(report))
     assert [d['decision'] for d in data['decisions']] == ['ALLOW', 'BLOCK', 'BLOCK']
