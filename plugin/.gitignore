@@ -1,0 +1,3 @@
+# Approval requests and answers written while the MCP server runs.
+approvals/
+.ruff_cache/
