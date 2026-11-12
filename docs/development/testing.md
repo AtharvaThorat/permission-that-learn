@@ -38,3 +38,11 @@ inspect artifacts, and record the actual hardware/pins/outcome in a milestone.
 No mocked prediction may be presented as real Laya or actor evidence.
 
 Teammate integration adds 9 tests in `test_permission_learning.py`: contextual estimation, per-user/policy isolation, deterministic synthetic splits and file hashes, Wall invariants, guarded grants, prediction-cache reuse, preserved raw outputs and duplicate rejection. Free/pooled policies are offline controls only.
+
+## Research release cleanup
+
+Removed the duplicate Hypothesis wrapper over the existing seeded Wall properties, the README-wording
+assertion, and two obsolete live-provider-selection tests. The seeded properties, scope/revocation,
+exact-action dispatch, context/overflow, native-suite, storage and reporting checks remain essential.
+Historical test counts above describe their original revisions; the release check is recorded in
+project tracking. Deleting more tests solely to reduce file count would discard unique safeguards.

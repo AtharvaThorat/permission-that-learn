@@ -7,6 +7,20 @@ architecture, and the [refactor milestone](milestones/2026-10-refactor.md) and
 [approval memory](milestones/2026-11-approval-memory.md) and
 [permission memory](milestones/2026-11-permission-memory.md) milestones for evidence.
 
+## Local research release preparation
+
+Branch `codex/research-release` builds on `4d8f1fb`; prepared locally, no push or main merge.
+- Research README links the supplied manuscript, shared pipeline, integration contract and results.
+- Portable aggregate evidence includes all saved Laya screening variants and selected full runs,
+  plus current scoped-permission checks; source hashes and limitations accompany the exports.
+- Added a research notebook and concise reproduction/integration guides. Removed obsolete live
+  legacy-provider wiring and redundant checks; retained authorization and data-integrity coverage.
+- External workspace: included the architecture diagram; moved the supplied manuscript into `paper/`.
+  Other repositories, third-party papers, administration files, credentials and raw logs remain local.
+- Remaining before public release: author review of paper/results consistency, repository/data license
+  confirmation, and recovery of missing historical sweep source if full sweep reproduction is claimed.
+- Demo-software branch is planned, not created. Fine-tuning, calibration and real-user validation remain open.
+
 ## Current objective
 
 Permission-layer update (branch `codex/scoped-permission-learning`, based on `19fe142`):
@@ -94,3 +108,5 @@ The labeled authorization benchmark is not yet available.
 
 Historical task details remain in Git. Retained local raw artifacts are not proof
 of real-model validation of the refactor.
+
+Release verification: Ruff passed; **352 CPU tests passed** after removing 10 redundant/obsolete checks. The documented simulated demo completed 504 actions per strategy (off, grants, active), with zero forbidden dispatches and zero errors. Evidence: `results/research-release-smoke-20261111/report.html`. No new real inference was performed during release preparation.

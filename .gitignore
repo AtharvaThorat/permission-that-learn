@@ -23,3 +23,6 @@ tmp/
 .venv-blackbox-tests/
 configs/**/*.local.json
 .hypothesis/
+
+/workspace/
+/test.py

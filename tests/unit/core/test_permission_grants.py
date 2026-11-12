@@ -121,13 +121,6 @@ def test_grants_never_see_wall_denials_or_forced_asks():
     assert user.calls == 2 and log == []
 
 
-def test_runtime_selects_the_grant_provider():
-    from grids.runs.runtime import learned_approvals
-    config = LearningConfig(enabled=True, learner='grants')
-    services = SimpleNamespace(memory=build_memory(config), memory_lock=threading.Lock())
-    wall = SimpleNamespace(context=SimpleNamespace(classify=lambda value: 'contact'))
-    wrapped = learned_approvals(config, services, None, wall, SimpleNamespace(append=lambda f, r: None))
-    assert isinstance(wrapped, GrantApprovalProvider) and isinstance(services.memory, GrantStore)
 
 
 def event(n, label, *, tool='send_email', recipient='priya@example.com', wall='PASS', laya='ASK', attack=False,

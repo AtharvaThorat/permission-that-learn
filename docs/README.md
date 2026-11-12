@@ -1,33 +1,39 @@
-# Documentation index
+# Research documentation
 
-| Location | Contents |
-|---|---|
-| [PROJECT_GUIDELINES.md](PROJECT_GUIDELINES.md) | Reusable coding-agent instructions and contribution rules |
-| [project_tracking.md](project_tracking.md) | Current project overview, verified progress, and remaining work |
-| [architecture/system/overview.md](architecture/system/overview.md) | Package boundaries and live execution |
-| [architecture/authorization/contract.md](architecture/authorization/contract.md) | Evidence, enforcement, approvals, and independent labels |
-| [architecture/evaluation/method.md](architecture/evaluation/method.md) | Matched-action evaluation, identities, metrics, and limitations |
-| [guides/setup.md](guides/setup.md) | Linux/Colab installation, assets, serving, and functional validation |
-| [guides/experiments.md](guides/experiments.md) | Collect actions, freeze datasets, evaluate, label, and report |
-| [guides/models.md](guides/models.md) | Seven pinned actor profiles and official references |
-| [guides/carc.md](guides/carc.md) | Slurm batch preparation and persistent output recovery |
-| [development/testing.md](development/testing.md) | Test catalog and required checks |
-| [milestones/2026-10-refactor.md](milestones/2026-10-refactor.md) | Refactor decisions, migration, and validation evidence |
-| [results/README.md](results/README.md) | Rules for future curated research results |
-| [results/laya-permission-v1/README.md](results/laya-permission-v1/README.md) | Laya ALLOW/ASK/BLOCK fine-tuning dataset, label guide and review sheet |
-| [milestones/2026-11-laya-training-data.md](milestones/2026-11-laya-training-data.md) | Training-data build, verification evidence and limitations |
-| [results/laya-permission-v1-compact/README.md](results/laya-permission-v1-compact/README.md) | The same dataset compacted to fit 1,024 Laya tokens |
-| [milestones/2026-11-laya-compact.md](milestones/2026-11-laya-compact.md) | compact_v1 measurement, design, verification and limitations |
-| [results/memory-sim/README.md](results/memory-sim/README.md) | Approval memory simulation: four setups, careful and careless users |
-| [milestones/2026-11-approval-memory.md](milestones/2026-11-approval-memory.md) | Approval memory design, live hook, verification and limitations |
-| [architecture/authorization/permission-memory.md](architecture/authorization/permission-memory.md) | Permission memory research note and design: grants versus counting |
-| [results/permission-memory/README.md](results/permission-memory/README.md) | Grants versus counting on laya-pairs-v1, with real Laya-Cybersec predictions |
-| [milestones/2026-11-permission-memory.md](milestones/2026-11-permission-memory.md) | Permission memory build, verification and limitations |
+The [project overview](../README.md) describes the contribution and links the
+[manuscript](../paper/manuscript.pdf). This index is the entry point for detailed documentation.
 
-Source, configuration, environment, test, and notebook directory responsibilities
-are mapped in the [project README](../README.md). Generated artifacts belong in
-the ignored root `results/`, not in documentation or source directories.
+## Run and integrate
 
-The former operations, reports, schemas, user_manual, and process_documentation
-trees were retired. Use the destinations above; Git retains their history.
-Do not recreate parallel command manuals or status reports.
+- [Reproduce the pipeline](guides/reproduce.md): local simulated demonstration, real Laya check, saved results and validation.
+- [Machine setup](guides/setup.md): environments, model assets, Colab and serving.
+- [Experiments](guides/experiments.md): native AgentDojo, identical-action replay, grants and contextual learning.
+- [Application integration](guides/integration.md): use the shared controller in another application.
+- [Actor profiles](guides/models.md) and [CARC execution](guides/carc.md).
+
+## Architecture and evaluation
+
+- [System](architecture/system/overview.md), [pipeline diagram](architecture/system/pipeline.png).
+- [Authorization contract](architecture/authorization/contract.md): trusted evidence and exact execution binding.
+- [Evaluation method](architecture/evaluation/method.md): paired observations and metric definitions.
+- [Permission-memory research](architecture/authorization/permission-memory.md): historical designs and comparisons;
+  current production behavior is described in the experiment guide.
+
+## Evidence and research history
+
+- [Results index](results/README.md): curated data, historical studies and current aggregate release.
+- [Release evidence](results/research-release/README.md): downloadable HTML, CSV, JSON and provenance.
+- [Permission-learning milestone](milestones/2026-11-permission-memory.md): actual checks and limitations.
+- Historical milestones: [refactor](milestones/2026-10-refactor.md),
+  [dataset](milestones/2026-11-laya-training-data.md), [compact contexts](milestones/2026-11-laya-compact.md),
+  [approval-memory study](milestones/2026-11-approval-memory.md).
+
+## Maintain the project
+
+- [PROJECT_GUIDELINES](PROJECT_GUIDELINES.md): contributor and coding-agent instructions.
+- [Project tracking](project_tracking.md): progress and remaining work.
+- [Test catalog](development/testing.md): retained security and integrity checks.
+
+`src/grids/` holds the reusable pipeline; `experiments/notebooks/` contains thin walkthroughs;
+`configs/` and `environments/` hold reproducible settings. Ignored `results/`, `workspace/` and
+`tmp/` hold local generated data and assets. Do not duplicate them into source or documentation.

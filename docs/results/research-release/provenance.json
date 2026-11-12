@@ -1,0 +1,26 @@
+{
+  "implementation_commit": "4d8f1fb",
+  "export": "aggregate-only",
+  "sources": {
+    "permission-summary.json": {
+      "source": "results/permission-learning/final-20261111/summary.json",
+      "sha256": "9684e3ce16a0fb328d41dec57d154e13e9b9c99dbf0a88c6c5e8529995e68070"
+    },
+    "laya-smoke-summary.json": {
+      "source": "results/permission-learning/final-20261111/laya-summary.json",
+      "sha256": "043e3f11e52c4775654c2ecaf9896a91bb123ac4d62bd342dad9516c0f5e1f8b"
+    },
+    "laya-comparison.csv": {
+      "source": "workspace/artifacts/question-trials-20261110T152520Z-2c7133a1/comparison.csv",
+      "sha256": "d809811593eb521ba927969f5e53296f13b094029d67f3861079ff87c9e3b5b2"
+    },
+    "laya-selection.json": {
+      "source": "workspace/artifacts/question-trials-20261110T152520Z-2c7133a1/selection.json",
+      "sha256": "b025b5c06b7d79427693987509cb1dc46b4afc36e8a6b748534927339ca62945"
+    },
+    "screen-ids.json": {
+      "source": "workspace/artifacts/question-trials-20261110T152520Z-2c7133a1/screen_ids.json",
+      "sha256": "2620cc04f0a0165ff89541f70b3bcbd7481a5e3defef426bc20cdf5549891048"
+    }
+  }
+}

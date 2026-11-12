@@ -14,19 +14,14 @@ def serializable(value):
 
 
 def learned_approvals(learning, services, inner, wall, writer):
-    """The run's shared memory in front of the episode's approval provider."""
+    """Wrap an episode with the run's persistent, user-scoped permission store."""
     from grids.core.permissions.approvals import PendingApprovalProvider
-    from grids.core.permissions.memory import GrantApprovalProvider, MemoryApprovalProvider
-    record = lambda row: writer.append('memory.jsonl', row)
-    if learning.learner == 'scoped':
-        from grids.core.permissions.provider import ScopedApprovalProvider
-        return ScopedApprovalProvider(inner or PendingApprovalProvider(), services.memory, learning.user_id,
-                                      learning.mode, learning.frozen, record)
-    if learning.learner == 'grants':
-        return GrantApprovalProvider(inner or PendingApprovalProvider(), services.memory,
-                                     classify=wall.context.classify, lock=services.memory_lock, record=record)
-    return MemoryApprovalProvider(inner or PendingApprovalProvider(), services.memory, classify=wall.context.classify,
-                                  granularity=learning.granularity, lock=services.memory_lock, record=record)
+    from grids.core.permissions.provider import ScopedApprovalProvider
+    if learning.learner != 'scoped':
+        raise ValueError('Legacy learning providers are simulation-only')
+    return ScopedApprovalProvider(inner or PendingApprovalProvider(), services.memory, learning.user_id,
+                                  learning.mode, learning.frozen,
+                                  lambda row: writer.append('memory.jsonl', row))
 
 
 def execute(spec, services, run_dir, job, attempt, directory, queue_seconds, cancel, *, dependencies=None):

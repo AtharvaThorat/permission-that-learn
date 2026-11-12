@@ -137,14 +137,6 @@ def test_learning_config_and_spec_identity():
     assert enabled.model_dump()['learning']['enabled'] is True
 
 
-def test_runtime_wraps_the_episode_provider_with_the_run_memory():
-    from grids.runs.runtime import learned_approvals
-    rows = []
-    services = SimpleNamespace(memory=CountingMemory(), memory_lock=threading.Lock())
-    wall = SimpleNamespace(context=SimpleNamespace(classify=lambda value: 'contact'))
-    wrapped = learned_approvals(LearningConfig(enabled=True), services, None, wall, SimpleNamespace(append=lambda f, r: rows.append(f)))
-    assert isinstance(wrapped, MemoryApprovalProvider) and isinstance(wrapped.inner, PendingApprovalProvider)
-    assert wrapped.memory is services.memory and wrapped.lock is services.memory_lock
 
 
 @pytest.fixture(scope='module')

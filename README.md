@@ -1,55 +1,79 @@
 # GRIDS — Permissions That Learn
 
-GRIDS studies whether tool actions proposed by language models are authorized by
-the user's request, policy, and verified environment evidence. It combines a
-deterministic **Wall**, a **Laya Gatekeeper**, and an enforcement controller.
+Research code for **Policy-Bounded Authorization and Approval Learning for Tool-Using LLM Agents**.
 
-The primary experiment freezes proposed actions and evaluates the **same actions
-and context** with Wall-only, Laya-only, and Wall→Laya. Independent human-reviewed
-ALLOW/BLOCK/ASK labels are required to measure authorization accuracy. There is
-no labeled benchmark yet; unlabeled runs report decisions and coverage, not accuracy.
+[Manuscript](paper/manuscript.pdf) · [Documentation](docs/README.md) · [Results](docs/results/research-release/README.md) · [Reproduction](docs/guides/reproduce.md)
 
-Native AgentDojo Workspace, Slack, and Banking runs collect actions and measure
-secondary task utility and attack success. Live `unprotected`, `wall_only`, and
-`wall_gatekeeper` runs may produce different trajectories: their task scores are
-not a matched-action authorization comparison.
+GRIDS studies whether an agent's proposed tool action is authorized by the authentic user request,
+fixed policy, and verified context. A deterministic Wall enforces hard boundaries; Laya evaluates
+contextual authorization; explicit grants and isolated user learning can reduce optional confirmations.
+The controller rechecks the exact action before dispatch. Learned behavior cannot override the Wall,
+a mandatory confirmation, or a Gatekeeper BLOCK.
 
-## Start here
+## Authorization pipeline
 
-Use Python 3.12 from the repository root:
-
-```bash
-python -m venv .venv
-# Linux/macOS: source .venv/bin/activate
-# PowerShell: .\.venv\Scripts\Activate.ps1
-python -m pip install -r environments/cpu.txt
-python -m grids --help
-python -m grids benchmark discover
-python -m grids benchmark plan --config configs/experiments/smoke.json
-python -m pytest -q -p no:cacheprovider
+```mermaid
+flowchart LR
+    A[User request and actor proposal] --> B[Parse and bind exact action]
+    B --> W{Deterministic Wall}
+    W -->|Pass| L{Laya Gatekeeper}
+    W -->|Deny or unresolved| X[Withhold or escalate]
+    L -->|BLOCK or error| X
+    L -->|ALLOW| R[Recheck action, policy and state]
+    L -->|ASK| P[Explicit approval or eligible existing grant]
+    P --> R
+    R -->|Checks pass| T[Tool dispatch]
+    T --> A
 ```
 
-CPU installation and planning do not download model weights. Inference requires
-separate environments, explicitly downloaded assets, and `--allow-models` for
-benchmark/evaluation execution. See [machine setup](docs/guides/setup.md).
+The shared controller supports native AgentDojo Workspace, Slack and Banking, OpenAI-compatible
+acting models, and unprotected, Wall-only and Wall-plus-Gatekeeper modes. Actor-specific settings
+stay in model profiles. Application developers can supply their own actor, tool runtime and trusted
+fact resolver through the same [integration contracts](docs/guides/integration.md).
+
+## Research questions and evidence
+
+The primary evaluation compares identical recorded actions and decision-time evidence across
+protection configurations. ALLOW, ASK and BLOCK agreement, false approvals, coverage and computation
+cost are distinct from native AgentDojo task utility and attack success. Independent reviewed
+labels remain necessary for definitive authorization-accuracy claims.
+
+- **Permission enforcement:** 36 constructed sequences across three suites, with zero forbidden
+  dispatches in the recorded no-memory, explicit-grant and contextual-learning checks.
+- **Real inference:** small base-Laya and Cybersec CPU checks completed. Successful inference
+  does not establish correct authorization; the published evidence includes disagreements.
+- **Laya comparisons:** all saved screening configurations and selected full-cohort results are
+  provided with accuracy, false approvals, latency, CPU time and memory. Labels are provisional.
+- **Learning:** persistent exact grants and a per-user contextual learner are integrated into the
+  controller. Offline LinUCB-style, Thompson and epsilon-greedy comparisons are research controls.
+  Weight fine-tuning, calibration and checkpoint promotion remain unfinished.
+
+Read the [evidence index](docs/results/README.md) for assumptions, historical experiments and limitations.
+The supplied [manuscript](paper/manuscript.pdf) is a research manuscript; no acceptance or publication
+status is asserted. Results must be reconciled with the manuscript before submission.
 
 ## Repository
 
-| Path | Purpose |
+| Directory | Role |
 |---|---|
-| `src/grids/` | Shared controller, Wall, Laya, actors, AgentDojo, execution and evaluation |
-| `configs/` | Pinned model profiles, experiment examples, permission metadata |
-| `environments/` | CPU, Laya and training-data installation profiles; actor versions live in model profiles |
-| `experiments/notebooks/` | Thin notebooks invoking the public CLI |
-| `tests/` | Unit and integration tests, with [test catalog](docs/development/testing.md) |
-| `scripts/` | Scheduler-specific shell entry points only |
-| `docs/` | [Documentation index](docs/README.md), guidelines, and project status |
-| `results/` | Ignored generated datasets, labels, runs, evaluations, and reports |
+| `src/grids/` | Reusable authorization pipeline, model adapters, native benchmarks and evaluation CLI |
+| `configs/` | Model pins, policies and declarative experiment configurations |
+| `environments/` | Dependency profiles for separate runner and model environments |
+| `experiments/notebooks/` | Research walkthroughs using the shared CLI and saved evidence |
+| `docs/` | Architecture, reproduction, integration, evidence and project status |
+| `paper/` | Supplied research manuscript |
+| `tests/` | Retained authorization, data-integrity and pipeline regression checks |
+| `scripts/` | Scheduler entry points |
 
-Seven actor profiles are provided; profile availability is not proof of successful
-GPU execution or model quality. See [models and validation status](docs/guides/models.md).
-AgentDojo remains pinned to the inspected revision; an upgrade is a separate task.
+Generated datasets, models, environments and raw runs stay outside the tracked release.
+Selected aggregate evidence is committed under `docs/results/`.
 
-Development starts with [PROJECT_GUIDELINES](docs/PROJECT_GUIDELINES.md).
-This refactor intentionally replaces the former package names and CLI. Historical
-tracked material is available in Git; local raw results and caches are preserved.
+## Demonstration software
+
+A separate demonstration-software branch is planned; its name and release will be announced here
+once reviewed. It will use this repository's authorization pipeline as its core. The research
+checkout already provides a [local simulated demonstration](docs/guides/reproduce.md), with no
+real email, banking or file-changing service integration required.
+
+Development follows [PROJECT_GUIDELINES](docs/PROJECT_GUIDELINES.md); current completion status
+and remaining research work are recorded in [project_tracking](docs/project_tracking.md).

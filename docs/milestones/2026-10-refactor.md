@@ -62,3 +62,19 @@ researched; GPU loading and memory fit remain unverified. Independent labels,
 real-model regression, semantic quality and CARC site validation remain open in
 the [tracker](../project_tracking.md). No task-specific security exception, automatic
 ASK approval or benchmark-score tuning was introduced.
+
+## Research release preparation â€” 2026-11-11
+
+Prepared `codex/research-release` locally from the integrated permission-learning implementation.
+Organized the supplied manuscript and one architecture figure; replaced the setup-heavy root README
+with a research overview. Added reproduction/application integration guides and an evidence notebook.
+Exported aggregate results with source hashes, preserving all raw artifacts and provisional-label
+limitations. Removed obsolete live-memory provider branches and redundant tests. No scientific
+results were recomputed or improved by this cleanup, and no new fine-tuning is claimed.
+
+The surrounding workspace was reviewed: `agentdojo-ptl` remains a separate repository; administration,
+CARC account material, third-party PDFs and old raw logs are excluded. Historical Laya question-search
+source is missing, though its saved aggregate outputs are included and explicitly labeled historical.
+Final public release requires license selection and author verification of manuscript claims.
+
+Release verification: Ruff passed; **352 CPU tests passed** after removing 10 redundant/obsolete checks. The documented simulated demo completed 504 actions per strategy (off, grants, active), with zero forbidden dispatches and zero errors. Evidence: `results/research-release-smoke-20261111/report.html`. No new real inference was performed during release preparation.

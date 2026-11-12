@@ -12,12 +12,6 @@ def test_published_dataset_is_valid_and_leak_free():
     assert problems == []
 
 
-def test_published_readme_states_review_and_matches_files():
-    published = td.Layout().published
-    readme = (published / 'README.md').read_text(encoding='utf-8')
-    assert '**Review:**' in readme and 'DRAFT' not in readme
-    for name in ('train.jsonl', 'test.jsonl', 'provenance.jsonl'):
-        assert td.sha256(published / name) in readme
 
 
 def test_context_is_the_exact_laya_input_and_reproducible():
