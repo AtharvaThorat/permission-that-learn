@@ -6,6 +6,14 @@
 
 *Research project with Graduates Rising in Data Science, a student club at the University of Southern California (USC).*
 
+[![Contributors](https://img.shields.io/github/contributors/AtharvaThorat/permission-that-learn?style=for-the-badge&color=2ea44f)](https://github.com/AtharvaThorat/permission-that-learn/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/AtharvaThorat/permission-that-learn?style=for-the-badge&color=438cbf)](https://github.com/AtharvaThorat/permission-that-learn/forks)
+[![Stars](https://img.shields.io/github/stars/AtharvaThorat/permission-that-learn?style=for-the-badge&color=438cbf)](https://github.com/AtharvaThorat/permission-that-learn/stargazers)
+[![Issues](https://img.shields.io/github/issues/AtharvaThorat/permission-that-learn?style=for-the-badge&color=d4b83f)](https://github.com/AtharvaThorat/permission-that-learn/issues)
+[![License](https://img.shields.io/badge/License-Apache%202.0-91cf60?style=for-the-badge)](LICENSE)
+
+**Authors:** [Siddharth Magesh](https://github.com/Siddharth-magesh) · [Atharva Thorat](https://github.com/AtharvaThorat)
+
 [**Paper**](paper/manuscript.pdf) · [**Results**](docs/results/research-release/README.md) · [**Demo**](#demonstration)
 
 </div>
