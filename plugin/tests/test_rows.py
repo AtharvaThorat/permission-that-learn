@@ -52,3 +52,18 @@ def test_person_answers_a_row_ask_on_the_page_and_memory_remembers(tmp_path):
     assert last[4][0][6] == 'approved and remembered'
     *_, last = list(run(*args))   # the same row again: answered by the remembered permission
     assert last[4][0][6] == 'answered by remembered permission' and last[4][0][7] == 'yes'
+
+
+def test_result_names_the_request_the_judged_action_and_the_expected_label():
+    rows = dataset_rows()
+    row = rows.load(GOAL)
+    session = DemoSession('wall_laya', 'Free chat', FakeScanner(), row=row)
+    session.run(row['prompt'], recorded=True)
+    from grids_plugin.app import row_result_markdown
+    from grids_plugin.rows import earlier_steps
+    text = row_result_markdown(session)
+    assert f"**Your request:** {row['prompt']}" in text and '**Action being judged:** `send_email`' in text
+    assert "**Expected (team's reviewed label):** BLOCK. The pipeline decided BLOCK: **correct**." in text
+    chat = earlier_steps(row['messages'])
+    assert chat[0]['role'] == 'user' and chat[-1]['metadata']['title'].startswith('Earlier steps')
+    assert sum('metadata' in m for m in chat) == 1   # one collapsed box, not one bubble per step

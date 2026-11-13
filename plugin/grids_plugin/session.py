@@ -494,7 +494,7 @@ class DemoSession:
                 'learner_would_reuse': sum(e['recommendation'] == 'USE_EXISTING_GRANT' for e in self.memory_events)}
 
     def table(self):
-        return [[i + 1, row['tool'], json.dumps(row['arguments'], ensure_ascii=False)[:120], row['wall'] or '-',
+        return [[i + 1, row['tool'], json.dumps(row['arguments'], ensure_ascii=False)[:60], row['wall'] or '-',
                  row['gate_output'] or '-', row['decision'] or '-', row['memory'] or '-',
                  {True: 'yes', False: 'no', None: '-'}[row['executed']], row.get('judge') or '-']
                 for i, row in enumerate(self.rows.values())]

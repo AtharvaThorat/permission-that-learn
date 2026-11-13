@@ -56,20 +56,23 @@ class DatasetRows:
                 'source_label': item['row'].get('source_label')}
 
 
-def earlier_steps(messages, limit=400):
-    """The row's earlier tool calls and results as chat messages (already run when the row is loaded)."""
-    chat, names = [], {}
+def earlier_steps(messages, limit=300):
+    """The row's request as a chat message, and its earlier tool calls and results in one collapsed box: they were
+    already done before the tested action and are not judged."""
+    chat, names, steps = [], {}, []
     for m in messages:
         if m['role'] == 'user':
             chat.append({'role': 'user', 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])})
         elif m['role'] == 'assistant':
             for c in m.get('tool_calls') or []:
                 names[c['id']] = c['function']['name']
-                chat.append({'role': 'assistant', 'content': f"(earlier step) calls `{c['function']['name']}` "
-                                                             f"{c['function']['arguments'][:limit]}"})
+                steps.append(f"(earlier step) called `{c['function']['name']}` {c['function']['arguments'][:limit]}")
         elif m['role'] == 'tool':
             text = m['content'] if isinstance(m['content'], str) else str(m['content'])
             more = ' …' if len(text) > limit else ''
-            chat.append({'role': 'assistant', 'content': f"(earlier step) `{names.get(m['tool_call_id'], 'tool')}` "
-                                                         f"returned:\n\n```\n{text[:limit]}{more}\n```"})
+            steps.append(f"(earlier step) `{names.get(m['tool_call_id'], 'tool')}` returned:\n\n```\n{text[:limit]}{more}\n```")
+    if steps:
+        chat.append({'role': 'assistant', 'content': '\n\n'.join(steps),
+                     'metadata': {'title': f'Earlier steps ({len(steps)}): already done before the tested action, '
+                                           'not judged (click to open)', 'status': 'done'}})
     return chat

@@ -4,6 +4,7 @@ the repository's permission memory.
     python -m grids_plugin.app --model qwen2.5:7b --laya-cache /content/hf-cache --memory-store /content/permissions.sqlite --share
 """
 import argparse
+import json
 import time
 from pathlib import Path
 
@@ -96,7 +97,8 @@ def row_result_markdown(session):
         return f'Error: {session.error}' if session.error else 'The action was not run.'
     verified = bool(session.row.get('verified'))
     call = session.row['call']
-    steps = [f"**Action:** `{call.function}` `{dict(call.args)}`"]
+    steps = [f"**Your request:** {session.row['prompt']}",
+             f"**Action being judged:** `{call.function}` `{json.dumps(dict(call.args), ensure_ascii=False)[:200]}`"]
     wall = (r.get('wall') or '-').replace(' (in case)', '')
     if wall == 'off':
         steps.append('**Wall:** off in this pipeline.')
@@ -122,6 +124,11 @@ def row_result_markdown(session):
     if r['attacker_goal_achieved'] is not None:
         steps.append("**Attack check (AgentDojo):** the attacker's goal was "
                      + ('**achieved**.' if r['attacker_goal_achieved'] else '**not achieved**.'))
+    expected = session.row.get('reviewed_label')
+    if expected:   # dataset rows: the team's reviewed label against the pipeline's decision
+        verdict = r['decision'] or '-'
+        steps.append(f"**Expected (team's reviewed label):** {expected}. The pipeline decided {verdict}: "
+                     + ('**correct**.' if verdict == expected else '**wrong**.'))
     return '\n'.join(f'{i}. {step}' for i, step in enumerate(steps, 1))
 
 
@@ -290,7 +297,8 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                 prompt = gr.Textbox(label='Your request', lines=2)
                 send_button = gr.Button('Send', variant='primary')
             with gr.Column(scale=6):
-                table = gr.Dataframe(headers=HEADERS, label='Every action the assistant proposed', wrap=True)
+                table = gr.Dataframe(headers=HEADERS, label='Every action checked', wrap=True,
+                                     column_widths=['4%', '14%', '20%', '10%', '20%', '9%', '11%', '5%', '7%'])
                 pending = gr.Markdown()
                 with gr.Row():
                     approve = gr.Button('Approve', interactive=False)
