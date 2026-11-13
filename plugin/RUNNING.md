@@ -30,14 +30,19 @@ Options: `--memory-store <file>` (remembered permissions), `--laya-device cpu|cu
 
 ### Using the page
 
-1. **Protection**: No protection / Wall only / Wall + laya-cybersec.
-2. **Permission memory** (only with Wall + laya-cybersec): Off / Grants (reuse remembered permissions, default) /
-   Shadow (learner records, still asks) / Active (learner decides when to reuse).
-3. **Scenario**: pick one. Only the two "Attack…" scenarios contain the hidden instruction.
-4. Press **Start / reset Workspace**. Remembered permissions are kept across resets.
-5. Type a request and press **Send**.
-6. When an action waits: **Approve**, **Approve and remember** (only for laya-cybersec's own asks), or **Reject**.
-7. **Remembered permissions** lists each grant; pick one and press **Revoke** to remove it.
+1. **Pipeline**: **Wall + laya-cybersec + learning + memory**, or **laya-cybersec + learning + memory (no Wall)**.
+2. **Test one action**: pick an item (an ASK case or a team dataset row) and press **Run**.
+3. When an action waits: **Approve**, **Approve and remember** (only for laya-cybersec's own asks), or **Reject**.
+   The chat shows the result step by step: Wall, laya-cybersec, your answer or memory, and whether it ran.
+4. **Remembered permissions** lists each grant; pick one and press **Revoke** to remove it.
+5. **Or chat with the assistant** (collapsed): pick a **Scenario**, press **Start / reset Workspace**, type a request
+   and press **Send**. Only the two "Attack…" scenarios contain the hidden instruction.
+6. **Advanced** (collapsed): another protection level (No protection / Wall only), the memory mode (Off / Grants /
+   Shadow / Active, default Active = learning + memory), the LLM-judge timing and the Compute table.
+
+Memory with learning (Active): a remembered permission is reused once the learner has seen it about 10 times, and 1 in
+10 times it still asks, to keep learning. To see a remembered permission reused at once, choose memory **Grants** in
+Advanced.
 
 ### Test prompts
 
@@ -101,16 +106,17 @@ did and whether it ran. The Compute table shows the cost of each part.
 
 ### ASK scenarios (laya-cybersec asks you)
 
-1. Choose **Wall + laya-cybersec** and memory **Grants**.
-2. In **ASK scenarios**, pick a scenario and press **Load scenario**. The first three are Siddharth's verified cases
-   (his exact model state and permission scope; no tool runs); the others run in the live Workspace.
-3. Press **Run the scenario's action**. It waits: press **Approve and remember**.
-4. Press **Load scenario** and **Run** again: the Memory column says `answered by remembered permission`.
-5. Revoke the permission (bottom right), load and run again: it asks again.
+1. Choose a **Pipeline**. To see reuse at once, set memory to **Grants** in Advanced.
+2. In **Test one action**, pick an `ASK case` and press **Run**. The first three are the verified cases (their exact
+   model state and permission scope; no tool runs); the others run in the live Workspace.
+3. It waits: press **Approve and remember**.
+4. Press **Run** again: the Memory column says `answered by remembered permission`.
+5. Revoke the permission (bottom right) and press **Run** again: it asks again.
 
-With memory **Shadow**, every run still asks you (the learner only records); use **Grants** to see reuse.
+With memory **Shadow**, every run still asks you (the learner only records). With **Active** (the default), reuse starts
+after about 10 runs.
 
-Check with the real model (Siddharth's 3 cases and the 3 scenarios), from `plugin`:
+Check with the real model (the 3 verified cases and the 3 scenarios), from `plugin`:
 
 ```powershell
 D:\grids-plugin\env\Scripts\python.exe -m grids_plugin.ask_check --laya-cache D:\grids-plugin\hf-cache
@@ -123,13 +129,13 @@ On Colab: cell 6c.
 Needs the Hugging Face login from C below. Locally, add `--dataset-data D:\grids-plugin\data` to the app command and set
 `$env:PYTHONUTF8 = "1"` first. On Colab, add the `HF_TOKEN` secret (cell 6) before running cell 5.
 
-1. Open **Team dataset row (Workspace)** on the page and pick a row, for example `GRIDS_305` (attack, Wall stops it),
+1. In **Test one action**, pick a `Dataset row` (type its id to search), for example `GRIDS_305` (attack, Wall stops it),
    `GRIDS_306` (the user's own email) or `GRIDS_448` (an email the user never asked for).
-2. Press **Load row**: the row's Workspace and earlier steps are rebuilt; the chat shows the earlier steps.
-3. Press **Run the row's action**. If laya-cybersec answers ASK, press Approve, Approve and remember, or Reject.
+2. Press **Run**: the row's Workspace and earlier steps are rebuilt (the chat shows them) and the row's action goes
+   through the pipeline. If laya-cybersec answers ASK, press Approve, Approve and remember, or Reject.
 4. The chat shows the decision, whether it ran and, for attack rows, whether the attacker's goal was achieved.
 
-Compare protection levels by choosing one before **Load row**. Load the row again to start it fresh.
+Compare the two pipelines by running the same row with each. Every **Run** starts from a fresh Workspace.
 
 ## B. MCP server (plugin for Claude Desktop / Claude Code)
 
@@ -243,7 +249,7 @@ D:\grids-plugin\env\Scripts\python.exe -m grids permissions revoke --store D:\gr
 
 ## C. Test on the team dataset
 
-Siddharth's dataset `siddharth-magesh/grids-laya-permission-v1` is gated, so log in once (it stays logged in):
+The team's dataset `siddharth-magesh/grids-laya-permission-v1` is gated, so log in once (it stays logged in):
 
 1. Open https://huggingface.co/datasets/siddharth-magesh/grids-laya-permission-v1 and accept the terms (done once).
 2. Create a **Read** token at https://huggingface.co/settings/tokens.

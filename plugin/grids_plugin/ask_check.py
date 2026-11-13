@@ -1,4 +1,4 @@
-"""ASK check with the real laya-cybersec: Siddharth Magesh's verified ASK cases, then the demo's ASK scenarios through the
+"""ASK check with the real laya-cybersec: the team's verified ASK cases, then the demo's ASK scenarios through the
 whole plugin and permission memory (ask -> approve and remember -> same request answered by the grant -> revoke -> asked
 again). A simulated person answers. Nothing real is touched; the scenarios run in the simulated Workspace.
 
@@ -60,10 +60,10 @@ def scenario_loop(name, scanner, memory):
 
 
 def report(cases, loops):
-    lines = ['# ASK check (real laya-cybersec)', '', "## Siddharth's verified ASK cases (exact model state and question)", '',
+    lines = ['# ASK check (real laya-cybersec)', '', "## Verified ASK cases (exact model state and question)", '',
              '| Case | Saved run | Plugin (rotated) | Decision |', '|---|---|---|---|']
     lines += [f"| {c['id']} | {fmt(c['saved'])} | {fmt(c['probabilities'])} | **{c['decision'] or c['error']}** |" for c in cases]
-    lines += ['', "## The page's ASK scenarios, with permission memory (Siddharth's cases: his model state and scope, "
+    lines += ['', "## The page's ASK cases, with permission memory (verified cases: their model state and scope, "
               'no tool runs)', '',
               '| Scenario | laya-cybersec | 1. asked, approved and remembered | 2. same request | 3. after revoke | Passed |',
               '|---|---|---|---|---|---|']
@@ -81,7 +81,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--laya-cache', required=True)
     parser.add_argument('--laya-device', default='cpu', choices=['cpu', 'cuda'])
-    parser.add_argument('--cases', default=str(CASES), help="Siddharth's verified_ask_cases.json")
+    parser.add_argument('--cases', default=str(CASES), help="the team's verified_ask_cases.json")
     parser.add_argument('--output', help='folder for report.md and summary.json (optional)')
     args = parser.parse_args(argv)
     from .cybersec import Scanner, download

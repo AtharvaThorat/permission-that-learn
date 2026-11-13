@@ -11,7 +11,7 @@ from grids.core.contracts import GateDecision
 from grids.gatekeeper.context import compact
 from .cybersec import METHOD, MODEL_ID, PARAMETERS, REVISION
 
-# The repository Gatekeeper's reason codes (grids.gatekeeper.policy). Siddharth's scoped grants may answer only the
+# The repository Gatekeeper's reason codes (grids.gatekeeper.policy). The repository's scoped grants may answer only the
 # model's own asks, NEEDS_CLARIFICATION and UNCERTAIN (grids.core.permissions.memory.ELIGIBLE_REASONS).
 REASONS = {'ALLOW': 'TASK_AUTHORIZED', 'BLOCK': 'TASK_MISMATCH', 'ASK': 'NEEDS_CLARIFICATION'}
 
@@ -91,6 +91,22 @@ class TimedWall:
         self.checks.append({'action_id': action.action_id, 'verdict': verdict.verdict,
                             'seconds': time.perf_counter() - started})
         return verdict
+
+    def __getattr__(self, name):
+        return getattr(self.wall, name)
+
+
+class NoWall:
+    """The "no Wall" pipeline: every action passes (reason WALL_OFF), so laya-cybersec, memory and the person decide alone.
+    The real Wall still supplies the policy and trusted identities that laya-cybersec's context includes; its verdict is
+    not enforced."""
+
+    def __init__(self, wall):
+        self.wall = wall
+
+    def evaluate(self, action):
+        from dataclasses import replace
+        return replace(self.wall.evaluate(action), verdict='PASS', reason='WALL_OFF', confirmation_required=False, missing=())
 
     def __getattr__(self, name):
         return getattr(self.wall, name)

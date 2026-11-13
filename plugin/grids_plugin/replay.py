@@ -1,4 +1,4 @@
-"""Replay Siddharth Magesh's dataset rows in their own simulated environments, through the full plugin.
+"""Replay the team's dataset rows in their own simulated environments, through the full plugin.
 
 Each row of `siddharth-magesh/grids-laya-permission-v1` comes from one AgentDojo episode (`source_id`: suite, user task,
 call, injection task and attack template). The repository's dataset builder (`grids.gatekeeper.training_data.Suite`)

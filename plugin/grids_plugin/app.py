@@ -76,46 +76,80 @@ def row_markdown(row):
     return (f"**Team dataset row {row['id']}** ({row['kind']}). Reviewed label **{row['reviewed_label'] or '-'}**, "
             f"source label {row['source_label'] or '-'}.  \n"
             f"Proposed action: **{call.function}** `{dict(call.args)}`  \n"
-            f"Workspace rebuilt with the row's injected text and earlier steps ({rebuilt}). Wall: the dataset's strict "
-            "preset.  \n**Run the row's action** sends exactly this action through the plugin; when laya-cybersec "
-            "answers ASK, you decide. **Send** gives your message to the assistant in this Workspace instead.")
+            f"Workspace rebuilt with the row's injected text and earlier steps ({rebuilt}); the Wall uses the dataset's "
+            "strict preset.")
 
 
 def case_markdown(case):
     """What an ASK scenario is, before anything runs."""
     call = case['call']
-    return (f"**ASK scenario: {case['id']}** — {case['explain']}  \n"
-            f"Request: `{case['prompt']}`  \nFixed action: **{call.function}** `{dict(call.args)}`  \n"
-            "**Run the scenario's action** sends exactly this action "
-            + ("to laya-cybersec" if case.get('verified') else "through the Wall and laya-cybersec") + "; when it waits, "
-            "press Approve, Approve and remember, or Reject. To see memory at work: Approve and remember, load the same "
-            "scenario again and run it: it is answered by the remembered permission. **Send** lets the assistant try instead.")
+    return (f"**ASK case: {case['id']}** — {case['explain']}  \n"
+            f"Request: `{case['prompt']}`  \nAction: **{call.function}** `{dict(call.args)}`  \n"
+            "When it waits, press Approve, Approve and remember, or Reject. With learning on, a remembered permission is "
+            "reused once the learner has seen it about 10 times (Advanced → memory Grants reuses it at once).")
 
 
 def row_result_markdown(session):
+    """The result of a fixed action, step by step in plain words."""
     r = session.row_result
     if session.error or not r:
-        return f'Error: {session.error}' if session.error else 'The row was not run.'
-    what = 'Scenario' if session.row.get('suite') is None else 'Row'
-    text = (f"{what} {session.row['id']}: **{session.row['call'].function}** — decision **{r['decision'] or '-'}** "
-            f"(`{r['reason'] or '-'}`), {'ran' if r['executed'] else 'did not run'}.")
-    if r.get('memory'):
-        text += f" Memory: {r['memory']}."
-    if r.get('decision') == 'ASK' and not r.get('memory'):
-        text += ' You were asked.'
-    if session.row.get('verified'):
-        text += " (Siddharth's case: no tool runs.)"
+        return f'Error: {session.error}' if session.error else 'The action was not run.'
+    verified = bool(session.row.get('verified'))
+    call = session.row['call']
+    steps = [f"**Action:** `{call.function}` `{dict(call.args)}`"]
+    wall = (r.get('wall') or '-').replace(' (in case)', '')
+    if wall == 'off':
+        steps.append('**Wall:** off in this pipeline.')
+    if wall not in ('PASS', '-', 'off'):
+        steps.append(f"**Wall:** stopped it (`{r.get('wall_reason')}`). laya-cybersec was not asked.")
+    else:
+        if wall != 'off':
+            steps.append('**Wall:** passed it' + (' (the verdict recorded in the case).' if verified else '.'))
+        if r.get('laya'):
+            steps.append(f"**laya-cybersec:** {r['decision']} ({r['laya']}).")
+        if r.get('memory') == 'answered by remembered permission':
+            steps.append('**Permission memory:** answered it with your remembered permission, so you were **not asked**.')
+        elif r.get('asked'):
+            answer = {'approved': '**approved** it', 'rejected': '**rejected** it'}.get(r.get('person'), 'did not answer in time')
+            remembered = ' and remembered it' if r.get('memory') == 'approved and remembered' else ''
+            steps.append(f"**You:** {answer}{remembered}.")
+    outcome = ('allowed' if r['executed'] else 'not allowed')
+    if verified:
+        outcome += ' (verified case: no tool actually runs)'
+    else:
+        outcome += ', so it ran' if r['executed'] else ', so it did not run'
+    steps.append(f"**Result:** {outcome}.")
     if r['attacker_goal_achieved'] is not None:
-        text += (" AgentDojo's security check: the attacker's goal was "
-                 + ('**achieved**.' if r['attacker_goal_achieved'] else '**not achieved**.'))
-    return text
+        steps.append("**Attack check (AgentDojo):** the attacker's goal was "
+                     + ('**achieved**.' if r['attacker_goal_achieved'] else '**not achieved**.'))
+    return '\n'.join(f'{i}. {step}' for i, step in enumerate(steps, 1))
+
+
+def result_message(session, title):
+    """The result as its own titled box in the chat, apart from anything the assistant said."""
+    return {'role': 'assistant', 'content': row_result_markdown(session), 'metadata': {'title': title}}
+
+USE_PIPELINE = 'Use the pipeline above'
+PIPELINES = {'wall_laya': 'Wall + laya-cybersec + learning + memory',
+             'laya_only': 'laya-cybersec + learning + memory (no Wall)'}
 
 
 def build_app(make_session, laya_available=True, memory=None, rows=None):
     """`make_session(mode, scenario, compare, memory_mode, row=None)`; `memory` is the shared Memory store, or None;
     `rows` is a rows.DatasetRows (the team dataset's Workspace rows), or None."""
-    modes = [label for key, label in MODES.items() if key != 'wall_laya' or laya_available]
+    modes = [label for key, label in MODES.items() if key not in ('wall_laya', 'laya_only') or laya_available]
     by_label = {label: key for key, label in MODES.items()}
+    # The two pipelines on the page; both use laya-cybersec, permission learning and memory. Values are MODES labels.
+    pipelines = ([(PIPELINES['wall_laya'], MODES['wall_laya']), (PIPELINES['laya_only'], MODES['laya_only'])] if laya_available
+                 else [(MODES['wall_only'], MODES['wall_only'])])
+    others = [USE_PIPELINE, MODES['unprotected'], MODES['wall_only']]
+
+    def resolve(mode_label, other=USE_PIPELINE):
+        """The protection level: the Advanced choice if one is set, else the pipeline."""
+        return by_label[other] if other in by_label else by_label[mode_label]
+
+    def shown(key):
+        return PIPELINES.get(key, MODES[key])
     memory_labels = [MEMORY_MODES['off']] + ([label for key, label in MEMORY_MODES.items() if key != 'off'] if memory else [])
     memory_by_label = {label: key for key, label in MEMORY_MODES.items()}
 
@@ -135,21 +169,21 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                 gr.update(interactive=rememberable), gr.update(interactive=pending), memory_markdown(session), grants,
                 revoke_choices)
 
-    def new_session(mode_label, scenario, compare, memory_label):
-        return make_session(by_label[mode_label], scenario, compare, memory_by_label.get(memory_label, 'off'))
+    def new_session(mode_label, scenario, compare, memory_label, other=USE_PIPELINE):
+        return make_session(resolve(mode_label, other), scenario, compare, memory_by_label.get(memory_label, 'off'))
 
-    def start(mode_label, scenario, compare, memory_label):
-        session = new_session(mode_label, scenario, compare, memory_label)
-        info = (f"**{scenario}** — {SCENARIOS[scenario]['explain']}  \nProtection: **{mode_label}**. "
+    def start(mode_label, scenario, compare, memory_label, other=USE_PIPELINE):
+        session = new_session(mode_label, scenario, compare, memory_label, other)
+        info = (f"**{scenario}** — {SCENARIOS[scenario]['explain']}  \nProtection: **{shown(session.mode)}**. "
                 f"Memory: **{MEMORY_MODES[session.memory_mode]}**. Workspace reset; remembered permissions are kept.")
         return (session, [], SCENARIOS[scenario]['prompt'], info, *views(session, [])[1:])
 
-    def send(session, chat, prompt, mode_label, scenario, compare, memory_label):
+    def send(session, chat, prompt, mode_label, scenario, compare, memory_label, other=USE_PIPELINE):
         if not prompt.strip():
             yield (session, chat, prompt, *views(session, chat)[1:])
             return
         if session is None:
-            session = new_session(mode_label, scenario, compare, memory_label)
+            session = new_session(mode_label, scenario, compare, memory_label, other)
         chat = chat + [{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': '…working'}]
         thread = session.start(prompt)
         while thread.is_alive():
@@ -159,35 +193,58 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                     else f'Error: {session.error}'}
         yield (session, chat, '', *views(session, chat)[1:])
 
-    def load_row(row_id, mode_label, compare, memory_label):
+    def load_row(row_id, mode_label, compare, memory_label, other=USE_PIPELINE):
         from .rows import earlier_steps
         if not row_id:
             raise gr.Error('Pick a dataset row first')
         row = rows.load(row_id)
-        session = make_session(by_label[mode_label], 'Free chat', compare, memory_by_label.get(memory_label, 'off'), row=row)
+        session = make_session(resolve(mode_label, other), 'Free chat', compare, memory_by_label.get(memory_label, 'off'),
+                               row=row)
         chat = earlier_steps(row['messages'])
-        info = (row_markdown(row) + f"  \nProtection: **{mode_label}**. Memory: **{MEMORY_MODES[session.memory_mode]}**. "
+        info = (row_markdown(row) + f"  \nProtection: **{shown(session.mode)}**. Memory: **{MEMORY_MODES[session.memory_mode]}**. "
                 'Remembered permissions are kept.')
         return (session, chat, row['prompt'], info, *views(session, chat)[1:], gr.update(interactive=True))
 
-    def load_case(name, mode_label, compare, memory_label):
+    def load_case(name, mode_label, compare, memory_label, other=USE_PIPELINE):
         if not name:
             raise gr.Error('Pick an ASK scenario first')
         case = verified_case(name) if name in VERIFIED_CASES else ask_case(name)
-        session = make_session(by_label[mode_label], 'Free chat', compare, memory_by_label.get(memory_label, 'off'), row=case)
-        info = (case_markdown(case) + f"  \nProtection: **{mode_label}**. Memory: **{MEMORY_MODES[session.memory_mode]}**. "
+        session = make_session(resolve(mode_label, other), 'Free chat', compare, memory_by_label.get(memory_label, 'off'),
+                               row=case)
+        info = (case_markdown(case) + f"  \nProtection: **{shown(session.mode)}**. Memory: **{MEMORY_MODES[session.memory_mode]}**. "
                 'Workspace reset; remembered permissions are kept.')
         return (session, [], case['prompt'], info, *views(session, [])[1:], gr.update(interactive=True))
 
+    # One list: the team's verified ASK cases, the Workspace ASK scenarios, then the team dataset's Workspace rows.
+    items = ([(f'ASK case · {name}', f'case:{name}') for name in list(VERIFIED_CASES) + list(ASK_SCENARIOS)]
+             + ([(f'Dataset row · {label}', f'row:{row_id}') for label, row_id in rows.choices()] if rows else []))
+
+    def load_item(item, mode_label, compare, memory_label, other=USE_PIPELINE):
+        kind, _, key = (item or '').partition(':')
+        if kind == 'row':
+            return load_row(key, mode_label, compare, memory_label, other)
+        if kind == 'case':
+            return load_case(key, mode_label, compare, memory_label, other)
+        raise gr.Error('Pick an item first')
+
+    def run_item(item, mode_label, compare, memory_label, other=USE_PIPELINE):
+        """One click: load the item (a fresh Workspace) and run its action through the chosen pipeline."""
+        session, chat, prompt, info, *rest = load_item(item, mode_label, compare, memory_label, other)
+        yield (session, chat, prompt, info, *rest[:-1])
+        for update in run_row(session, chat):
+            yield (update[0], update[1], prompt, info, *update[2:])
+
     def run_row(session, chat):
         if session is None or session.row is None:
-            raise gr.Error('Load a dataset row first')
-        chat = chat + [{'role': 'assistant', 'content': f"…running the row's action `{session.row['call'].function}`"}]
+            raise gr.Error('Press Load first')
+        title = f"Result of the action: {session.row['id']}"
+        chat = chat + [{'role': 'assistant', 'content': f"…running `{session.row['call'].function}`. If it waits, answer with "
+                        'the buttons on the right.', 'metadata': {'title': title}}]
         thread = session.start(session.row['prompt'], recorded=True)
         while thread.is_alive():
             yield (session, chat, *views(session, chat)[1:])
             time.sleep(0.5)
-        chat[-1] = {'role': 'assistant', 'content': row_result_markdown(session)}
+        chat[-1] = result_message(session, title)
         yield (session, chat, *views(session, chat)[1:])
 
     def decide(session, approved, remember=False):
@@ -205,24 +262,26 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
     with gr.Blocks(title='GRIDS permission demo') as app:
         state = gr.State(None)
         gr.Markdown(INTRO)
-        with gr.Row():
-            mode = gr.Radio(modes, value=modes[-1], label='Protection')
-            scenario = gr.Dropdown(list(SCENARIOS), value='Attack only laya-cybersec catches', label='Scenario')
-            memory_mode = gr.Radio(memory_labels, value=MEMORY_MODES['grants'] if memory else memory_labels[0],
-                                   label='Permission memory', visible=memory is not None)
-            compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
-            reset = gr.Button('Start / reset Workspace')
-        with gr.Accordion('ASK scenarios: laya-cybersec asks you', open=True):
+        mode = gr.Radio(pipelines, value=pipelines[0][1], label='Pipeline')
+        with gr.Accordion('Test one action: ASK cases and team dataset rows', open=True):
+            gr.Markdown('Pick an item and press **Run**. The result says what the Wall and laya-cybersec decided '
+                        '(ALLOW, ASK or BLOCK); when it asks, answer with the buttons on the right. Type to search.'
+                        + ('' if rows else ' *(Team dataset rows appear when the demo starts with the dataset token.)*'))
             with gr.Row():
-                case_choice = gr.Dropdown(list(VERIFIED_CASES) + list(ASK_SCENARIOS),
-                                          value=(list(VERIFIED_CASES) + list(ASK_SCENARIOS))[0], label='ASK scenario', scale=4)
-                load_case_button = gr.Button('Load scenario')
-                run_case_button = gr.Button("Run the scenario's action", variant='primary', interactive=False)
-        with gr.Accordion('Team dataset row (Workspace)', open=False, visible=rows is not None):
+                item_choice = gr.Dropdown(items, value=items[0][1], label='Item', scale=5, filterable=True)
+                run_item_button = gr.Button('Run', variant='primary')
+        with gr.Accordion('Or chat with the assistant', open=False):
             with gr.Row():
-                row_choice = gr.Dropdown(rows.choices() if rows else [], label='Row', scale=4)
-                load_button = gr.Button('Load row')
-                run_row_button = gr.Button("Run the row's action", variant='primary', interactive=False)
+                scenario = gr.Dropdown(list(SCENARIOS), value='Attack only laya-cybersec catches', label='Scenario', scale=4)
+                reset = gr.Button('Start / reset Workspace')
+        with gr.Accordion('Advanced', open=False):
+            with gr.Row():
+                other = gr.Radio(others if laya_available else [USE_PIPELINE], value=USE_PIPELINE,
+                                 label='Other protection level (instead of the pipeline)')
+                memory_mode = gr.Radio(memory_labels, value=MEMORY_MODES['active'] if memory else memory_labels[0],
+                                       label='Permission memory', visible=memory is not None)
+                compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
+            compute = gr.Markdown()
         info = gr.Markdown()
         with gr.Row():
             with gr.Column(scale=5):
@@ -236,7 +295,6 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                     approve = gr.Button('Approve', interactive=False)
                     remember = gr.Button('Approve and remember', interactive=False)
                     reject = gr.Button('Reject', variant='stop', interactive=False)
-                compute = gr.Markdown()
                 memory_info = gr.Markdown()
                 grants = gr.Dataframe(headers=GRANT_HEADERS, label='Remembered permissions', wrap=True,
                                       visible=memory is not None)
@@ -245,20 +303,15 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                     revoke_button = gr.Button('Revoke')
         outputs = [table, compute, pending, approve, remember, reject, memory_info, grants, revoke_choice]
         buttons = [approve, remember, reject]
-        reset.click(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs]).then(
-            lambda: (gr.update(interactive=False), gr.update(interactive=False)), None, [run_row_button, run_case_button])
-        load_case_button.click(load_case, [case_choice, mode, compare, memory_mode],
-                               [state, chat, prompt, info, *outputs, run_case_button])
-        run_case_button.click(run_row, [state, chat], [state, chat, *outputs])
-        load_button.click(load_row, [row_choice, mode, compare, memory_mode],
-                          [state, chat, prompt, info, *outputs, run_row_button])
-        run_row_button.click(run_row, [state, chat], [state, chat, *outputs])
-        send_button.click(send, [state, chat, prompt, mode, scenario, compare, memory_mode], [state, chat, prompt, *outputs])
+        settings = [mode, scenario, compare, memory_mode, other]
+        reset.click(start, settings, [state, chat, prompt, info, *outputs])
+        run_item_button.click(run_item, [item_choice, mode, compare, memory_mode, other], [state, chat, prompt, info, *outputs])
+        send_button.click(send, [state, chat, prompt, *settings], [state, chat, prompt, *outputs])
         approve.click(lambda s: decide(s, True), [state], buttons)
         remember.click(lambda s: decide(s, True, remember=True), [state], buttons)
         reject.click(lambda s: decide(s, False), [state], buttons)
         revoke_button.click(revoke, [revoke_choice], [grants, revoke_choice])
-        app.load(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs])
+        app.load(start, settings, [state, chat, prompt, info, *outputs])
     return app
 
 

@@ -1,7 +1,7 @@
 """TextCortex/laya-cybersec as the Gatekeeper model, with the team's rotated-option ALLOW / ASK / BLOCK method.
 
 laya-cybersec is fine-tuned from Laya (mmBERT-base encoder, 321.9M parameters). As in the team's permission study
-(`grids.evaluation.permission_sim`, Siddharth Magesh's method of 2026-11-10), it is asked the repository's decision
+(`grids.evaluation.permission_sim`, the team's method of 2026-11-10), it is asked the repository's decision
 question three times in one model call, with the ALLOW, ASK and BLOCK options in rotated orders. Every answer and the
 truncation diagnostics are validated; the probabilities are averaged by label and the highest wins (a tie is ASK).
 Any failure is an error, never an ALLOW.

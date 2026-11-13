@@ -1,4 +1,4 @@
-"""Test the plugin's pipeline on Siddharth Magesh's dataset `siddharth-magesh/grids-laya-permission-v1` (gated).
+"""Test the plugin's pipeline on the team's dataset `siddharth-magesh/grids-laya-permission-v1` (gated).
 
 150 short user requests, each with one proposed tool call (Workspace, Slack, Banking), labelled ALLOW, ASK or BLOCK.
 
@@ -8,7 +8,7 @@
    (`experiments/reference/permission-memory/reviewed_labels.csv`). Both label sets are LLM-made, not ground truth.
 2. **Reproduction.** The decisions are compared with the team's recorded run on the same rows
    (`experiments/reference/permission-memory/laya_cybersec_rotated_predictions.jsonl`).
-3. **Permission memory.** Two passes over the rows through the repository's `PermissionStore` (Siddharth's scoped
+3. **Permission memory.** Two passes over the rows through the repository's `PermissionStore` (the team's scoped
    grants) with a simulated careful user who follows the reviewed label: in pass 1 every eligible ask goes to the user,
    who approves and remembers ALLOW / ASK rows and rejects BLOCK rows; in pass 2 the same requests are asked again.
    Counts questions, questions saved by grants, and any grant that would run a BLOCK-labelled action.

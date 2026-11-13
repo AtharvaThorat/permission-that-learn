@@ -1,4 +1,4 @@
-"""Permission memory: the repository's scoped grants and contextual learner (Siddharth Magesh, 2026-11-11).
+"""Permission memory: the repository's scoped grants and contextual learner (the team, 2026-11-11).
 
 This wraps `grids.core.permissions.store.PermissionStore` and `provider.ScopedApprovalProvider` unchanged:
 

@@ -30,19 +30,49 @@ def test_load_and_run_a_scenario_on_the_page(tmp_path):
         return DemoSession(mode, scenario, ASKING, memory=memory, memory_mode=memory_mode, row=row)
 
     app = build_app(make_session, memory=memory)
-    fns = {fn.fn.__name__: fn.fn for fn in app.fns.values() if getattr(fn.fn, '__name__', '') in ('load_case', 'run_row')}
+    run = next(fn.fn for fn in app.fns.values() if getattr(fn.fn, '__name__', '') == 'run_item')
     name = 'Email that waits for your confirmation'
-    args = (name, 'Wall + laya-cybersec', False, 'Grants (reuse remembered permissions)')
-    session, chat, prompt, info, *_, run_button = fns['load_case'](*args)
-    assert prompt == ASK_SCENARIOS[name]['prompt'] and 'ASK scenario' in info and run_button['interactive'] is True
-    stream = fns['run_row'](session, chat)
+    # One Run: (state, chat, prompt, info, table, compute, pending, approve, remember, reject, memory, grants, revoke)
+    args = (f'case:{name}', 'Wall + laya-cybersec', False, 'Grants (reuse remembered permissions)')
+    stream = run(*args)
+    first = next(stream)
+    assert first[2] == ASK_SCENARIOS[name]['prompt'] and 'ASK case' in first[3]
     for update in stream:
-        if update[4]:   # waiting for the person: Approve and remember is offered
-            assert update[6]['interactive'] is True
+        if update[6]:   # waiting for the person: Approve and remember is offered
+            assert update[8]['interactive'] is True
             update[0].respond(True, remember=True)
             break
     *_, last = list(stream)
-    assert 'decision **ASK**' in last[1][-1]['content'] and 'approved and remembered' in last[1][-1]['content']
-    session, chat, *_ = fns['load_case'](*args)
-    *_, last = list(fns['run_row'](session, chat))
-    assert 'answered by remembered permission' in last[1][-1]['content'] and last[2][0][7] == 'yes'
+    result = last[1][-1]
+    assert result['metadata']['title'].startswith('Result of the action')
+    assert '**laya-cybersec:** ASK' in result['content'] and '**approved** it and remembered it' in result['content']
+    *_, last = list(run(*args))   # the same item again: a fresh Workspace, answered by the remembered permission
+    assert 'you were **not asked**' in last[1][-1]['content'] and last[4][0][7] == 'yes'
+
+
+def test_pipeline_without_the_wall(tmp_path):
+    from test_rows import GOAL, dataset_rows
+    memory = Memory(tmp_path / 'permissions.sqlite')
+
+    def make_session(mode, scenario, compare, memory_mode, row=None):
+        return DemoSession(mode, scenario, FakeScanner(), memory=memory, memory_mode=memory_mode, row=row)
+
+    app = build_app(make_session, memory=memory, rows=dataset_rows())
+    run = next(fn.fn for fn in app.fns.values() if getattr(fn.fn, '__name__', '') == 'run_item')
+    learning = 'Active (learner decides when to reuse)'
+    # The attack row: with the Wall it is stopped there; without it, laya-cybersec sees the injection and blocks it.
+    *_, with_wall = list(run(f'row:{GOAL}', 'Wall + laya-cybersec', False, learning))
+    *_, no_wall = list(run(f'row:{GOAL}', 'laya-cybersec (no Wall)', False, learning))
+    assert with_wall[4][0][3] == 'DENY' and with_wall[4][0][4] == '-'
+    assert no_wall[4][0][3] == 'off' and no_wall[4][0][5] == 'BLOCK' and no_wall[4][0][7] == 'no'
+    assert '**Wall:** off in this pipeline.' in no_wall[1][-1]['content'] and 'no Wall' in no_wall[3]
+
+
+def test_one_list_holds_the_cases_and_the_dataset_rows():
+    from test_rows import dataset_rows
+    app = build_app(lambda *a, **k: None, rows=dataset_rows())
+    choices = next(b for b in app.blocks.values() if getattr(b, 'label', None) == 'Item').choices
+    values = [value for _, value in choices]
+    assert values[:3] == [f'case:{name}' for name in VERIFIED_CASES]
+    assert values[3:6] == [f'case:{name}' for name in ASK_SCENARIOS]
+    assert values[6:] == ['row:GRIDS_305', 'row:GRIDS_306']

@@ -23,9 +23,9 @@ def test_injected_goal_row_with_and_without_protection():
         row = rows.load(GOAL)
         session = DemoSession(mode, 'Free chat', FakeScanner(), row=row)
         session.run(row['prompt'], recorded=True)
-        assert session.row_result == {'decision': decision, 'reason': session.row_result['reason'], 'executed': executed,
-                                      'memory': None,
-                                      'attacker_goal_achieved': achieved}, (mode, session.row_result)
+        r = session.row_result
+        assert (r['decision'], r['executed'], r['memory'], r['attacker_goal_achieved'], r['asked'], r['person']) == (
+            decision, executed, None, achieved, False, None), (mode, r)
 
 
 def test_person_answers_a_row_ask_on_the_page_and_memory_remembers(tmp_path):
@@ -37,19 +37,18 @@ def test_person_answers_a_row_ask_on_the_page_and_memory_remembers(tmp_path):
                            row=row)
 
     app = build_app(make_session, memory=memory, rows=rows)
-    fns = {fn.fn.__name__: fn.fn for fn in app.fns.values() if getattr(fn.fn, '__name__', '') in ('load_row', 'run_row')}
-    args = (OWN, 'Wall + laya-cybersec', False, 'Grants (reuse remembered permissions)')
-    session, chat, prompt, info, *_, run_button = fns['load_row'](*args)
-    assert prompt == session.row['prompt'] and 'Team dataset row GRIDS_306' in info and run_button['interactive'] is True
+    run = next(fn.fn for fn in app.fns.values() if getattr(fn.fn, '__name__', '') == 'run_item')
+    args = (f'row:{OWN}', 'Wall + laya-cybersec', False, 'Grants (reuse remembered permissions)')
+    stream = run(*args)
+    session, chat, prompt, info, *_ = next(stream)   # loaded: the row's request and earlier steps
+    assert prompt == session.row['prompt'] and 'Team dataset row GRIDS_306' in info
     assert any('(earlier step)' in m['content'] for m in chat)
-    stream = fns['run_row'](session, chat)
     for update in stream:
-        if update[4]:   # the page shows laya-cybersec's ask; the person presses "Approve and remember"
+        if update[6]:   # the page shows laya-cybersec's ask; the person presses "Approve and remember"
             update[0].respond(True, remember=True)
             break
     *_, last = list(stream)
     assert last[0].row_result['executed'] and 'ran' in last[1][-1]['content']
-    assert last[2][0][6] == 'approved and remembered'
-    session, chat, *_ = fns['load_row'](*args)   # the same row again: answered by the remembered permission
-    *_, last = list(fns['run_row'](session, chat))
-    assert last[2][0][6] == 'answered by remembered permission' and last[2][0][7] == 'yes'
+    assert last[4][0][6] == 'approved and remembered'
+    *_, last = list(run(*args))   # the same row again: answered by the remembered permission
+    assert last[4][0][6] == 'answered by remembered permission' and last[4][0][7] == 'yes'
