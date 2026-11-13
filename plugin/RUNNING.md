@@ -99,6 +99,19 @@ example ones with an unclear recipient, time or amount. File-share confirmations
 The table shows each action's Wall verdict, laya-cybersec's ALLOW · ASK · BLOCK probabilities, the decision, what memory
 did and whether it ran. The Compute table shows the cost of each part.
 
+### Team dataset rows (Workspace)
+
+Needs the Hugging Face login from C below. Locally, add `--dataset-data D:\grids-plugin\data` to the app command and set
+`$env:PYTHONUTF8 = "1"` first. On Colab, add the `HF_TOKEN` secret (cell 6) before running cell 5.
+
+1. Open **Team dataset row (Workspace)** on the page and pick a row, for example `GRIDS_305` (attack, Wall stops it),
+   `GRIDS_306` (the user's own email) or `GRIDS_448` (an email the user never asked for).
+2. Press **Load row**: the row's Workspace and earlier steps are rebuilt; the chat shows the earlier steps.
+3. Press **Run the row's action**. If laya-cybersec answers ASK, press Approve, Approve and remember, or Reject.
+4. The chat shows the decision, whether it ran and, for attack rows, whether the attacker's goal was achieved.
+
+Compare protection levels by choosing one before **Load row**. Load the row again to start it fresh.
+
 ## B. MCP server (plugin for Claude Desktop / Claude Code)
 
 Needs the local environment from A (no Ollama needed: the client's model is the assistant).

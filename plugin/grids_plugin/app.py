@@ -68,8 +68,34 @@ def pending_markdown(session, waiting):
             f'Nothing runs until you decide. {remember}')
 
 
-def build_app(make_session, laya_available=True, memory=None):
-    """`make_session(mode, scenario, compare, memory_mode)`; `memory` is the shared Memory store, or None."""
+def row_markdown(row):
+    """What a loaded team dataset row is, before anything runs."""
+    call = row['call']
+    rebuilt = ('identical to the dataset input' if row['exact'] else
+               'not byte-identical to the dataset input (on Windows, run Python in UTF-8 mode)')
+    return (f"**Team dataset row {row['id']}** ({row['kind']}). Reviewed label **{row['reviewed_label'] or '-'}**, "
+            f"source label {row['source_label'] or '-'}.  \n"
+            f"Proposed action: **{call.function}** `{dict(call.args)}`  \n"
+            f"Workspace rebuilt with the row's injected text and earlier steps ({rebuilt}). Wall: the dataset's strict "
+            "preset.  \n**Run the row's action** sends exactly this action through the plugin; when laya-cybersec "
+            "answers ASK, you decide. **Send** gives your message to the assistant in this Workspace instead.")
+
+
+def row_result_markdown(session):
+    r = session.row_result
+    if session.error or not r:
+        return f'Error: {session.error}' if session.error else 'The row was not run.'
+    text = (f"Row {session.row['id']}: **{session.row['call'].function}** — decision **{r['decision'] or '-'}** "
+            f"(`{r['reason'] or '-'}`), {'ran' if r['executed'] else 'did not run'}.")
+    if r['attacker_goal_achieved'] is not None:
+        text += (" AgentDojo's security check: the attacker's goal was "
+                 + ('**achieved**.' if r['attacker_goal_achieved'] else '**not achieved**.'))
+    return text
+
+
+def build_app(make_session, laya_available=True, memory=None, rows=None):
+    """`make_session(mode, scenario, compare, memory_mode, row=None)`; `memory` is the shared Memory store, or None;
+    `rows` is a rows.DatasetRows (the team dataset's Workspace rows), or None."""
     modes = [label for key, label in MODES.items() if key != 'wall_laya' or laya_available]
     by_label = {label: key for key, label in MODES.items()}
     memory_labels = [MEMORY_MODES['off']] + ([label for key, label in MEMORY_MODES.items() if key != 'off'] if memory else [])
@@ -115,6 +141,28 @@ def build_app(make_session, laya_available=True, memory=None):
                     else f'Error: {session.error}'}
         yield (session, chat, '', *views(session, chat)[1:])
 
+    def load_row(row_id, mode_label, compare, memory_label):
+        from .rows import earlier_steps
+        if not row_id:
+            raise gr.Error('Pick a dataset row first')
+        row = rows.load(row_id)
+        session = make_session(by_label[mode_label], 'Free chat', compare, memory_by_label.get(memory_label, 'off'), row=row)
+        chat = earlier_steps(row['messages'])
+        info = (row_markdown(row) + f"  \nProtection: **{mode_label}**. Memory: **{MEMORY_MODES[session.memory_mode]}**. "
+                'Remembered permissions are kept.')
+        return (session, chat, row['prompt'], info, *views(session, chat)[1:], gr.update(interactive=True))
+
+    def run_row(session, chat):
+        if session is None or session.row is None:
+            raise gr.Error('Load a dataset row first')
+        chat = chat + [{'role': 'assistant', 'content': f"…running the row's action `{session.row['call'].function}`"}]
+        thread = session.start(session.row['prompt'], recorded=True)
+        while thread.is_alive():
+            yield (session, chat, *views(session, chat)[1:])
+            time.sleep(0.5)
+        chat[-1] = {'role': 'assistant', 'content': row_result_markdown(session)}
+        yield (session, chat, *views(session, chat)[1:])
+
     def decide(session, approved, remember=False):
         if session and session.pending:
             session.respond(approved, remember=remember)
@@ -137,6 +185,11 @@ def build_app(make_session, laya_available=True, memory=None):
                                    label='Permission memory', visible=memory is not None)
             compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
             reset = gr.Button('Start / reset Workspace')
+        with gr.Accordion('Team dataset row (Workspace)', open=False, visible=rows is not None):
+            with gr.Row():
+                row_choice = gr.Dropdown(rows.choices() if rows else [], label='Row', scale=4)
+                load_button = gr.Button('Load row')
+                run_row_button = gr.Button("Run the row's action", variant='primary', interactive=False)
         info = gr.Markdown()
         with gr.Row():
             with gr.Column(scale=5):
@@ -159,7 +212,11 @@ def build_app(make_session, laya_available=True, memory=None):
                     revoke_button = gr.Button('Revoke')
         outputs = [table, compute, pending, approve, remember, reject, memory_info, grants, revoke_choice]
         buttons = [approve, remember, reject]
-        reset.click(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs])
+        reset.click(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs]).then(
+            lambda: gr.update(interactive=False), None, [run_row_button])
+        load_button.click(load_row, [row_choice, mode, compare, memory_mode],
+                          [state, chat, prompt, info, *outputs, run_row_button])
+        run_row_button.click(run_row, [state, chat], [state, chat, *outputs])
         send_button.click(send, [state, chat, prompt, mode, scenario, compare, memory_mode], [state, chat, prompt, *outputs])
         approve.click(lambda s: decide(s, True), [state], buttons)
         remember.click(lambda s: decide(s, True, remember=True), [state], buttons)
@@ -177,6 +234,8 @@ def main(argv=None):
     parser.add_argument('--laya-device', default='cpu', choices=['cpu', 'cuda'])
     parser.add_argument('--memory-store', default=str(Path(__file__).resolve().parents[1] / 'memory' / 'permissions.sqlite'),
                         help="SQLite file for remembered permissions (the repository's PermissionStore)")
+    parser.add_argument('--dataset-data', help="folder for the team dataset's files; shows the dataset row picker "
+                                                "(the dataset is gated: log in to Hugging Face or set HF_TOKEN)")
     parser.add_argument('--share', action='store_true', help='public gradio.live link (needed on Colab)')
     parser.add_argument('--port', type=int, default=7860)
     args = parser.parse_args(argv)
@@ -189,11 +248,20 @@ def main(argv=None):
         memory = Memory(args.memory_store)
         print(f'Permission memory: {memory.path}', flush=True)
 
-    def make_session(mode, scenario, compare, memory_mode):
-        return DemoSession(mode, scenario, scanner, memory=memory, memory_mode=memory_mode, model=args.model,
-                           base_url=args.base_url, compare_judge=compare)
+    rows = None
+    if args.dataset_data:
+        try:
+            from .rows import DatasetRows
+            rows = DatasetRows(args.dataset_data)
+            print(f'Team dataset: {len(rows.rows)} Workspace rows', flush=True)
+        except Exception as exc:   # the demo still works without the picker
+            print(f'Team dataset not loaded ({type(exc).__name__}: {exc}); the row picker is hidden', flush=True)
 
-    build_app(make_session, laya_available=scanner is not None, memory=memory).queue().launch(
+    def make_session(mode, scenario, compare, memory_mode, row=None):
+        return DemoSession(mode, scenario, scanner, memory=memory, memory_mode=memory_mode, model=args.model,
+                           base_url=args.base_url, compare_judge=compare, row=row)
+
+    build_app(make_session, laya_available=scanner is not None, memory=memory, rows=rows).queue().launch(
         share=args.share, server_name='0.0.0.0' if args.share else '127.0.0.1', server_port=args.port)
 
 

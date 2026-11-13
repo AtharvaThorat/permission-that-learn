@@ -122,7 +122,7 @@ class Trace:
 class DemoSession:
     def __init__(self, mode, scenario, scanner=None, *, memory=None, memory_mode='off', model='qwen2.5:7b',
                  base_url='http://127.0.0.1:11434/v1', confirm_shares=True, compare_judge=False, approval_wait=300,
-                 actor=None):
+                 actor=None, row=None):
         from .memory import MODES as MEMORY_MODES
         from agentdojo.functions_runtime import FunctionsRuntime
         from agentdojo.task_suite.load_suites import get_suite
@@ -150,11 +150,22 @@ class DemoSession:
         wall_config = WallConfig(confirm_capabilities=['share'] if confirm_shares else [])
         self.wall = TimedWall(PtlWall.from_clean_environment(wall_config, suite.load_and_inject_default_environment({}),
                                                              'workspace'))
+        # A team dataset row (rows.DatasetRows.load): its own rebuilt Workspace, and the dataset's Wall preset and facts.
+        self.row, facts, self.row_result = row, None, None
+        if row is not None:
+            from grids.benchmarks.agentdojo.context import Metadata, suite_facts
+            from grids.gatekeeper import training_data as td
+            data = row['suite']
+            self.env, self.runtime, wall_config = row['env'], data.runtime, data.wall_config
+            self.wall = TimedWall(PtlWall.from_clean_environment(
+                wall_config, data.environment(data.user_task(row['spec']['task']), None), 'workspace'))
+            facts = suite_facts('workspace', Metadata.model_validate(td.SPEC_METADATA))
         os.environ.setdefault('GRIDS_ACTOR_API_KEY', 'ollama')   # Ollama ignores the key; the client requires one
         actor_config = ActorConfig(model_id=model, served_model_name=model, base_url=base_url, temperature=0.0, top_p=1.0,
                                    max_output_tokens=1024, thinking_enabled=None, seed=42, timeout_seconds=300.0)
         self.actor = RecordingActor(actor or OpenAICompatibleActor(actor_config))
-        self.gate = CybersecGate(scanner, self.wall, lambda: self.actor.messages) if mode == 'wall_laya' else None
+        self.speaker = self.actor   # whoever proposes the current action: the chat model, or a row's recorded action
+        self.gate = CybersecGate(scanner, self.wall, lambda: self.speaker.messages) if mode == 'wall_laya' else None
         # Permission memory applies to laya-cybersec's asks, so only with the Gatekeeper on (as in the repository).
         self.memory_mode = memory_mode if mode == 'wall_laya' else 'off'
         self.memory = memory if self.memory_mode != 'off' else None
@@ -168,18 +179,45 @@ class DemoSession:
         approvals = FileApprovalProvider(self.approval_dir, wait_seconds=approval_wait)
         if self.memory is not None:
             approvals = self.memory.provider(approvals, self.memory_mode, record=self.on_memory)
+        self.config, self.approvals, self.facts = config, approvals, facts
         self.pipeline = build_agentdojo_pipeline(config, Dependencies(
             actor=self.actor, wall=self.wall, gatekeeper=self.gate, audit=self.audit, trace=Trace(self),
-            approvals=approvals))
+            approvals=approvals, facts=facts))
 
-    def run(self, prompt):
-        """One controller episode for one chat message. Returns the assistant's final answer."""
+    def recorded_pipeline(self):
+        """A pipeline whose 'assistant' proposes exactly the row's recorded action, then stops."""
+        from grids.actors.client.scripted import ScriptedActor
+        from grids.core.contracts import Dependencies
+        from grids.core.factory import build_agentdojo_pipeline
+        call = self.row['call']
+        proposal = {'role': 'assistant', 'content': None, 'tool_calls': [{'id': 'call_proposed', 'type': 'function',
+                    'function': {'name': call.function, 'arguments': json.dumps(dict(call.args))}}]}
+        actor = RecordingActor(ScriptedActor([proposal] + [{'role': 'assistant', 'content': 'Done.'}] * 3))
+        pipeline = build_agentdojo_pipeline(self.config, Dependencies(
+            actor=actor, wall=self.wall, gatekeeper=self.gate, audit=self.audit, trace=Trace(self),
+            approvals=self.approvals, facts=self.facts))
+        return pipeline, actor
+
+    def run(self, prompt, recorded=False):
+        """One controller episode for one chat message. Returns the assistant's final answer.
+
+        With a dataset row, the row's earlier steps are the history when the message is the row's own request;
+        `recorded` sends the row's recorded action instead of asking the chat model."""
         self.running, self.error = True, None
+        pipeline, history, before, rows_before = self.pipeline, None, None, set(self.rows)
         try:
-            _, _, self.env, history, _ = self.pipeline.query(prompt, self.runtime, self.env)
+            if self.row is not None and (recorded or prompt == self.row['prompt']):
+                from .replay import native_history
+                history = native_history(self.row['messages'])
+            if recorded:
+                pipeline, self.speaker = self.recorded_pipeline()
+                before = self.env.model_copy(deep=True)
+            _, _, self.env, history, _ = pipeline.query(prompt, self.runtime, self.env, history)
+            if recorded:
+                self.row_result = self.recorded_result(rows_before, before)
             answer = next((text_of(m.get('content')) for m in reversed(history)
                            if m.get('role') == 'assistant' and text_of(m.get('content')).strip()), '')
-            episode = self.pipeline.last_episode
+            episode = pipeline.last_episode
             if episode is not None and episode.terminal != 'completed':
                 answer += f'\n\n[episode ended: {episode.terminal}]'
             self.answers.append(answer)
@@ -188,19 +226,37 @@ class DemoSession:
             self.error = f'{type(exc).__name__}: {exc}'
             raise
         finally:
+            if pipeline is not self.pipeline:
+                pipeline.close()
+                self.speaker = self.actor
             self.running, self.pending, self.awaiting_memory = False, None, None
             executed = {e['action_id']: e['executed'] for e in self.audit.events if e['event'] == 'execution_result'}
             for action_id, row in self.rows.items():
                 row['executed'] = executed.get(action_id, False)   # no execution event: it never ran
 
-    def start(self, prompt):
-        thread = threading.Thread(target=self._run_quietly, args=(prompt,), daemon=True)
+    def recorded_result(self, rows_before, before):
+        """What happened to the row's recorded action; for an injected goal, AgentDojo's own security check."""
+        from .replay import attacker_goal_achieved, native_history
+        new = [action_id for action_id in self.rows if action_id not in rows_before]
+        executed_ids = {e['action_id'] for e in self.audit.events if e['event'] == 'execution_result' and e['executed']}
+        row = self.rows[new[0]] if new else None
+        executed = bool(new) and new[0] in executed_ids
+        attack = None
+        if self.row['spec']['kind'] == 'goal':
+            traces = [c for m in native_history(self.row['messages']) if m['role'] == 'assistant' for c in m['tool_calls']]
+            attack = attacker_goal_achieved(self.row['suite'], self.row['spec'], before, self.env,
+                                            traces + ([self.row['call']] if executed else []), self.row['mapping'])
+        return {'decision': row and row['decision'], 'reason': row and row['reason'], 'executed': executed,
+                'attacker_goal_achieved': attack}
+
+    def start(self, prompt, recorded=False):
+        thread = threading.Thread(target=self._run_quietly, args=(prompt, recorded), daemon=True)
         thread.start()
         return thread
 
-    def _run_quietly(self, prompt):
+    def _run_quietly(self, prompt, recorded=False):
         try:
-            self.run(prompt)
+            self.run(prompt, recorded)
         except Exception:
             pass   # kept in self.error for the interface
 
@@ -248,9 +304,9 @@ class DemoSession:
         a = self.last_action
         action = SimpleNamespace(action_id=action_id, tool=a['tool'], arguments_json=a['arguments_json'],
                                  facts_json=a['facts_json'], effects=a['effects'], evidence_complete=a['evidence_complete'])
-        users = [m for m in self.actor.messages if m.get('role') == 'user']
+        users = [m for m in self.speaker.messages if m.get('role') == 'user']
         task = text_of(users[-1]['content']) if users else ''
-        content, _ = decision_context(task, action, SimpleNamespace(**verdict), self.wall, self.actor.messages)
+        content, _ = decision_context(task, action, SimpleNamespace(**verdict), self.wall, self.speaker.messages)
         started = time.perf_counter()
         record = {'action_id': action_id, 'decision': None, 'prompt_tokens': None, 'completion_tokens': None}
         try:

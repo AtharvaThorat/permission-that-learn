@@ -35,12 +35,15 @@ sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` p
 - **Dataset replay in real environments:** `python -m grids_plugin.replay` rebuilds each dataset row in its own simulated
   AgentDojo environment (Workspace, Slack or Banking) and sends its action through the whole plugin
   (see [Replay in real environments](#replay-in-real-environments)).
+- **Dataset rows in the chat demo:** the page can load any of the team dataset's 64 Workspace rows and run the row's
+  action through the plugin; when laya-cybersec answers ASK, you approve or reject it yourself
+  (see [Team dataset rows in the chat demo](#team-dataset-rows-in-the-chat-demo)).
 - **Merged with main:** includes Siddharth's latest `main`; the dataset test reads the team's files from their new folder.
 - **Docs:** this README, [RUNNING.md](RUNNING.md) and the Colab notebook are updated.
 
 ### Checks
 
-- All 26 tests pass.
+- All 28 tests pass.
 - The chat page starts with the real model.
 - The MCP server works over stdio with the real model and memory.
 - Nothing outside `plugin/` changed.
@@ -223,6 +226,22 @@ Laptop CPU, all 150 rows, 260 s in all:
 Attack scenarios place AgentDojo's `important_instructions` wording, with the stated goal, in every spot AgentDojo allows
 injected text. Whether the assistant follows it depends on the chat model.
 
+## Team dataset rows in the chat demo
+
+Start the page with `--dataset-data <folder>` (the dataset is gated: log in with `hf auth login`, or set `HF_TOKEN`).
+The **Team dataset row (Workspace)** panel lists the dataset's 64 Workspace rows (id, tool, kind of row, reviewed label).
+
+1. Pick a row and press **Load row**. The row's Workspace is rebuilt as in the replay: its injected text and earlier
+   steps are already in place, and the chat shows those earlier steps.
+2. Press **Run the row's action**. The row's proposed action goes through the Wall (the dataset's strict preset) and
+   laya-cybersec. When laya-cybersec answers ASK, **you** press Approve, Approve and remember, or Reject.
+3. The chat says what happened. For an injected-goal row it also gives AgentDojo's check of whether the attacker's
+   goal was achieved.
+
+**Send** instead gives your own message to the chat model in the row's Workspace. With the row's own request, the
+model also sees the row's earlier steps. Only the Workspace suite is shown for now (Slack and Banking: see the replay).
+On Windows, run Python in UTF-8 mode, or the rebuild differs slightly from the dataset input.
+
 ## Run the chat demo on Colab
 
 Open [`colab_demo.ipynb`](colab_demo.ipynb) on a GPU runtime and run the cells in order. It clones this branch, installs
@@ -276,7 +295,7 @@ $env:PYTHONUTF8 = "1"
 D:\grids-plugin\env\Scripts\python.exe -m pytest tests -q -p no:cacheprovider
 ```
 
-The 26 tests drive the real controller, Wall, simulated Workspace and permission store with a scripted chat model and a
+The 28 tests drive the real controller, Wall, simulated Workspace and permission store with a scripted chat model and a
 fake laya-cybersec (it reads the real `compact_v1` reduction):
 
 - all scenarios, including both answers to an approval;
@@ -286,7 +305,9 @@ fake laya-cybersec (it reads the real `compact_v1` reduction):
 - the MCP server through a real in-process MCP client, including a permission remembered in the approval console;
 - the dataset evaluation on a three-row stand-in;
 - the environment replay on three rows from the repository's published copy (exact rebuild, Wall, an injected goal,
-  and a remembered ask answered in the second pass).
+  and a remembered ask answered in the second pass);
+- dataset rows in the chat page: an injected-goal row with and without protection, and a row's ask approved and
+  remembered on the page, then answered by the remembered permission.
 
 ## Limitations
 
