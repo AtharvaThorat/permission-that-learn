@@ -38,7 +38,8 @@ Options: `--memory-store <file>` (remembered permissions), `--laya-device cpu|cu
 5. **Or chat with the assistant** (collapsed): pick a **Scenario**, press **Start / reset Workspace**, type a request
    and press **Send**. Only the two "Attack…" scenarios contain the hidden instruction.
 6. **Advanced** (collapsed): another protection level (No protection / Wall only), the memory mode (Off / Grants /
-   Shadow / Active, default Active = learning + memory), the LLM-judge timing and the Compute table.
+   Shadow / Active, default Active = learning + memory) and the LLM-judge timing. The Compute table is under the
+   approval buttons.
 
 Memory with learning (Active): a remembered permission is reused once the learner has seen it about 10 times, and 1 in
 10 times it still asks, to keep learning. To see a remembered permission reused at once, choose memory **Grants** in
@@ -107,8 +108,8 @@ did and whether it ran. The Compute table shows the cost of each part.
 ### ASK scenarios (laya-cybersec asks you)
 
 1. Choose a **Pipeline**. To see reuse at once, set memory to **Grants** in Advanced.
-2. In **Test one action**, pick an `ASK case` and press **Run**. The first three are the verified cases (their exact
-   model state and permission scope; no tool runs); the others run in the live Workspace.
+2. In **Test one action**, pick an `ASK case` (the 3 verified cases: their exact model state and permission scope;
+   no tool runs) and press **Run**.
 3. It waits: press **Approve and remember**.
 4. Press **Run** again: the Memory column says `answered by remembered permission`.
 5. Revoke the permission (bottom right) and press **Run** again: it asks again.

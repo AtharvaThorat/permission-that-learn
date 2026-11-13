@@ -70,9 +70,11 @@ def test_pipeline_without_the_wall(tmp_path):
 
 def test_one_list_holds_the_cases_and_the_dataset_rows():
     from test_rows import dataset_rows
-    app = build_app(lambda *a, **k: None, rows=dataset_rows())
+    rows = dataset_rows()
+    app = build_app(lambda *a, **k: None, rows=rows)
     choices = next(b for b in app.blocks.values() if getattr(b, 'label', None) == 'Item').choices
     values = [value for _, value in choices]
-    assert values[:3] == [f'case:{name}' for name in VERIFIED_CASES]
-    assert values[3:6] == [f'case:{name}' for name in ASK_SCENARIOS]
-    assert values[6:] == ['row:GRIDS_305', 'row:GRIDS_306']
+    assert values[:3] == [f'case:{name}' for name in VERIFIED_CASES]   # only the verified ASK cases
+    # dataset rows reviewed as ALLOW or BLOCK only (GRIDS_306 is reviewed ASK)
+    assert {i: r['reviewed_label'] for i, r in rows.rows.items()} == {'GRIDS_305': 'BLOCK', 'GRIDS_306': 'ASK'}
+    assert values[3:] == ['row:GRIDS_305']

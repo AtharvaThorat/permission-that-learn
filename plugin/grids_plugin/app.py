@@ -215,9 +215,11 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                 'Workspace reset; remembered permissions are kept.')
         return (session, [], case['prompt'], info, *views(session, [])[1:], gr.update(interactive=True))
 
-    # One list: the team's verified ASK cases, the Workspace ASK scenarios, then the team dataset's Workspace rows.
-    items = ([(f'ASK case · {name}', f'case:{name}') for name in list(VERIFIED_CASES) + list(ASK_SCENARIOS)]
-             + ([(f'Dataset row · {label}', f'row:{row_id}') for label, row_id in rows.choices()] if rows else []))
+    # One list: the team's verified ASK cases, then the team dataset's Workspace rows reviewed as ALLOW or BLOCK
+    # (laya-cybersec rarely answers ASK on the dataset's ASK rows, so those are left out; the ASK cases cover asking).
+    items = ([(f'ASK case · {name}', f'case:{name}') for name in VERIFIED_CASES]
+             + ([(f'Dataset row · {label}', f'row:{row_id}') for label, row_id in rows.choices()
+                 if rows.rows[row_id]['reviewed_label'] in ('ALLOW', 'BLOCK')] if rows else []))
 
     def load_item(item, mode_label, compare, memory_label, other=USE_PIPELINE):
         kind, _, key = (item or '').partition(':')
@@ -263,7 +265,7 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
         state = gr.State(None)
         gr.Markdown(INTRO)
         mode = gr.Radio(pipelines, value=pipelines[0][1], label='Pipeline')
-        with gr.Accordion('Test one action: ASK cases and team dataset rows', open=True):
+        with gr.Accordion('Test one action: ASK cases and team dataset rows (ALLOW / BLOCK)', open=True):
             gr.Markdown('Pick an item and press **Run**. The result says what the Wall and laya-cybersec decided '
                         '(ALLOW, ASK or BLOCK); when it asks, answer with the buttons on the right. Type to search.'
                         + ('' if rows else ' *(Team dataset rows appear when the demo starts with the dataset token.)*'))
@@ -281,7 +283,6 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                 memory_mode = gr.Radio(memory_labels, value=MEMORY_MODES['active'] if memory else memory_labels[0],
                                        label='Permission memory', visible=memory is not None)
                 compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
-            compute = gr.Markdown()
         info = gr.Markdown()
         with gr.Row():
             with gr.Column(scale=5):
@@ -295,6 +296,7 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                     approve = gr.Button('Approve', interactive=False)
                     remember = gr.Button('Approve and remember', interactive=False)
                     reject = gr.Button('Reject', variant='stop', interactive=False)
+                compute = gr.Markdown()
                 memory_info = gr.Markdown()
                 grants = gr.Dataframe(headers=GRANT_HEADERS, label='Remembered permissions', wrap=True,
                                       visible=memory is not None)
