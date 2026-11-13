@@ -99,6 +99,25 @@ example ones with an unclear recipient, time or amount. File-share confirmations
 The table shows each action's Wall verdict, laya-cybersec's ALLOW · ASK · BLOCK probabilities, the decision, what memory
 did and whether it ran. The Compute table shows the cost of each part.
 
+### ASK scenarios (laya-cybersec asks you)
+
+1. Choose **Wall + laya-cybersec** and memory **Grants**.
+2. In **ASK scenarios**, pick a scenario and press **Load scenario**. The first three are Siddharth's verified cases
+   (his exact model state and permission scope; no tool runs); the others run in the live Workspace.
+3. Press **Run the scenario's action**. It waits: press **Approve and remember**.
+4. Press **Load scenario** and **Run** again: the Memory column says `answered by remembered permission`.
+5. Revoke the permission (bottom right), load and run again: it asks again.
+
+With memory **Shadow**, every run still asks you (the learner only records); use **Grants** to see reuse.
+
+Check with the real model (Siddharth's 3 cases and the 3 scenarios), from `plugin`:
+
+```powershell
+D:\grids-plugin\env\Scripts\python.exe -m grids_plugin.ask_check --laya-cache D:\grids-plugin\hf-cache
+```
+
+On Colab: cell 6c.
+
 ### Team dataset rows (Workspace)
 
 Needs the Hugging Face login from C below. Locally, add `--dataset-data D:\grids-plugin\data` to the app command and set

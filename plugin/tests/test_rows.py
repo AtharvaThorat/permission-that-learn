@@ -24,6 +24,7 @@ def test_injected_goal_row_with_and_without_protection():
         session = DemoSession(mode, 'Free chat', FakeScanner(), row=row)
         session.run(row['prompt'], recorded=True)
         assert session.row_result == {'decision': decision, 'reason': session.row_result['reason'], 'executed': executed,
+                                      'memory': None,
                                       'attacker_goal_achieved': achieved}, (mode, session.row_result)
 
 

@@ -10,7 +10,7 @@ from pathlib import Path
 import gradio as gr
 
 from .memory import MODES as MEMORY_MODES
-from .session import MODES, SCENARIOS, DemoSession
+from .session import ASK_SCENARIOS, MODES, SCENARIOS, VERIFIED_CASES, DemoSession, ask_case, verified_case
 
 HEADERS = ['#', 'Tool', 'Arguments', 'Wall', 'laya-cybersec (ALLOW · ASK · BLOCK)', 'Decision', 'Memory', 'Ran',
            'LLM judge (comparison only)']
@@ -81,12 +81,30 @@ def row_markdown(row):
             "answers ASK, you decide. **Send** gives your message to the assistant in this Workspace instead.")
 
 
+def case_markdown(case):
+    """What an ASK scenario is, before anything runs."""
+    call = case['call']
+    return (f"**ASK scenario: {case['id']}** — {case['explain']}  \n"
+            f"Request: `{case['prompt']}`  \nFixed action: **{call.function}** `{dict(call.args)}`  \n"
+            "**Run the scenario's action** sends exactly this action "
+            + ("to laya-cybersec" if case.get('verified') else "through the Wall and laya-cybersec") + "; when it waits, "
+            "press Approve, Approve and remember, or Reject. To see memory at work: Approve and remember, load the same "
+            "scenario again and run it: it is answered by the remembered permission. **Send** lets the assistant try instead.")
+
+
 def row_result_markdown(session):
     r = session.row_result
     if session.error or not r:
         return f'Error: {session.error}' if session.error else 'The row was not run.'
-    text = (f"Row {session.row['id']}: **{session.row['call'].function}** — decision **{r['decision'] or '-'}** "
+    what = 'Scenario' if session.row.get('suite') is None else 'Row'
+    text = (f"{what} {session.row['id']}: **{session.row['call'].function}** — decision **{r['decision'] or '-'}** "
             f"(`{r['reason'] or '-'}`), {'ran' if r['executed'] else 'did not run'}.")
+    if r.get('memory'):
+        text += f" Memory: {r['memory']}."
+    if r.get('decision') == 'ASK' and not r.get('memory'):
+        text += ' You were asked.'
+    if session.row.get('verified'):
+        text += " (Siddharth's case: no tool runs.)"
     if r['attacker_goal_achieved'] is not None:
         text += (" AgentDojo's security check: the attacker's goal was "
                  + ('**achieved**.' if r['attacker_goal_achieved'] else '**not achieved**.'))
@@ -152,6 +170,15 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                 'Remembered permissions are kept.')
         return (session, chat, row['prompt'], info, *views(session, chat)[1:], gr.update(interactive=True))
 
+    def load_case(name, mode_label, compare, memory_label):
+        if not name:
+            raise gr.Error('Pick an ASK scenario first')
+        case = verified_case(name) if name in VERIFIED_CASES else ask_case(name)
+        session = make_session(by_label[mode_label], 'Free chat', compare, memory_by_label.get(memory_label, 'off'), row=case)
+        info = (case_markdown(case) + f"  \nProtection: **{mode_label}**. Memory: **{MEMORY_MODES[session.memory_mode]}**. "
+                'Workspace reset; remembered permissions are kept.')
+        return (session, [], case['prompt'], info, *views(session, [])[1:], gr.update(interactive=True))
+
     def run_row(session, chat):
         if session is None or session.row is None:
             raise gr.Error('Load a dataset row first')
@@ -185,6 +212,12 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                                    label='Permission memory', visible=memory is not None)
             compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
             reset = gr.Button('Start / reset Workspace')
+        with gr.Accordion('ASK scenarios: laya-cybersec asks you', open=True):
+            with gr.Row():
+                case_choice = gr.Dropdown(list(VERIFIED_CASES) + list(ASK_SCENARIOS),
+                                          value=(list(VERIFIED_CASES) + list(ASK_SCENARIOS))[0], label='ASK scenario', scale=4)
+                load_case_button = gr.Button('Load scenario')
+                run_case_button = gr.Button("Run the scenario's action", variant='primary', interactive=False)
         with gr.Accordion('Team dataset row (Workspace)', open=False, visible=rows is not None):
             with gr.Row():
                 row_choice = gr.Dropdown(rows.choices() if rows else [], label='Row', scale=4)
@@ -213,7 +246,10 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
         outputs = [table, compute, pending, approve, remember, reject, memory_info, grants, revoke_choice]
         buttons = [approve, remember, reject]
         reset.click(start, [mode, scenario, compare, memory_mode], [state, chat, prompt, info, *outputs]).then(
-            lambda: gr.update(interactive=False), None, [run_row_button])
+            lambda: (gr.update(interactive=False), gr.update(interactive=False)), None, [run_row_button, run_case_button])
+        load_case_button.click(load_case, [case_choice, mode, compare, memory_mode],
+                               [state, chat, prompt, info, *outputs, run_case_button])
+        run_case_button.click(run_row, [state, chat], [state, chat, *outputs])
         load_button.click(load_row, [row_choice, mode, compare, memory_mode],
                           [state, chat, prompt, info, *outputs, run_row_button])
         run_row_button.click(run_row, [state, chat], [state, chat, *outputs])
