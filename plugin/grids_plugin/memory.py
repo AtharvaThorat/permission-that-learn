@@ -48,13 +48,28 @@ class Memory:
 
     def remember(self, pending_path, ttl_seconds=86400, max_uses=None):
         """Issue an exact grant from a waiting action's pending record (as `grids permissions grant` does)."""
-        from grids.core.contracts import BoundAction
-        from grids.core.permissions.store import scope_for
         pending = json.loads(Path(pending_path).read_text(encoding='utf-8'))
         if not self.rememberable(pending):
             raise ValueError('Only laya-cybersec asks with complete evidence can be remembered')
+        return self.issue(self.scope_of(pending), ttl_seconds, max_uses)
+
+    @staticmethod
+    def scope_of(pending):
+        """The exact scope a grant for this pending record covers (the repository's `scope_for`)."""
+        from grids.core.contracts import BoundAction
+        from grids.core.permissions.store import scope_for
         action = BoundAction(**{f.name: pending['action'][f.name] for f in fields(BoundAction)})
-        return self.store.issue(self.user, scope_for(pending['request'], action), ttl_seconds, max_uses)
+        return scope_for(pending['request'], action)
+
+    def existing(self, scope):
+        """The id of a usable grant (active, unexpired, uses left) for exactly this scope, or None."""
+        with self.store.transaction() as db:
+            grant = self.store.matching(db, self.user, scope)
+        return grant['id'] if grant else None
+
+    def issue(self, scope, ttl_seconds=86400, max_uses=None):
+        """Remember a scope once: a usable grant for the same exact scope is returned instead of adding a duplicate."""
+        return self.existing(scope) or self.store.issue(self.user, scope, ttl_seconds, max_uses)
 
     def grants(self):
         rows = []

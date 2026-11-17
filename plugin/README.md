@@ -15,7 +15,50 @@ compute measurable.
 Everything acts on AgentDojo's **simulated** Workspace (Emma Johnson's mailbox, calendar and drive). Nothing real is read,
 sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` package.
 
-## Changes in this version (laya-cybersec + permission memory)
+## Changes in this version (52 verified ASK cases + redesigned page)
+
+### What changed
+
+- **Siddharth's 49 Workspace ASK cases** (`ask_cases/verified_workspace_ask_cases.json`, shared 2026-11-16: 19 email,
+  15 calendar, 15 files) join the earlier 3 (Workspace, Slack, Banking): 52 verified cases on the page and in `ask_check`.
+  - The new file names the tool `name` and records no permission scope.
+  - The plugin rebuilds each case's exact scope from its recorded binding: request, tool, arguments, facts, policy version
+    and schema digest.
+  - It rejects a case whose facts or action do not reproduce that binding. All 49 do.
+- **Borderline cases are marked.** The cases were recorded asking laya-cybersec once. The plugin asks with the team's rotated
+  method: three option orders, averaged.
+  - With the plugin's method, the real model answers **ASK on 45 of 52**. The other 7 have a recorded ASK of only
+    0.48–0.69, and the plugin allows them.
+  - The page labels those 7 "borderline". `ask_check --record` writes these results to
+    `ask_cases/plugin_method_results.json`.
+  - Asking once with each case's own recorded question reproduces Siddharth's probabilities exactly (difference 0.0), so
+    the 7 are a method difference, not a fault.
+- **Redesigned page** (`grids_plugin/look.py`):
+  - **Header:** explains the three layers.
+  - **Quick starts:** email, calendar, file and "Surprise me".
+  - **Case browser:** category filters with counts.
+  - **Live pipeline:** Request → Wall → laya-cybersec → You / memory → Result, which lights up step by step.
+  - **Decision card:** the request, the exact action and laya-cybersec's ALLOW / ASK / BLOCK bar.
+  - **Approval panel:** glows when the guard waits for you.
+  - **Tabs:** activity log, compute, permission memory, chat and "How it works".
+  - **Colours:** decisions use the status colors (green, amber, red), always with an icon and a label.
+  - **Layouts:** works in light and dark mode and at phone width.
+- `ask_check` records a failing case instead of stopping the whole run.
+
+### Checks
+
+- All 37 tests pass. One runs ask → remember → reuse → revoke for all 52 cases with a test scanner.
+- `ask_check` with the real model, on a laptop CPU:
+  - 45 of 52 cases answer ASK, and all 45 complete ask → approve and remember → answered by the permission → revoke →
+    asked again.
+  - The 3 scripted ASK scenarios also pass.
+  - The 7 borderline cases are allowed, so they never ask.
+- The page was driven in Microsoft Edge with the real model:
+  - quick start → ask → Approve and remember → run again with memory Grants → answered by the remembered permission;
+  - a calendar case rejected;
+  - dark mode and a 420-pixel-wide window.
+
+## Changes in the previous version (laya-cybersec + permission memory)
 
 ### What changed
 
@@ -239,10 +282,12 @@ injected text. Whether the assistant follows it depends on the chat model.
 
 laya-cybersec rarely answers ASK on the team dataset (2 of 37 ASK-labelled rows), so the permission steps are hard to
 reach with dataset rows. It does answer ASK when the request says to wait for confirmation, as in the team's verified
-cases. The page's **Test one action** list (one list for ASK cases and dataset rows) starts with the team's **3 verified cases**, read from
-`verified_ask_cases.json` (Workspace, Slack, Banking). For these, laya-cybersec reads each case's exact model state and question,
-the Wall verdict is the one recorded in the case, Approve and remember stores its exact permission scope, and no tool
-runs, as in the team's runner (real result: ASK 0.98, 1.00 and 0.94, as in the team's run). Three Workspace requests of the same
+cases. The page's action list (ASK cases and dataset rows, with category filters) starts with the team's **52 verified
+cases**: the first 3 from `verified_ask_cases.json` (Workspace, Slack, Banking; real result ASK 0.98, 1.00 and 0.94, as
+in the team's run), then Siddharth's 49 Workspace cases from `verified_workspace_ask_cases.json` (email, calendar, files).
+For these, laya-cybersec reads each case's exact model state and question, the Wall verdict is the one recorded in the
+case, Approve and remember stores its exact permission scope, and no tool runs, as in the team's runner. With the plugin's
+rotated method, 7 of the 49 are allowed and marked "borderline" in the list (see the changes above). Three Workspace requests of the same
 kind, which go through the live Wall and laya-cybersec with a fixed action, are checked by `ask_check` (they are not in
 the page's list):
 
@@ -264,8 +309,9 @@ ALLOW: the model reacts to the explicit sentence, not to ambiguity.
 D:\grids-plugin\env\Scripts\python.exe -m grids_plugin.ask_check --laya-cache D:\grids-plugin\hf-cache
 ```
 
-checks the 3 verified cases (`ask_cases/verified_ask_cases.json`, the team's file) and the full loop for each scenario
-with the real model; it exits with 1 if any of them does not ask.
+checks all 52 verified cases (both files in `ask_cases/`) and the full loop for each case and scenario with the real
+model. It exits with 1 if any of them does not ask, which today is the 7 borderline cases. Add `--record` to rewrite
+`ask_cases/plugin_method_results.json`, which marks the borderline cases on the page.
 
 ## Team dataset rows in the chat demo
 

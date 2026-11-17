@@ -77,19 +77,80 @@ def ask_case(name):
             'messages': None, 'suite': None, 'spec': None, 'kind': 'ASK scenario', 'explain': s['explain']}
 
 
-VERIFIED_FILE = Path(__file__).resolve().parents[1] / 'ask_cases' / 'verified_ask_cases.json'
+ASK_DIR = Path(__file__).resolve().parents[1] / 'ask_cases'
+# The team's verified ASK cases: the first 3 (Workspace, Slack, Banking), then Siddharth's 49 Workspace cases (email,
+# calendar, files). Both were recorded with the real laya-cybersec answering ASK.
+VERIFIED_FILES = (ASK_DIR / 'verified_ask_cases.json', ASK_DIR / 'verified_workspace_ask_cases.json')
+CATEGORIES = {'email': 'Email', 'calendar': 'Calendar', 'files': 'Files', 'slack': 'Slack', 'banking': 'Banking'}
 
 
-def verified_cases(path=VERIFIED_FILE):
-    """The team's verified ASK cases (`verified_ask_cases.json`), by page name."""
-    try:
-        cases = json.loads(Path(path).read_text(encoding='utf-8'))['cases']
-    except OSError:
-        return {}
-    return {f"Verified case: {c['suite'].capitalize()} ({c['proposed_tool_call']['tool']})": c for c in cases}
+def normalize_case(case):
+    """One shape for both case files. The newer file names the tool `name` and records no permission scope; its scope is
+    rebuilt from the recorded binding (request, tool, arguments, facts, policy version, schema digest), and the case is
+    rejected if its facts or action do not reproduce that binding."""
+    from grids.core.actions import digest
+    case = dict(case)
+    call = case['proposed_tool_call']
+    tool = call.get('tool') or call['name']
+    case['proposed_tool_call'] = {'tool': tool, 'arguments': call['arguments']}
+    if 'scope' not in case:
+        proposed = next(e for e in case['controller_events'] if e['event'] == 'proposed_action')
+        facts = case['gatekeeper_input']['verified_context']['facts']['metadata']
+        if (digest(facts) != proposed['state_version']
+                or digest({'tool': tool, 'arguments': call['arguments']}) != proposed['action_digest']):
+            raise ValueError(f"{case['id']}: its facts or action do not match its recorded binding")
+        case['scope'] = {'request': case['user_prompt'], 'tool': tool, 'arguments': call['arguments'], 'facts': facts,
+                         'policy_version': case['gatekeeper_input']['wall']['policy_version'],
+                         'schema_digest': proposed['schema_digest']}
+    if case.get('category') not in CATEGORIES:
+        case['category'] = case['suite'] if case['suite'] in CATEGORIES else 'files'   # the older file's Workspace case reads a file
+    return case
+
+
+def verified_cases(paths=VERIFIED_FILES):
+    """The team's verified ASK cases, by case id, in file order."""
+    cases = {}
+    for path in paths:
+        try:
+            listed = json.loads(Path(path).read_text(encoding='utf-8'))['cases']
+        except OSError:
+            continue
+        for case in listed:
+            case = normalize_case(case)
+            if case['id'] in cases:
+                raise ValueError(f"Duplicate verified case id {case['id']}")
+            cases[case['id']] = case
+    return cases
 
 
 VERIFIED_CASES = verified_cases()
+# The plugin judges with the team's rotated method (three option orders, averaged); the cases were recorded asking once.
+# `ask_check --record` writes what the real model decides on each case with the plugin's method.
+PLUGIN_RESULTS_FILE = ASK_DIR / 'plugin_method_results.json'
+
+
+def plugin_results(path=PLUGIN_RESULTS_FILE):
+    """Case id -> the real laya-cybersec's decision with the plugin's method, from the last `ask_check --record`."""
+    try:
+        return json.loads(Path(path).read_text(encoding='utf-8'))['cases']
+    except OSError:
+        return {}
+
+
+PLUGIN_RESULTS = plugin_results()
+
+
+def borderline(case_id):
+    """True when the plugin's method does not answer ASK on a case that was recorded as ASK."""
+    result = PLUGIN_RESULTS.get(case_id)
+    return bool(result) and result['decision'] != 'ASK'
+
+
+def case_label(case):
+    """How a verified case is listed on the page: its category, request and id."""
+    prompt = case['user_prompt'].split(' Wait for my explicit confirmation')[0]
+    flag = ' · borderline: the plugin allows it' if borderline(case['id']) else ''
+    return f"{CATEGORIES[case['category']]} · {prompt[:70]}{'…' if len(prompt) > 70 else ''} · {case['id']}{flag}"
 
 
 def verified_case(name):
@@ -100,9 +161,11 @@ def verified_case(name):
     call = case['proposed_tool_call']
     return {'id': name, 'prompt': case['user_prompt'], 'call': FunctionCall(function=call['tool'], args=dict(call['arguments'])),
             'messages': None, 'suite': None, 'spec': None, 'kind': 'verified case', 'verified': case,
-            'explain': f"{case['id']} from the team's verified_ask_cases.json ({case['suite']}). laya-cybersec reads its exact "
-                       "model state and question; the Wall verdict is the one recorded in the case; Approve and remember "
-                       "stores its exact scope. No tool runs, as in the team's runner."}
+            'explain': f"{case['id']}, a verified ASK case from the team ({case['suite']}, {CATEGORIES[case['category']].lower()}). "
+                       "laya-cybersec reads its exact model state and question; the Wall verdict is the one recorded in the "
+                       "case; Approve and remember stores its exact scope. No tool runs, as in the team's runner."
+                       + (" **Borderline:** recorded as ASK when asked once, but the plugin's method (three option orders, "
+                          "averaged) allows it." if borderline(name) else '')}
 
 
 JUDGE_PROMPT = None   # built lazily from the repository's single-v1 question
@@ -176,6 +239,8 @@ class Trace:
             waiting = {'pending_id': data['pending_id'], 'action_id': action_id,
                        'rememberable': self.session.memory is not None and self.session.memory.rememberable(data)}
             if waiting['rememberable']:
+                # Already remembered: the page shows it and does not offer to remember it again.
+                waiting['remembered'] = self.session.memory.existing(self.session.memory.scope_of(data))
                 # Memory decides first; the person sees this ask only if memory does not answer it (on_memory).
                 self.session.awaiting_memory = waiting
             else:
@@ -238,6 +303,7 @@ class DemoSession:
         self.approval_dir = Path(tempfile.mkdtemp(prefix='grids-approvals-'))
         self.audit, self.rows, self.pending, self.last_action = LiveAudit(), {}, None, None
         self.judge_calls, self.answers, self.running, self.error = [], [], False, None
+        self.last_prompt = None
         self.laya_device = getattr(scanner, 'device', 'cpu')
         config = Config(mode='wall_gatekeeper' if mode in LAYA_MODES else mode, actor=actor_config, wall=wall_config,
                         learning_enabled=self.memory is not None)
@@ -269,6 +335,7 @@ class DemoSession:
 
         With a dataset row, the row's earlier steps are the history when the message is the row's own request;
         `recorded` sends the row's recorded action instead of asking the chat model."""
+        self.last_prompt = prompt   # the request the page's pipeline view shows
         if recorded and self.row is not None and self.row.get('verified'):
             return self.run_verified()
         self.running, self.error = True, None
@@ -402,6 +469,7 @@ class DemoSession:
         self.rows[action_id].update(pending=action_id)
         if waiting['rememberable']:
             scope = case['scope']
+            waiting['remembered'] = self.memory.existing(scope)
             binding = Binding(case['id'], uuid4().hex, action_id, action_id, scope['policy_version'], 'verified-case',
                               scope['schema_digest'], time.time() + 3600)
             effects = case['gatekeeper_input']['verified_context']['facts']['effects']
@@ -425,7 +493,7 @@ class DemoSession:
         if remember and approved:
             if not self.pending.get('rememberable'):
                 raise ValueError('This ask cannot be remembered')
-            grant = self.memory.store.issue(self.memory.user, self.row['verified']['scope'])
+            grant = self.memory.issue(self.row['verified']['scope'])   # no duplicate if already remembered
             self.rows[self.pending['action_id']]['memory'] = 'approved and remembered'
         self.verified_answer, self.pending = approved, None
         self.verified_event.set()

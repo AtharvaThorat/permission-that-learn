@@ -53,7 +53,8 @@ def test_approve_and_remember_from_the_page(tmp_path):
             break
     *_, last = list(stream)
     assert last[3][0][6] == 'approved and remembered' and last[3][0][7] == 'yes'
-    assert [g[1] for g in last[-2]] == ['send_email']
+    assert [g[1] for g in last[10]] == ['send_email']   # (state, chat, prompt, table, compute, pending, 3 buttons, memory, grants, ...)
+    assert 'Allowed by you' in last[-1]   # the pipeline view
     session, chat, *_ = fns['start'](*args)   # Workspace reset; the permission is kept
     *_, last = list(fns['send'](session, chat, request, *args))
     assert last[3][0][6] == 'answered by remembered permission' and last[3][0][7] == 'yes'

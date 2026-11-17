@@ -30,16 +30,28 @@ Options: `--memory-store <file>` (remembered permissions), `--laya-device cpu|cu
 
 ### Using the page
 
-1. **Pipeline**: **Wall + laya-cybersec + learning + memory**, or **laya-cybersec + learning + memory (no Wall)**.
-2. **Test one action**: pick an item (an ASK case or a team dataset row) and press **Run**.
-3. When an action waits: **Approve**, **Approve and remember** (only for laya-cybersec's own asks), or **Reject**.
-   The chat shows the result step by step: Wall, laya-cybersec, your answer or memory, and whether it ran.
-4. **Remembered permissions** lists each grant; pick one and press **Revoke** to remove it.
-5. **Or chat with the assistant** (collapsed): pick a **Scenario**, press **Start / reset Workspace**, type a request
-   and press **Send**. Only the two "Attack…" scenarios contain the hidden instruction.
-6. **Advanced** (collapsed): another protection level (No protection / Wall only), the memory mode (Off / Grants /
-   Shadow / Active, default Active = learning + memory) and the LLM-judge timing. The Compute table is under the
-   approval buttons.
+1. **Quick start**: press **Try an email search**, **Try a calendar search**, **Try opening a file** or **Surprise me**.
+   Each picks a verified ASK case and runs it at once.
+2. **Or choose an action yourself**:
+   - filter by category (Email, Calendar, Files, Slack & Banking, team dataset rows);
+   - pick an action (type to search);
+   - choose the protection (**Wall + laya-cybersec + learning + memory**, or the same without the Wall);
+   - press **Run it through the guard**.
+
+   Cases marked "borderline" are allowed by the plugin's method.
+3. **Watch the pipeline**: Request → Wall → laya-cybersec → You / memory → Result lights up step by step. The decision card
+   shows the request, the exact action and laya-cybersec's ALLOW / ASK / BLOCK bar.
+4. **When it waits**, the **Your decision** panel glows: **Approve**, **Approve and remember** (only for laya-cybersec's own
+   asks), or **Reject**.
+5. **Tabs** under the page:
+   - **Every action checked**;
+   - **Compute**;
+   - **Permission memory**: the remembered permissions; pick one and press **Revoke**;
+   - **Chat with the assistant**: pick a **Scenario**, press **Start / reset Workspace**, type a request and press
+     **Send**. Only the two "Attack…" scenarios contain the hidden instruction;
+   - **How it works**.
+6. **Advanced settings** (collapsed): another protection level (No protection / Wall only), the memory mode (Off /
+   Grants / Shadow / Active, default Active = learning + memory) and the LLM-judge timing.
 
 Memory with learning (Active): a remembered permission is reused once the learner has seen it about 10 times, and 1 in
 10 times it still asks, to keep learning. To see a remembered permission reused at once, choose memory **Grants** in

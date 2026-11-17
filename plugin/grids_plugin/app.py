@@ -5,25 +5,21 @@ the repository's permission memory.
 """
 import argparse
 import json
+import random
 import time
 from pathlib import Path
 
 import gradio as gr
 
+from .look import CSS, HOW_IT_WORKS, THEME, hero, stage_html
 from .memory import MODES as MEMORY_MODES
-from .session import ASK_SCENARIOS, MODES, SCENARIOS, VERIFIED_CASES, DemoSession, ask_case, verified_case
+from .session import (ASK_SCENARIOS, MODES, SCENARIOS, VERIFIED_CASES, DemoSession, ask_case, borderline, case_label,
+                      verified_case)
 
 HEADERS = ['#', 'Tool', 'Arguments', 'Wall', 'laya-cybersec (ALLOW · ASK · BLOCK)', 'Decision', 'Memory', 'Ran',
            'LLM judge (comparison only)']
 GRANT_HEADERS = ['Grant', 'Tool', 'Target', 'Request', 'Uses', 'Expires', 'Active']
-INTRO = """
-# Permissions That Learn: guarded assistant demo
-The assistant works on AgentDojo's **simulated** Workspace (Emma Johnson's mailbox, calendar and drive). Every action it
-proposes passes the **Wall** (the user's fixed rules: *only email contacts, never share outside work, never delete*) and
-then **laya-cybersec** (322M parameters, on the CPU), which answers **ALLOW, ASK or BLOCK** for whether your request
-authorizes the action. With **permission memory** on, "Approve and remember" stores an exact permission, so the same
-ask is answered without asking you again. Pick a scenario, a protection level and a memory mode, then send a message.
-"""
+QUICK = (('email', '📧  Try an email search'), ('calendar', '📅  Try a calendar search'), ('files', '📁  Try opening a file'))
 
 
 def seconds(value):
@@ -65,6 +61,9 @@ def pending_markdown(session, waiting):
     remember = ('You can **approve and remember** it: the same request and action will not ask again.'
                 if waiting.get('rememberable') else 'This ask cannot be remembered (a mandatory confirmation, '
                 'or memory is off).')
+    if waiting.get('remembered'):
+        remember = (f"**Already remembered** (permission `{waiting['remembered'][:8]}`), so **Approve** is enough. "
+                    f"Memory mode **{MEMORY_MODES[session.memory_mode]}** decides when it answers without asking.")
     return (f"### Waiting for your approval\n**{row['tool']}** `{row['arguments']}`\n\nReason: `{row['reason']}`. "
             f'Nothing runs until you decide. {remember}')
 
@@ -169,12 +168,12 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
     def views(session, chat):
         waiting = session.pending if session else None   # read once: the episode thread may change it meanwhile
         pending = bool(waiting)
-        rememberable = pending and bool(waiting.get('rememberable'))
+        rememberable = pending and bool(waiting.get('rememberable')) and not waiting.get('remembered')
         compute = compute_markdown(session.compute(), session.gate is not None) if session else ''
         grants, revoke_choices = grants_view()
         return (chat, session.table() if session else [], compute, pending_markdown(session, waiting), gr.update(interactive=pending),
                 gr.update(interactive=rememberable), gr.update(interactive=pending), memory_markdown(session), grants,
-                revoke_choices)
+                revoke_choices, stage_html(session))
 
     def new_session(mode_label, scenario, compare, memory_label, other=USE_PIPELINE):
         return make_session(resolve(mode_label, other), scenario, compare, memory_by_label.get(memory_label, 'off'))
@@ -224,9 +223,28 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
 
     # One list: the team's verified ASK cases, then the team dataset's Workspace rows reviewed as ALLOW or BLOCK
     # (laya-cybersec rarely answers ASK on the dataset's ASK rows, so those are left out; the ASK cases cover asking).
-    items = ([(f'ASK case · {name}', f'case:{name}') for name in VERIFIED_CASES]
-             + ([(f'Dataset row · {label}', f'row:{row_id}') for label, row_id in rows.choices()
-                 if rows.rows[row_id]['reviewed_label'] in ('ALLOW', 'BLOCK')] if rows else []))
+    row_items = ([(f'Dataset row · {label}', f'row:{row_id}') for label, row_id in rows.choices()
+                  if rows.rows[row_id]['reviewed_label'] in ('ALLOW', 'BLOCK')] if rows else [])
+    items = [(case_label(case), f'case:{name}') for name, case in VERIFIED_CASES.items()] + row_items
+    # The same list by category, for the filter above it.
+    groups = {f'All ({len(items)})': items}
+    for keys, title in ((('email',), 'Email'), (('calendar',), 'Calendar'), (('files',), 'Files'),
+                        (('slack', 'banking'), 'Slack & Banking')):
+        members = [(case_label(c), f'case:{name}') for name, c in VERIFIED_CASES.items() if c['category'] in keys]
+        if members:
+            groups[f'{title} ({len(members)})'] = members
+    if row_items:
+        groups[f'Team dataset rows ({len(row_items)})'] = row_items
+    # Quick starts use the first case of each category that the plugin's method answers with ASK.
+    quick = [(text, f'case:{first}') for category, text in QUICK
+             if (first := next((n for n, c in VERIFIED_CASES.items() if c['category'] == category and not borderline(n)), None))]
+
+    def filter_items(group):
+        choices = groups.get(group) or items
+        return gr.update(choices=choices, value=choices[0][1] if choices else None)
+
+    def pick_random(group):
+        return random.choice(groups.get(group) or items)[1]
 
     def load_item(item, mode_label, compare, memory_label, other=USE_PIPELINE):
         kind, _, key = (item or '').partition(':')
@@ -268,60 +286,83 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                     memory.revoke(g['id'])
         return grants_view()
 
-    with gr.Blocks(title='GRIDS permission demo') as app:
+    with gr.Blocks(title='Permissions That Learn: guarded assistant demo') as app:
         state = gr.State(None)
-        gr.Markdown(INTRO)
-        mode = gr.Radio(pipelines, value=pipelines[0][1], label='Pipeline')
-        with gr.Accordion('Test one action: ASK cases and team dataset rows (ALLOW / BLOCK)', open=True):
-            gr.Markdown('Pick an item and press **Run**. The result says what the Wall and laya-cybersec decided '
-                        '(ALLOW, ASK or BLOCK); when it asks, answer with the buttons on the right. Type to search.'
-                        + ('' if rows else ' *(Team dataset rows appear when the demo starts with the dataset token.)*'))
-            with gr.Row():
-                item_choice = gr.Dropdown(items, value=items[0][1], label='Item', scale=5, filterable=True)
-                run_item_button = gr.Button('Run', variant='primary')
-        with gr.Accordion('Or chat with the assistant', open=False):
-            with gr.Row():
-                scenario = gr.Dropdown(list(SCENARIOS), value='Attack only laya-cybersec catches', label='Scenario', scale=4)
-                reset = gr.Button('Start / reset Workspace')
-        with gr.Accordion('Advanced', open=False):
-            with gr.Row():
-                other = gr.Radio(others if laya_available else [USE_PIPELINE], value=USE_PIPELINE,
-                                 label='Other protection level (instead of the pipeline)')
-                memory_mode = gr.Radio(memory_labels, value=MEMORY_MODES['active'] if memory else memory_labels[0],
-                                       label='Permission memory', visible=memory is not None)
-                compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
-        info = gr.Markdown()
-        with gr.Row():
-            with gr.Column(scale=5):
-                chat = gr.Chatbot(label='Assistant', height=430)
-                prompt = gr.Textbox(label='Your request', lines=2)
-                send_button = gr.Button('Send', variant='primary')
-            with gr.Column(scale=6):
+        gr.HTML(hero(len(VERIFIED_CASES), len(row_items)))
+        with gr.Row(elem_classes='quick'):
+            quick_buttons = [(gr.Button(text, size='lg'), value) for text, value in quick]
+            surprise = gr.Button('🎲  Surprise me', size='lg', variant='secondary')
+        with gr.Row(equal_height=False, elem_classes='main-row'):
+            with gr.Column(scale=4, elem_classes='panel'):
+                gr.Markdown('### <span>1</span>Choose an action to test', elem_classes='step-title')
+                category = gr.Radio(list(groups), value=next(iter(groups)), show_label=False, elem_classes='pills')
+                item_choice = gr.Dropdown(items, value=items[0][1] if items else None, label='Action to test',
+                                          filterable=True, info='Type to search by request, category or id.'
+                                          + ('' if rows else ' Team dataset rows appear when the demo starts with the dataset token.'))
+                run_item_button = gr.Button('▶  Run it through the guard', variant='primary', size='lg')
+                gr.Markdown('### <span>2</span>Choose the protection', elem_classes='step-title')
+                mode = gr.Radio(pipelines, value=pipelines[0][1], show_label=False)
+                with gr.Accordion('About this action', open=False):
+                    info = gr.Markdown()
+                with gr.Accordion('Advanced settings', open=False):
+                    other = gr.Radio(others if laya_available else [USE_PIPELINE], value=USE_PIPELINE,
+                                     label='Other protection level (instead of the pipeline)')
+                    memory_mode = gr.Radio(memory_labels, value=MEMORY_MODES['active'] if memory else memory_labels[0],
+                                           label='Permission memory', visible=memory is not None)
+                    compare = gr.Checkbox(False, label='Also time an LLM judge for each check (comparison only)')
+            with gr.Column(scale=7):
+                stage = gr.HTML(stage_html(None))
+                with gr.Column(elem_classes='approval'):
+                    gr.Markdown('#### ✋ Your decision\nThese buttons light up when the guard asks you. Nothing runs until '
+                                'you choose.')
+                    pending = gr.Markdown()
+                    with gr.Row():
+                        approve = gr.Button('✓  Approve', interactive=False, elem_classes='approve-btn')
+                        remember = gr.Button('★  Approve and remember', interactive=False, elem_classes='remember-btn')
+                        reject = gr.Button('✕  Reject', interactive=False, elem_classes='reject-btn')
+        with gr.Tabs():
+            with gr.Tab('📋 Every action checked'):
                 table = gr.Dataframe(headers=HEADERS, label='Every action checked', wrap=True,
                                      column_widths=['4%', '14%', '20%', '10%', '20%', '9%', '11%', '5%', '7%'])
-                pending = gr.Markdown()
-                with gr.Row():
-                    approve = gr.Button('Approve', interactive=False)
-                    remember = gr.Button('Approve and remember', interactive=False)
-                    reject = gr.Button('Reject', variant='stop', interactive=False)
+            with gr.Tab('⚡ Compute'):
                 compute = gr.Markdown()
+            with gr.Tab('🗂️ Permission memory'):
                 memory_info = gr.Markdown()
                 grants = gr.Dataframe(headers=GRANT_HEADERS, label='Remembered permissions', wrap=True,
                                       visible=memory is not None)
                 with gr.Row(visible=memory is not None):
                     revoke_choice = gr.Dropdown([], label='Permission to revoke')
                     revoke_button = gr.Button('Revoke')
-        outputs = [table, compute, pending, approve, remember, reject, memory_info, grants, revoke_choice]
+            with gr.Tab('💬 Chat with the assistant'):
+                gr.Markdown('Results of **Run** also appear here. To chat, pick a scenario, reset the Workspace and send a '
+                            'request (needs the chat model on Ollama).')
+                with gr.Row():
+                    scenario = gr.Dropdown(list(SCENARIOS), value='Attack only laya-cybersec catches', label='Scenario', scale=4)
+                    reset = gr.Button('Start / reset Workspace')
+                chat = gr.Chatbot(label='Assistant', height=430)
+                prompt = gr.Textbox(label='Your request', lines=2)
+                send_button = gr.Button('Send', variant='primary')
+            with gr.Tab('ℹ️ How it works'):
+                gr.Markdown(HOW_IT_WORKS)
+        outputs = [table, compute, pending, approve, remember, reject, memory_info, grants, revoke_choice, stage]
         buttons = [approve, remember, reject]
         settings = [mode, scenario, compare, memory_mode, other]
-        reset.click(start, settings, [state, chat, prompt, info, *outputs])
-        run_item_button.click(run_item, [item_choice, mode, compare, memory_mode, other], [state, chat, prompt, info, *outputs])
-        send_button.click(send, [state, chat, prompt, *settings], [state, chat, prompt, *outputs])
+        run_inputs = [item_choice, mode, compare, memory_mode, other]
+        run_outputs = [state, chat, prompt, info, *outputs]
+        # Streaming events show their progress in the pipeline view, so Gradio's loading overlays are hidden.
+        quiet = {'show_progress': 'hidden'}
+        reset.click(start, settings, [state, chat, prompt, info, *outputs], **quiet)
+        run_item_button.click(run_item, run_inputs, run_outputs, **quiet)
+        category.change(filter_items, [category], [item_choice])
+        for button, value in quick_buttons:
+            button.click(lambda value=value: value, None, [item_choice]).then(run_item, run_inputs, run_outputs, **quiet)
+        surprise.click(pick_random, [category], [item_choice]).then(run_item, run_inputs, run_outputs, **quiet)
+        send_button.click(send, [state, chat, prompt, *settings], [state, chat, prompt, *outputs], **quiet)
         approve.click(lambda s: decide(s, True), [state], buttons)
         remember.click(lambda s: decide(s, True, remember=True), [state], buttons)
         reject.click(lambda s: decide(s, False), [state], buttons)
         revoke_button.click(revoke, [revoke_choice], [grants, revoke_choice])
-        app.load(start, settings, [state, chat, prompt, info, *outputs])
+        app.load(start, settings, [state, chat, prompt, info, *outputs], **quiet)
     return app
 
 
@@ -361,7 +402,7 @@ def main(argv=None):
                            base_url=args.base_url, compare_judge=compare, row=row)
 
     build_app(make_session, laya_available=scanner is not None, memory=memory, rows=rows).queue().launch(
-        share=args.share, server_name='0.0.0.0' if args.share else '127.0.0.1', server_port=args.port)
+        share=args.share, server_name='0.0.0.0' if args.share else '127.0.0.1', server_port=args.port, theme=THEME, css=CSS)
 
 
 if __name__ == '__main__':
