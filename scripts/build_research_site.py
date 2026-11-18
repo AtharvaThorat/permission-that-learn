@@ -42,14 +42,86 @@ def build():
     latest_table = table(['Suite / case', 'Expected final', 'Raw Laya', 'Controller final', 'Dispatched', 'Latency (s)'], [[r['suite']+' / '+r['kind'],r['expected'],r['raw_decision'],r['controller_outcome']['decision'],r['controller_outcome']['executed'],number(r['elapsed_seconds'],3)] for r in latest['rows']])
     class_table = table(['Expected class','Correct final / total'],[[k,str(v['controller_correct'])+' / '+str(v['total'])] for k,v in latest['summary']['by_class'].items()])
     permission_table = table(['Strategy','Actions','Questions','Saved','Forbidden','Errors','Permission time (s)'],[[k,v['actions'],v['questions'],v['questions_saved'],v['forbidden_dispatches'],v['errors'],number(v['permission_seconds'],3)] for k,v in measured['summary'].items()])
-    intro = f'<header><p class="eyebrow">RESEARCH EVIDENCE</p><h1>Permission behavior.<br><em>Quality, safety and cost.</em></h1><p>Constructed enforcement checks, real inference, and exploratory model comparisons.</p></header><main><section id="latest"><h2>Latest local verification</h2><h3>1. Automated permission-learning check</h3><p>Run {measured["run_id"]}: 36 constructed sequences, 504 actions per arm. The Wall/controller/store are real; tools and Gatekeeper decisions are fixtures. Runtime {number(measured["runtime"]["elapsed_seconds"])} s; process CPU {number(measured["runtime"]["cpu_seconds"])} s. Peak memory was unavailable.</p>{permission_table}<p>All 36 holdout expectations passed per arm. Grants saved 29/168 questions (17.3%); learning saved 9/168 (5.4%). The learner did not outperform grants alone. These repeated steps are not 504 independent scenarios.</p><a href="results/research-release/latest-permission-check.json">Full summary and source hash</a><h3>2. Real base-Laya CPU smoke</h3><p>Run {latest["run_id"]}: 12/12 supported, zero errors. Final controller agreement: 10/12 (83.3%). Raw intent agreement: 10/12 against a different target. Three confirmation cases have raw ALLOW but final ASK. Two optional ASK cases became BLOCK. The 512-token checkpoint limit includes question overhead; these short cases do not validate arbitrary long contexts.</p>{class_table}{latest_table}<p>CPU, four threads, Python {latest["python"]}, {latest["platform"]}. Initialization {number(latest["initialization_seconds"])} s. Checkpoint {latest["checkpoint"]}@{latest["revision"]}. Per-input latency excludes initialization. No new inference was run to create this page.</p><p><a href="results/research-release/latest-laya-check.csv">Per-example CSV</a> · <a href="results/research-release/latest-laya-check.json">Inputs, probabilities, context limits and diagnostics</a></p></section><section><h2>Browse the experiment archive</h2><p><a href="https://github.com/AtharvaThorat/permission-that-learn/tree/main/docs/results/permission-experiments">41 saved run folders: configurations, predictions, per-action tables and provenance</a>. Controlled checks, Laya comparisons, historical simulations and integration fixtures are separated. Repeated runs and report derivatives are not independent experiments.</p><h2>How to read the comparisons</h2><p>Baseline uses the existing decision question. Rotated averages probabilities across three option orders; that is three presentations for one prediction. Concise shortens the instructions. Decomposed separates task relation from authorization details. Each screening cohort has 30 examples, ten per supplied class; full runs have 150.</p><p>Accuracy means correct predictions divided by scored examples. Coverage and failures must be read alongside it. False approvals predict ALLOW for supplied ASK/BLOCK labels. Historical timings have different pass counts: timing repetitions never increase accuracy sample size. Configuration selection reused these examples, so results are exploratory and require fresh human-reviewed evaluation.</p></section>'
-    results = f'''<section id="results"><p class="eyebrow">03 / RECORDED EVIDENCE</p><h2>Authorization quality and cost.</h2><p>All screening configurations are included below. Configuration selection reused evaluated examples; improvements are exploratory. Accuracy here means agreement with supplied labels. Timing repetitions do not increase the number of independent samples.</p><h3>Selected and historical full-cohort comparisons</h3><div class="bars">{bars}</div><p class="note">All bars use a 0–100% agreement scale. Higher agreement alone does not establish safety: Cybersec rotated agrees on 70/150 but falsely approves 52 supplied ASK/BLOCK examples. The historical Cybersec baseline falsely approves 38. These configurations should not be promoted on agreement alone.</p><details open><summary>Complete configuration and compute table</summary>{ctable}</details><p><a href="results/research-release/laya-comparison.csv">Download comparison CSV</a> · <a href="results/research-release/provenance.json">Source provenance</a></p>
-<h3>Scoped-permission enforcement</h3>{ptable}<p>36 constructed sequences per strategy, across three suites. The 504 steps include repeated learning interactions. Zero forbidden dispatches in these fixtures does not establish universal safety. Explicit grants saved more questions than the contextual learner in this run.</p><h3>Real-model smoke evidence</h3><p>Pinned base Laya completed 12/12 CPU inputs; final controller decisions matched 10/12 constructed expectations. Three mandatory-confirmation cases withheld dispatch despite raw Laya ALLOW. A separate 21-input Cybersec smoke completed without errors (8 ALLOW, 13 BLOCK, 0 ASK). These are functionality checks.</p><details><summary>All available local compute summaries ({len(local)} runs)</summary><p>Includes repeated runs and failures; do not pool these as independent samples or compare timings across different pass counts. Missing values remain unavailable.</p>{ltable}</details><p><a href="results/research-release/local-runs.json">Download local-run catalog</a> · <a href="results/research-release/permission-summary.json">Permission metrics</a> · <a href="results/research-release/laya-smoke-summary.json">Base Laya smoke</a></p></section>
-<section id="reproduce"><p class="eyebrow">04 / REPRODUCIBILITY</p><h2>Run the shared pipeline.</h2><p>The demo benchmark calls the existing controller and evaluation components. Its default mode uses constructed Gatekeeper fixtures and simulated tools. Activate the documented environment first.</p><pre>python scripts/benchmark.py --output results/demo-01
-# In the Laya environment, with cached weights:
-python scripts/benchmark.py --output results/demo-laya-01 --real-laya --cache workspace/cache</pre><p>Open the generated <code>report.html</code> for action-level evidence. Output paths must be new. <a href="{REPO}/blob/main/docs/guides/reproduce.md">Reproduction guide ↗</a></p><p>The plugin is under separate development. This page does not claim a hosted interactive plugin demo. <a href="{REPO}/tree/main/plugin">Plugin source ↗</a></p></section>
-<section><p class="eyebrow">05 / LIMITATIONS & NEXT STEPS</p><h2>Evidence before claims.</h2><p>Independent human review, Laya weight fine-tuning, calibration and checkpoint-promotion gates remain open. Historical sweep source is absent from this checkout; saved outputs are preserved with provenance. CPU checks do not establish GPU compatibility, real-user effectiveness or native full-benchmark performance. The manuscript and released measurements require author review before submission.</p></section>'''
-    (DOCS / 'results.html').write_text(shell + intro + results + '</main>' + footer, encoding='utf-8')
+    ms = measured['summary']
+    def question_reduction(strategy):
+        saved = ms[strategy]['questions_saved']
+        baseline = ms['off']['questions']
+        return f'{saved / baseline * 100:.1f}%'
+    def per_action_ms(strategy):
+        return ms[strategy]['permission_seconds'] * 1000 / ms[strategy]['actions']
+    real_ask = {}
+    real_ask_path = ROOT / 'results/real-ask-learning-cybersec-20261112/summary.json'
+    if real_ask_path.exists():
+        real_ask = json.loads(real_ask_path.read_text())
+    intro = f'''<header><p class="eyebrow">RESEARCH EVIDENCE</p><h1>Permission behavior.<br><em>Learning, efficiency and scope.</em></h1><p>A concise view of measured permission learning, enforcement, and CPU cost.</p></header><main>
+<section id="latest"><p class="eyebrow">01 / CORE RESULT</p><h2>Small learning loop, measurable question reduction.</h2>
+<div class="kpis">
+  <article><strong>504</strong><span>permission actions per arm</span></article>
+  <article><strong>29</strong><span>questions avoided by explicit grants</span></article>
+  <article><strong>9</strong><span>questions avoided by active learning</span></article>
+  <article><strong>0</strong><span>forbidden dispatches</span></article>
+</div>
+<p class="result-lead">Across 36 constructed sequences, explicit grants removed <b>17.3%</b> of repeated questions, while contextual learning removed <b>5.4%</b>. Every arm preserved the 36 holdout ALLOW/ASK/BLOCK expectations. The active learner is therefore a credible reduction mechanism, but it did not outperform explicit grants in this test.</p>
+<h3>How the strategies compare</h3>{permission_table}
+<div class="comparison-grid">
+  <article><h3>Explicit grants</h3><p><b>139 questions</b> from a 168-question baseline</p><p><b>{question_reduction("grants")}</b> question reduction</p><p>197 tool dispatches and zero forbidden dispatches</p></article>
+  <article><h3>Active learning</h3><p><b>159 questions</b> from a 168-question baseline</p><p><b>{question_reduction("active")}</b> question reduction</p><p>177 tool dispatches and zero forbidden dispatches</p></article>
+  <article><h3>Protection unchanged</h3><p>All 36 holdout expectations passed in each arm</p><p>12 ALLOW, 12 ASK and 12 BLOCK cases remained correct</p><p>No forbidden dispatches in the constructed run</p></article>
+</div>
+<p class="note"><b>Read carefully:</b> 504 actions are repeated steps from 36 sequences, not 504 independent scenarios. This demonstrates controller and memory behavior; it is not live-user or real-agent utility evidence.</p>
+<p><a href="results/research-release/latest-permission-check.json">Full summary and source hash</a></p>
+</section>
+<section><p class="eyebrow">02 / COMPUTATIONAL COST</p><h2>Permission overhead remains small.</h2>
+<div class="kpis kpis-four">
+  <article><strong>{number(ms["off"]["permission_seconds"],3)} s</strong><span>no-memory permission time</span></article>
+  <article><strong>{number(ms["grants"]["permission_seconds"],3)} s</strong><span>explicit-grant time</span></article>
+  <article><strong>{number(ms["active"]["permission_seconds"],3)} s</strong><span>active-learning time</span></article>
+  <article><strong>{number(measured["runtime"]["elapsed_seconds"],2)} s</strong><span>complete local demo</span></article>
+</div>
+<div class="comparison-grid">
+  <article><h3>No memory</h3><p>{per_action_ms("off"):.3f} ms average permission time per action</p></article>
+  <article><h3>Explicit grants</h3><p>{per_action_ms("grants"):.3f} ms average permission time per action</p></article>
+  <article><h3>Active learning</h3><p>{per_action_ms("active"):.3f} ms average permission time per action</p></article>
+</div>
+<p>The complete local run used {number(measured["runtime"]["cpu_seconds"],2)} process CPU seconds. Peak memory was unavailable. These are lightweight CPU measurements of permission logic and in-process stores, not GPU serving or LLM inference benchmarks.</p>
+<p class="note"><b>PPT-safe framing:</b> “The full 504-action demo completed in a 4.57-second local process, with sub-millisecond permission decisions and no forbidden dispatches.” Do not describe it as faster wall-clock inference or a universal cost reduction.</p>
+</section>
+<section><p class="eyebrow">03 / LEARNING BEHAVIOR</p><h2>Learning is scoped, reviewable and revocable.</h2>
+<div class="state-flow">
+  <div><b>1</b><span>Observe</span><small>same task, effect and scope</small></div><i>→</i>
+  <div><b>2</b><span>Learn</span><small>update only eligible permissions</small></div><i>→</i>
+  <div><b>3</b><span>Reuse</span><small>skip eligible repeated prompts</small></div><i>→</i>
+  <div><b>4</b><span>Invalidate</span><small>changed scope, policy or explicit revoke</small></div>
+</div>
+<div class="comparison-grid">
+  <article><h3>Constructed learning run</h3><p>504 actions across 36 sequences</p><p>9 fewer questions than no-memory mode</p><p>Zero forbidden dispatches</p></article>
+  <article><h3>Cybersec ASK check</h3><p>{real_ask.get("actions","—")} ASK actions</p><p>{real_ask.get("explicit_approvals","—")} explicit approvals</p><p>{real_ask.get("grant_reuse_dispatches","—")} grant-reuse dispatches</p></article>
+  <article><h3>Safety check</h3><p>{real_ask.get("revocation_withheld","—")} revocation-withheld actions</p><p>{real_ask.get("errors","—")} recorded errors</p><p>Synthetic ASKs; not real-user evidence</p></article>
+</div>
+</section>
+<section><p class="eyebrow">04 / COMPATIBILITY CHECK</p><h2>One compact CPU check.</h2>
+<p>Run {latest["run_id"]}: 12/12 supported inputs completed with zero recorded errors. The controller reached 10/12 final constructed outcomes. This is included as an implementation and compatibility check, not as the main learning result.</p>
+{class_table}{latest_table}
+<p><a href="results/research-release/latest-laya-check.csv">Per-example CSV</a> · <a href="results/research-release/latest-laya-check.json">Diagnostics and context limits</a></p>
+</section>
+<section><p class="eyebrow">05 / ARCHIVE</p><h2>Detailed evidence remains available.</h2>
+<p><a href="https://github.com/AtharvaThorat/permission-that-learn/tree/main/docs/results/permission-experiments">Experiment archive</a> · <a href="results/research-release/laya-comparison.csv">Historical authorization comparison CSV</a> · <a href="results/research-release/local-runs.json">Local run catalog</a></p>
+<details><summary>How to read historical comparisons</summary><p>Some Laya configurations used multiple presentations or repeated timing runs. Accuracy is agreement with supplied labels, not established real-world safety. Full historical detail is available for reviewer traceability, but it is not the headline learning result.</p></details>
+<details><summary>Selected full-cohort Laya values</summary><div class="bars">{bars}</div><p class="note">Higher label agreement alone does not establish safety. These archived sweeps are exploratory and should not be promoted from accuracy alone.</p><details open><summary>Configuration and compute table</summary>{ctable}</details></details>
+</section>
+<section id="reproduce"><p class="eyebrow">06 / REPRODUCIBILITY</p><h2>Reproduce the learning demo.</h2>
+<pre>python scripts/benchmark.py --output results/demo-01
+python scripts/benchmark.py --output results/demo-pages-02</pre>
+<p><a href="https://github.com/AtharvaThorat/permission-that-learn/blob/main/docs/guides/reproduce.md">Reproduction guide ↗</a> · <a href="https://github.com/AtharvaThorat/permission-that-learn/tree/main/plugin">Plugin source ↗</a></p>
+</section>
+<section><p class="eyebrow">07 / LIMITATIONS</p><h2>What this evidence does—and does not—show.</h2>
+<div class="limitation-grid">
+<article><h3>Shown</h3><p>Scoped grant and contextual-learning behavior, holdout consistency, question reduction, revocation, and bounded CPU overhead in a deterministic construction.</p></article>
+<article><h3>Not shown</h3><p>Real user utility, native AgentDojo attack success, GPU latency, independent human labels, or broad generalization.</p></article>
+<article><h3>Next validation</h3><p>Frozen real-action pilots, independent human review, recurring-action studies, and matched repeated experiments on production hardware.</p></article>
+</div>
+</section></main>'''
+    (DOCS / 'results.html').write_text(shell + intro + footer, encoding='utf-8')
     (DOCS / '.nojekyll').touch()
     print('Built homepage and results page from committed evidence; no inference performed.')
 

@@ -119,6 +119,27 @@ Verification: Ruff passed; 352 CPU tests passed in 18.42s. The new benchmark wra
 
 Published in `026b31d`. Pages activation remains blocked: authenticated account has push=true, maintain=false, admin=false; Pages API returned 404 and has_pages=false. Repository owner must enable main:/docs in Settings → Pages.
 
+## Results page organization — 2026-11-17
+
+- Reworked `docs/results.html` through `scripts/build_research_site.py` for a
+  presentation-ready, learning-first order.
+- The headline now separates:
+  - core learning and holdout consistency;
+  - question reduction by explicit grants versus active learning;
+  - permission-only CPU cost and sub-millisecond per-action decision cost;
+  - scoped observe/learn/reuse/invalidate behavior;
+  - revocation and grant-reuse evidence;
+  - a compact compatibility check;
+  - historical Laya sweeps as archived, secondary detail.
+- The page explicitly states that 504 actions are repeated steps from 36
+  sequences, that the active learner did not outperform explicit grants, and
+  that this evidence is not real-user, GPU, or native AgentDojo validation.
+- Added KPI cards, learning-flow cards, and responsive comparison/limitation
+  grids to `docs/assets/research.css`.
+- No benchmark values were fabricated or changed. The page uses committed
+  aggregate JSON/CSV evidence and removes the older duplicate historical block
+  from the main presentation order.
+
 ## Pipeline-first website — 2026-11-11
 
 Homepage now explains the shared pipeline with a six-stage native HTML architecture, interactive illustrative approval/grant/revocation walkthrough, model rationale/configuration, dataset excerpts and contributors. Separate results page preserves all comparisons and adds local-demo-20261111-200647 and local-laya-20261111-200928 evidence (12/12 inference, 10/12 controller agreement). No new inference or plugin changes. Ruff passed; 352 CPU tests passed in 17.96s. Desktop walkthrough and mobile dataset preview checked; local page/download links resolve. Pages is now enabled on main:/docs (API status built).
