@@ -49,6 +49,14 @@ def build():
         return f'{saved / baseline * 100:.1f}%'
     def per_action_ms(strategy):
         return ms[strategy]['permission_seconds'] * 1000 / ms[strategy]['actions']
+    question_width = {
+        strategy: ms[strategy]['questions'] / ms['off']['questions'] * 100
+        for strategy in ('off', 'grants', 'active')
+    }
+    cost_width = {
+        strategy: per_action_ms(strategy) / max(per_action_ms(name) for name in ('off', 'grants', 'active')) * 100
+        for strategy in ('off', 'grants', 'active')
+    }
     real_ask = {}
     real_ask_path = ROOT / 'results/real-ask-learning-cybersec-20261112/summary.json'
     if real_ask_path.exists():
@@ -63,6 +71,12 @@ def build():
 </div>
 <p class="result-lead">Across 36 constructed sequences, explicit grants removed <b>17.3%</b> of repeated questions, while contextual learning removed <b>5.4%</b>. Every arm preserved the 36 holdout ALLOW/ASK/BLOCK expectations. The active learner is therefore a credible reduction mechanism, but it did not outperform explicit grants in this test.</p>
 <h3>How the strategies compare</h3>{permission_table}
+<figure class="result-chart" aria-label="Questions remaining after each permission strategy">
+  <figcaption><b>Questions remaining</b><span>Lower is better; baseline = 168 questions</span></figcaption>
+  <div class="chart-row"><span>Unprotected baseline</span><div class="chart-track"><div class="chart-bar chart-off" style="width:{question_width["off"]:.1f}%"></div></div><b>{ms["off"]["questions"]}</b></div>
+  <div class="chart-row"><span>Explicit grants</span><div class="chart-track"><div class="chart-bar chart-grants" style="width:{question_width["grants"]:.1f}%"></div></div><b>{ms["grants"]["questions"]}</b></div>
+  <div class="chart-row"><span>Active learning</span><div class="chart-track"><div class="chart-bar chart-active" style="width:{question_width["active"]:.1f}%"></div></div><b>{ms["active"]["questions"]}</b></div>
+</figure>
 <div class="comparison-grid">
   <article><h3>Explicit grants</h3><p><b>139 questions</b> from a 168-question baseline</p><p><b>{question_reduction("grants")}</b> question reduction</p><p>197 tool dispatches and zero forbidden dispatches</p></article>
   <article><h3>Active learning</h3><p><b>159 questions</b> from a 168-question baseline</p><p><b>{question_reduction("active")}</b> question reduction</p><p>177 tool dispatches and zero forbidden dispatches</p></article>
@@ -78,6 +92,12 @@ def build():
   <article><strong>{number(ms["active"]["permission_seconds"],3)} s</strong><span>active-learning time</span></article>
   <article><strong>{number(measured["runtime"]["elapsed_seconds"],2)} s</strong><span>complete local demo</span></article>
 </div>
+<figure class="result-chart cost-chart" aria-label="Permission decision cost per action">
+  <figcaption><b>Permission decision cost</b><span>Milliseconds per action; lower is better</span></figcaption>
+  <div class="chart-row"><span>No memory</span><div class="chart-track"><div class="chart-bar chart-off" style="width:{cost_width["off"]:.1f}%"></div></div><b>{per_action_ms("off"):.2f} ms</b></div>
+  <div class="chart-row"><span>Explicit grants</span><div class="chart-track"><div class="chart-bar chart-grants" style="width:{cost_width["grants"]:.1f}%"></div></div><b>{per_action_ms("grants"):.2f} ms</b></div>
+  <div class="chart-row"><span>Active learning</span><div class="chart-track"><div class="chart-bar chart-active" style="width:{cost_width["active"]:.1f}%"></div></div><b>{per_action_ms("active"):.2f} ms</b></div>
+</figure>
 <div class="comparison-grid">
   <article><h3>No memory</h3><p>{per_action_ms("off"):.3f} ms average permission time per action</p></article>
   <article><h3>Explicit grants</h3><p>{per_action_ms("grants"):.3f} ms average permission time per action</p></article>

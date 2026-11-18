@@ -136,6 +136,9 @@ Published in `026b31d`. Pages activation remains blocked: authenticated account 
   that this evidence is not real-user, GPU, or native AgentDojo validation.
 - Added KPI cards, learning-flow cards, and responsive comparison/limitation
   grids to `docs/assets/research.css`.
+- Added static, accessible measuring charts for questions remaining and
+  permission decision cost per action. The charts use committed aggregate
+  values and require no JavaScript.
 - No benchmark values were fabricated or changed. The page uses committed
   aggregate JSON/CSV evidence and removes the older duplicate historical block
   from the main presentation order.

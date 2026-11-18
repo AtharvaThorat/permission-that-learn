@@ -8,6 +8,12 @@
 </div>
 <p class="result-lead">Across 36 constructed sequences, explicit grants removed <b>17.3%</b> of repeated questions, while contextual learning removed <b>5.4%</b>. Every arm preserved the 36 holdout ALLOW/ASK/BLOCK expectations. The active learner is therefore a credible reduction mechanism, but it did not outperform explicit grants in this test.</p>
 <h3>How the strategies compare</h3><div class="scroll"><table><thead><tr><th>Strategy</th><th>Actions</th><th>Questions</th><th>Saved</th><th>Forbidden</th><th>Errors</th><th>Permission time (s)</th></tr></thead><tbody><tr><td>off</td><td>504</td><td>168</td><td>0</td><td>0</td><td>0</td><td>1.012</td></tr><tr><td>grants</td><td>504</td><td>139</td><td>29</td><td>0</td><td>0</td><td>1.240</td></tr><tr><td>active</td><td>504</td><td>159</td><td>9</td><td>0</td><td>0</td><td>1.632</td></tr></tbody></table></div>
+<figure class="result-chart" aria-label="Questions remaining after each permission strategy">
+  <figcaption><b>Questions remaining</b><span>Lower is better; baseline = 168 questions</span></figcaption>
+  <div class="chart-row"><span>Unprotected baseline</span><div class="chart-track"><div class="chart-bar chart-off" style="width:100.0%"></div></div><b>168</b></div>
+  <div class="chart-row"><span>Explicit grants</span><div class="chart-track"><div class="chart-bar chart-grants" style="width:82.7%"></div></div><b>139</b></div>
+  <div class="chart-row"><span>Active learning</span><div class="chart-track"><div class="chart-bar chart-active" style="width:94.6%"></div></div><b>159</b></div>
+</figure>
 <div class="comparison-grid">
   <article><h3>Explicit grants</h3><p><b>139 questions</b> from a 168-question baseline</p><p><b>17.3%</b> question reduction</p><p>197 tool dispatches and zero forbidden dispatches</p></article>
   <article><h3>Active learning</h3><p><b>159 questions</b> from a 168-question baseline</p><p><b>5.4%</b> question reduction</p><p>177 tool dispatches and zero forbidden dispatches</p></article>
@@ -23,6 +29,12 @@
   <article><strong>1.632 s</strong><span>active-learning time</span></article>
   <article><strong>4.57 s</strong><span>complete local demo</span></article>
 </div>
+<figure class="result-chart cost-chart" aria-label="Permission decision cost per action">
+  <figcaption><b>Permission decision cost</b><span>Milliseconds per action; lower is better</span></figcaption>
+  <div class="chart-row"><span>No memory</span><div class="chart-track"><div class="chart-bar chart-off" style="width:62.0%"></div></div><b>2.01 ms</b></div>
+  <div class="chart-row"><span>Explicit grants</span><div class="chart-track"><div class="chart-bar chart-grants" style="width:76.0%"></div></div><b>2.46 ms</b></div>
+  <div class="chart-row"><span>Active learning</span><div class="chart-track"><div class="chart-bar chart-active" style="width:100.0%"></div></div><b>3.24 ms</b></div>
+</figure>
 <div class="comparison-grid">
   <article><h3>No memory</h3><p>2.007 ms average permission time per action</p></article>
   <article><h3>Explicit grants</h3><p>2.460 ms average permission time per action</p></article>
