@@ -11,6 +11,8 @@ from pathlib import Path
 
 import gradio as gr
 
+from .learning_demo import (GROUPS, HISTORY_HEADERS, INTRO as LEARNING_INTRO, LearningDemo, case_choice, group_cases,
+                            history_rows, progress_html, result_html)
 from .look import CSS, HOW_IT_WORKS, THEME, hero, stage_html
 from .memory import MODES as MEMORY_MODES
 from .session import (ASK_SCENARIOS, MODES, SCENARIOS, VERIFIED_CASES, DemoSession, ask_case, borderline, case_label,
@@ -140,9 +142,10 @@ PIPELINES = {'wall_laya': 'Wall + laya-cybersec + learning + memory',
              'laya_only': 'laya-cybersec + learning + memory (no Wall)'}
 
 
-def build_app(make_session, laya_available=True, memory=None, rows=None):
+def build_app(make_session, laya_available=True, memory=None, rows=None, scanner=None):
     """`make_session(mode, scenario, compare, memory_mode, row=None)`; `memory` is the shared Memory store, or None;
-    `rows` is a rows.DatasetRows (the team dataset's Workspace rows), or None."""
+    `rows` is a rows.DatasetRows (the team dataset's Workspace rows), or None; `scanner` (laya-cybersec) runs the
+    learning demo tab, which is hidden without it."""
     modes = [label for key, label in MODES.items() if key not in ('wall_laya', 'laya_only') or laya_available]
     by_label = {label: key for key, label in MODES.items()}
     # The two pipelines on the page; both use laya-cybersec, permission learning and memory. Values are MODES labels.
@@ -292,6 +295,7 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
         with gr.Row(elem_classes='quick'):
             quick_buttons = [(gr.Button(text, size='lg'), value) for text, value in quick]
             surprise = gr.Button('🎲  Surprise me', size='lg', variant='secondary')
+            see_learning = gr.Button('🧠  See it learn', size='lg', variant='secondary', visible=scanner is not None)
         with gr.Row(equal_height=False, elem_classes='main-row'):
             with gr.Column(scale=4, elem_classes='panel'):
                 gr.Markdown('### <span>1</span>Choose an action to test', elem_classes='step-title')
@@ -320,7 +324,31 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                         approve = gr.Button('✓  Approve', interactive=False, elem_classes='approve-btn')
                         remember = gr.Button('★  Approve and remember', interactive=False, elem_classes='remember-btn')
                         reject = gr.Button('✕  Reject', interactive=False, elem_classes='reject-btn')
-        with gr.Tabs():
+        learn_groups = group_cases()
+        learn_kinds = [(f'{icon} {name} ({len(learn_groups[tool])})', tool) for tool, (icon, name, _) in GROUPS.items()]
+        with gr.Tabs() as tabs:
+            with gr.Tab('🧠 Permissions that learn', id='learn', visible=scanner is not None):
+                learn_state = gr.State(None)
+                gr.Markdown(LEARNING_INTRO)
+                learn_progress = gr.HTML(progress_html(None))
+                with gr.Row(equal_height=False, elem_classes='main-row'):
+                    with gr.Column(scale=4, elem_classes='panel'):
+                        learn_kind = gr.Radio(learn_kinds, value='search_emails', label='Kind of request',
+                                              elem_classes='pills')
+                        learn_next = gr.Button('▶  Run the next one', variant='primary', size='lg')
+                        learn_case = gr.Dropdown([(case_choice(c), c) for c in learn_groups['search_emails']],
+                                                 label='Or pick a specific request', filterable=True)
+                        learn_run = gr.Button('Run this one')
+                        learn_reset = gr.Button('↺  Forget what it learned', variant='secondary')
+                    with gr.Column(scale=7):
+                        learn_result = gr.HTML(result_html(None))
+                        with gr.Column(elem_classes='approval'):
+                            gr.Markdown('#### ✋ Your decision\nThese light up when the guard asks you. The guard '
+                                        'learns from each answer.')
+                            with gr.Row():
+                                learn_approve = gr.Button('✓  Approve', interactive=False, elem_classes='approve-btn')
+                                learn_reject = gr.Button('✕  Reject', interactive=False, elem_classes='reject-btn')
+                learn_history = gr.Dataframe(headers=HISTORY_HEADERS, label='Requests in this demo', wrap=True)
             with gr.Tab('📋 Every action checked'):
                 table = gr.Dataframe(headers=HEADERS, label='Every action checked', wrap=True,
                                      column_widths=['4%', '14%', '20%', '10%', '20%', '9%', '11%', '5%', '7%'])
@@ -363,6 +391,43 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
         reject.click(lambda s: decide(s, False), [state], buttons)
         revoke_button.click(revoke, [revoke_choice], [grants, revoke_choice])
         app.load(start, settings, [state, chat, prompt, info, *outputs], **quiet)
+
+        # Learning demo: each viewer has their own LearningDemo (the team's CountingMemory) in learn_state.
+        learn_outputs = [learn_state, learn_progress, learn_result, learn_history, learn_approve, learn_reject,
+                         learn_next, learn_run]
+
+        def learn_view(demo):
+            waiting = bool(demo and demo.pending)
+            return (demo, progress_html(demo), result_html(demo), history_rows(demo), gr.update(interactive=waiting),
+                    gr.update(interactive=waiting), gr.update(interactive=not waiting), gr.update(interactive=not waiting))
+
+        def learn_case_run(demo, case_id):
+            demo = demo or LearningDemo(scanner)
+            if case_id and not demo.pending:
+                demo.run(case_id)
+            return learn_view(demo)
+
+        def learn_next_run(demo, tool):
+            demo = demo or LearningDemo(scanner)
+            case_id = demo.next_case(tool)
+            if case_id is None:
+                gr.Info(f'All {len(learn_groups[tool])} {GROUPS[tool][1].lower()} have been run. '
+                        'Press Forget what it learned to start again.')
+            return learn_case_run(demo, case_id)
+
+        def learn_answer(demo, approved):
+            if demo and demo.pending:
+                demo.answer(approved)
+            return learn_view(demo)
+
+        learn_kind.change(lambda tool: gr.update(choices=[(case_choice(c), c) for c in learn_groups[tool]], value=None),
+                          [learn_kind], [learn_case])
+        learn_next.click(learn_next_run, [learn_state, learn_kind], learn_outputs, show_progress='minimal')
+        learn_run.click(learn_case_run, [learn_state, learn_case], learn_outputs, show_progress='minimal')
+        learn_approve.click(lambda d: learn_answer(d, True), [learn_state], learn_outputs, **quiet)
+        learn_reject.click(lambda d: learn_answer(d, False), [learn_state], learn_outputs, **quiet)
+        learn_reset.click(lambda: learn_view(LearningDemo(scanner)), None, learn_outputs, **quiet)
+        see_learning.click(lambda: gr.Tabs(selected='learn'), None, [tabs])
     return app
 
 
@@ -401,7 +466,7 @@ def main(argv=None):
         return DemoSession(mode, scenario, scanner, memory=memory, memory_mode=memory_mode, model=args.model,
                            base_url=args.base_url, compare_judge=compare, row=row)
 
-    build_app(make_session, laya_available=scanner is not None, memory=memory, rows=rows).queue().launch(
+    build_app(make_session, laya_available=scanner is not None, memory=memory, rows=rows, scanner=scanner).queue().launch(
         share=args.share, server_name='0.0.0.0' if args.share else '127.0.0.1', server_port=args.port, theme=THEME, css=CSS)
 
 

@@ -15,7 +15,30 @@ compute measurable.
 Everything acts on AgentDojo's **simulated** Workspace (Emma Johnson's mailbox, calendar and drive). Nothing real is read,
 sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` package.
 
-## Changes in this version (52 verified ASK cases + redesigned page)
+## Changes in this version (learning demo: approve 2, the 3rd new request is approved for you)
+
+### What changed
+
+- New tab **🧠 Permissions that learn** (and a **See it learn** button at the top), for the verified ASK cases only.
+- The cases are grouped by **action type**: 📧 email searches (14), 📅 calendar lookups (14), 📁 private-file reads (15).
+  The 7 borderline cases (the model allows them) and the 3 single cases (send email, bank balance, Slack) are left out.
+- After you **approve 2 different requests** of one kind, the next **new** request of that kind is approved without
+  asking. One **Reject** stops that kind without asking until you press **Forget what it learned**.
+- The learner is the team's `CountingMemory(approvals_to_allow=2)` with the team's `pattern_key(..., 'class')`
+  (`grids.core.permissions.memory`), unchanged. It answers only laya-cybersec's own asks and learns only from your
+  answers. The key leaves out the per-case context part of the policy version (`rules_version`): the Wall's version is
+  its rules plus each recorded case's own context, so the full version would make every request its own group.
+- Why a new mechanism: the page's permission memory (`PermissionStore` + `learning.py`) only reuses a grant for the
+  **exact** same request and action, so a different request always asks, however many are approved.
+- New files: `grids_plugin/learning_demo.py`, `tests/test_learning_demo.py`.
+
+### Checks
+
+- `python -m pytest -q tests`: 42 passed.
+- Real laya-cybersec (`python -m grids_plugin.learning_demo --laya-cache ...`): for each kind, the 1st and 2nd requests
+  asked and were approved, and the 3rd, a different request, was approved by learning. Passed for all three kinds.
+
+## Changes in an earlier version (52 verified ASK cases + redesigned page)
 
 ### What changed
 

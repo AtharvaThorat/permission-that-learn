@@ -102,10 +102,27 @@ CSS = """
 .reject-btn { background: var(--bad) !important; color: #fff !important; border: none !important; }
 .approve-btn:disabled, .remember-btn:disabled, .reject-btn:disabled { opacity: .35 !important; }
 
+/* Learning demo: one card per kind of request, with its approvals so far */
+.groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 4px 0 12px; }
+.group { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--block-background-fill);
+  transition: all .3s ease; }
+.group .gtop { display: flex; align-items: center; gap: 8px; }
+.group .gicon { font-size: 18px; }
+.group .dots { margin-left: auto; display: flex; gap: 5px; }
+.group .dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--line); display: inline-block; }
+.group .dots i.on { background: #2a78d6; }
+.group .gsay { font-size: 13px; margin-top: 6px; }
+.group .seen { font-size: 12px; color: var(--body-text-color-subdued); margin-top: 4px; overflow-wrap: anywhere; }
+.group.learned { border-color: var(--ok); background: var(--ok-tint); }
+.group.learned .dots i.on { background: var(--ok); }
+.group.stopped { border-color: var(--bad); background: var(--bad-tint); }
+.badge.learned { background: linear-gradient(90deg, #1d4e94, #2a78d6); color: #fff; }
+
 .quick { flex-wrap: wrap !important; }
 .quick > * { min-width: 180px !important; }
 @media (max-width: 900px) {
   .pipe { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .groups { grid-template-columns: minmax(0, 1fr); }
   .hero { padding: 20px; } .hero h1 { font-size: 24px; }
   .main-row { flex-direction: column !important; }
   .main-row > * { min-width: 0 !important; width: 100% !important; }

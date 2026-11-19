@@ -117,6 +117,14 @@ example ones with an unclear recipient, time or amount. File-share confirmations
 The table shows each action's Wall verdict, laya-cybersec's ALLOW · ASK · BLOCK probabilities, the decision, what memory
 did and whether it ran. The Compute table shows the cost of each part.
 
+### Learning demo (approve 2, the 3rd new request is approved for you)
+
+1. Press **🧠 See it learn** at the top (or open the **Permissions that learn** tab).
+2. Pick a kind (e.g. **Email searches**) and press **Run the next one**. laya-cybersec asks; press **Approve**.
+3. Press **Run the next one** again (a different request) and **Approve**. The kind's card now says **Learned**.
+4. Press **Run the next one** a third time: a new request, **⚡ Approved by learning**, without asking.
+5. A **Reject** stops that kind without asking. **Forget what it learned** starts over.
+
 ### ASK scenarios (laya-cybersec asks you)
 
 1. Choose a **Pipeline**. To see reuse at once, set memory to **Grants** in Advanced.
