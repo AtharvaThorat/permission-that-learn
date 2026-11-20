@@ -11,6 +11,7 @@ from pathlib import Path
 
 import gradio as gr
 
+from .learner import APPROVED as LEARNER_APPROVED, STOPPED as LEARNER_STOPPED
 from .look import CSS, HOW_IT_WORKS, THEME, hero, stage_html
 from .memory import MODES as MEMORY_MODES
 from .session import (ASK_SCENARIOS, MODES, SCENARIOS, VERIFIED_CASES, DemoSession, ask_case, borderline, case_label,
@@ -42,7 +43,26 @@ def compute_markdown(c, laya_on):
     return '### Compute\n' + table + '\n\n' + ' '.join(notes)
 
 
+def learner_markdown(learner):
+    """What Atharva's learner has learned, one row per kind of request."""
+    text = ("### Permission memory: Atharva's learner\n"
+            f"**Approve and remember** counts as one approval of that **kind** of request (the same tool, reaching the "
+            f"same kinds of people). After **{learner.k}** approvals of a kind with no rejection, a new request of that "
+            "kind is approved **without asking**. One **Reject** stops that kind without asking. A plain **Approve** "
+            "allows it once and teaches nothing. File-share confirmations always ask you.\n\n")
+    kinds = learner.kinds()
+    if not kinds:
+        return text + 'Nothing learned yet.'
+    state = {'learning': 'asks you', 'learned': '⚡ approves new ones', 'stopped': '✕ stops new ones'}
+    rows = '\n'.join(f"| `{k['tool']}` | {k['reaches']} | {min(k['approvals'], learner.k)} of {learner.k} | {k['rejections']} | "
+                     f"{state[k['state']]} | {'; '.join(r[:60] for r in k['requests'][-3:])} |" for k in kinds)
+    return (text + '| Kind (tool) | Reaches | Approvals | Rejections | Now | Learned from (latest) |\n'
+            '|---|---|---|---|---|---|\n' + rows)
+
+
 def memory_markdown(session):
+    if session is not None and getattr(session, 'learner', None) is not None:
+        return learner_markdown(session.learner)
     if not session or session.memory is None:
         return '### Permission memory\nOff. Every ask goes to you.'
     m = session.memory_summary()
@@ -61,6 +81,11 @@ def pending_markdown(session, waiting):
     remember = ('You can **approve and remember** it: the same request and action will not ask again.'
                 if waiting.get('rememberable') else 'This ask cannot be remembered (a mandatory confirmation, '
                 'or memory is off).')
+    if waiting.get('key') and session.learner is not None:   # Atharva's learner
+        approvals, _ = session.learner.progress(waiting['key'])
+        remember = (f"**Approve and remember** teaches the learner: {approvals} of {session.learner.k} approvals of this "
+                    f"kind so far. After {session.learner.k}, new requests of this kind are approved without asking. "
+                    "**Approve** allows it just this once; **Reject** stops this kind.")
     if waiting.get('remembered'):
         remember = (f"**Already remembered** (permission `{waiting['remembered'][:8]}`), so **Approve** is enough. "
                     f"Memory mode **{MEMORY_MODES[session.memory_mode]}** decides when it answers without asking.")
@@ -110,6 +135,12 @@ def row_result_markdown(session):
             steps.append(f"**laya-cybersec:** {r['decision']} ({r['laya']}).")
         if r.get('memory') == 'answered by remembered permission':
             steps.append('**Permission memory:** answered it with your remembered permission, so you were **not asked**.')
+        elif r.get('memory') == LEARNER_APPROVED:
+            steps.append("**Atharva's learner:** you approved enough requests of this kind before, so it approved this "
+                         'one and you were **not asked**.')
+        elif r.get('memory') == LEARNER_STOPPED:
+            steps.append("**Atharva's learner:** you rejected this kind before, so it stopped this one and you were "
+                         '**not asked**.')
         elif r.get('asked'):
             answer = {'approved': '**approved** it', 'rejected': '**rejected** it'}.get(r.get('person'), 'did not answer in time')
             remembered = ' and remembered it' if r.get('memory') == 'approved and remembered' else ''
@@ -140,9 +171,10 @@ PIPELINES = {'wall_laya': 'Wall + laya-cybersec + learning + memory',
              'laya_only': 'laya-cybersec + learning + memory (no Wall)'}
 
 
-def build_app(make_session, laya_available=True, memory=None, rows=None):
+def build_app(make_session, laya_available=True, memory=None, rows=None, learner=None):
     """`make_session(mode, scenario, compare, memory_mode, row=None)`; `memory` is the shared Memory store, or None;
-    `rows` is a rows.DatasetRows (the team dataset's Workspace rows), or None."""
+    `rows` is a rows.DatasetRows (the team dataset's Workspace rows), or None; `learner` is Atharva's learner
+    (learner.Learner), the page's permission memory when given (memory is then None)."""
     modes = [label for key, label in MODES.items() if key not in ('wall_laya', 'laya_only') or laya_available]
     by_label = {label: key for key, label in MODES.items()}
     # The two pipelines on the page; both use laya-cybersec, permission learning and memory. Values are MODES labels.
@@ -156,7 +188,9 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
 
     def shown(key):
         return PIPELINES.get(key, MODES[key])
-    memory_labels = [MEMORY_MODES['off']] + ([label for key, label in MEMORY_MODES.items() if key != 'off'] if memory else [])
+    memory_labels = ([MEMORY_MODES['learner']] if learner else
+                     [MEMORY_MODES['off']] + ([label for key, label in MEMORY_MODES.items() if key not in ('off', 'learner')]
+                                              if memory else []))
     memory_by_label = {label: key for key, label in MEMORY_MODES.items()}
 
     def grants_view():
@@ -333,6 +367,7 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
                 with gr.Row(visible=memory is not None):
                     revoke_choice = gr.Dropdown([], label='Permission to revoke')
                     revoke_button = gr.Button('Revoke')
+                forget = gr.Button('↺  Forget what the learner learned', visible=learner is not None)
             with gr.Tab('💬 Chat with the assistant'):
                 gr.Markdown('Results of **Run** also appear here. To chat, pick a scenario, reset the Workspace and send a '
                             'request (needs the chat model on Ollama).')
@@ -362,6 +397,13 @@ def build_app(make_session, laya_available=True, memory=None, rows=None):
         remember.click(lambda s: decide(s, True, remember=True), [state], buttons)
         reject.click(lambda s: decide(s, False), [state], buttons)
         revoke_button.click(revoke, [revoke_choice], [grants, revoke_choice])
+
+        def forget_learned(session):
+            if learner is not None:
+                learner.forget()
+            return memory_markdown(session)
+
+        forget.click(forget_learned, [state], [memory_info])
         app.load(start, settings, [state, chat, prompt, info, *outputs], **quiet)
     return app
 
@@ -373,20 +415,21 @@ def main(argv=None):
     parser.add_argument('--laya-cache', help='folder for the laya-cybersec download; omit to run without it')
     parser.add_argument('--laya-device', default='cpu', choices=['cpu', 'cuda'])
     parser.add_argument('--memory-store', default=str(Path(__file__).resolve().parents[1] / 'memory' / 'permissions.sqlite'),
-                        help="SQLite file for remembered permissions (the repository's PermissionStore)")
+                        help="SQLite file for exact permissions (the repository's PermissionStore); not used by the "
+                             "page, which uses Atharva's learner")
     parser.add_argument('--dataset-data', help="folder for the team dataset's files; shows the dataset row picker "
                                                 "(the dataset is gated: log in to Hugging Face or set HF_TOKEN)")
     parser.add_argument('--share', action='store_true', help='public gradio.live link (needed on Colab)')
     parser.add_argument('--port', type=int, default=7860)
     args = parser.parse_args(argv)
-    scanner = memory = None
+    scanner = memory = learner = None
     if args.laya_cache:
         from .cybersec import Scanner, download
-        from .memory import Memory
+        from .learner import Learner
         scanner = Scanner(download(args.laya_cache), device=args.laya_device)
         print(f'laya-cybersec loaded in {scanner.load_seconds:.1f} s on {args.laya_device}', flush=True)
-        memory = Memory(args.memory_store)
-        print(f'Permission memory: {memory.path}', flush=True)
+        learner = Learner()   # the page's permission memory: Atharva's learner
+        print(f"Permission memory: Atharva's learner ({learner.k} approvals of a kind)", flush=True)
 
     rows = None
     if args.dataset_data:
@@ -399,9 +442,9 @@ def main(argv=None):
 
     def make_session(mode, scenario, compare, memory_mode, row=None):
         return DemoSession(mode, scenario, scanner, memory=memory, memory_mode=memory_mode, model=args.model,
-                           base_url=args.base_url, compare_judge=compare, row=row)
+                           base_url=args.base_url, compare_judge=compare, row=row, learner=learner)
 
-    build_app(make_session, laya_available=scanner is not None, memory=memory, rows=rows).queue().launch(
+    build_app(make_session, laya_available=scanner is not None, memory=memory, rows=rows, learner=learner).queue().launch(
         share=args.share, server_name='0.0.0.0' if args.share else '127.0.0.1', server_port=args.port, theme=THEME, css=CSS)
 
 

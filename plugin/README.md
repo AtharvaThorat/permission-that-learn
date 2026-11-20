@@ -15,7 +15,31 @@ compute measurable.
 Everything acts on AgentDojo's **simulated** Workspace (Emma Johnson's mailbox, calendar and drive). Nothing real is read,
 sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` package.
 
-## Changes in this version (learning demo: approve 2, the 3rd new request is approved for you)
+## Changes in this version (the demo page uses Atharva's learner: 3 approvals of a kind)
+
+### What changed
+
+- The main demo page's permission memory is now **Atharva's learner**: the team's `CountingMemory(approvals_to_allow=3)`
+  and `pattern_key(..., 'class')` (`grids.core.permissions.memory`), unchanged, in `grids_plugin/learner.py`.
+  The page no longer offers Siddharth's store (Off / Grants / Shadow / Active); that code stays in the plugin and `src/`
+  for `ask_check`, the MCP server and the tests.
+- A **kind** of request = the same tool, reaching the same kinds of people (trust classes from the Wall's own context),
+  under the same Wall rules (the per-case context part of the policy version is left out).
+- **Approve and remember** counts one approval of that kind; after **3**, a new request of that kind is approved without
+  asking (pipeline: "Learner approved it"; Memory column: `approved by the learner`). A plain **Approve** allows it once
+  and teaches nothing. One **Reject** stops that kind without asking until **Forget what the learner learned**.
+- Only laya-cybersec's own asks with complete evidence are learned or answered; file-share confirmations and model
+  failures always ask.
+- Permission memory tab: what the learner learned per kind, and the Forget button.
+
+### Checks
+
+- `python -m pytest -q tests`: 45 passed (`tests/test_learner_page.py`: verified cases and a live action through the
+  controller; plain Approve; Reject; the page).
+- Real laya-cybersec: for email searches and for file reads, 3 different requests asked and were remembered, and the
+  4th, a different request, was approved by the learner without asking. Checked on the page in Edge.
+
+## Changes in an earlier version (learning demo: approve 2, the 3rd new request is approved for you)
 
 ### What changed
 
@@ -46,7 +70,7 @@ sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` p
 - Comparison page (real model): Atharva's learner approved the 3rd different email search without asking; Siddharth's
   asked all 3 different requests and reused only the same request, after 2 approvals.
 
-## Changes in an earlier version (52 verified ASK cases + redesigned page)
+## Changes in an older version (52 verified ASK cases + redesigned page)
 
 ### What changed
 

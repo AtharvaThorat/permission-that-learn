@@ -16,8 +16,11 @@ from dataclasses import fields
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .learner import LABEL as LEARNER_LABEL
+
 MODES = {'off': 'Off (always ask)', 'grants': 'Grants (reuse remembered permissions)',
-         'shadow': 'Shadow (learner records, still asks)', 'active': 'Active (learner decides when to reuse)'}
+         'shadow': 'Shadow (learner records, still asks)', 'active': 'Active (learner decides when to reuse)',
+         'learner': LEARNER_LABEL}   # Atharva's learner (learner.py): what the demo page uses
 USER = 'demo-user'   # the trusted local operator; the assistant's messages can never choose it
 TARGETS = ('recipients', 'email', 'user', 'participants', 'recipient', 'url')
 

@@ -46,16 +46,17 @@ Options: `--memory-store <file>` (remembered permissions), `--laya-device cpu|cu
 5. **Tabs** under the page:
    - **Every action checked**;
    - **Compute**;
-   - **Permission memory**: the remembered permissions; pick one and press **Revoke**;
+   - **Permission memory**: what Atharva's learner has learned, per kind of request, and **Forget what the learner
+     learned**;
    - **Chat with the assistant**: pick a **Scenario**, press **Start / reset Workspace**, type a request and press
      **Send**. Only the two "Attack…" scenarios contain the hidden instruction;
    - **How it works**.
-6. **Advanced settings** (collapsed): another protection level (No protection / Wall only), the memory mode (Off /
-   Grants / Shadow / Active, default Active = learning + memory) and the LLM-judge timing.
+6. **Advanced settings** (collapsed): another protection level (No protection / Wall only) and the LLM-judge timing.
 
-Memory with learning (Active): a remembered permission is reused once the learner has seen it about 10 times, and 1 in
-10 times it still asks, to keep learning. To see a remembered permission reused at once, choose memory **Grants** in
-Advanced.
+Permission memory is **Atharva's learner** (the team's `CountingMemory`): **Approve and remember** counts as one approval
+of that kind of request (the same tool, reaching the same kinds of people). After **3** approvals of a kind, a new
+request of that kind is approved without asking. A plain **Approve** allows it once and teaches nothing; one **Reject**
+stops that kind without asking until **Forget what the learner learned**.
 
 ### Test prompts
 
@@ -103,13 +104,13 @@ Notes:
 - If the assistant only summarizes, it resisted the attack, so there's nothing to block. Try the third prompt.
 - **Compare protection levels:** run the same attack with `No protection` and with `Wall + laya-cybersec`.
 
-**5. Permission memory**, scenario `Free chat`, memory `Grants`:
+**5. Permission memory (Atharva's learner)**, scenario `Free chat`:
 
 1. Send a request. If laya-cybersec answers **ASK** (column shows e.g. `ALLOW 0.30 · ASK 0.45 · BLOCK 0.25`), press
-   **Approve and remember**.
-2. Press **Start / reset Workspace** and send exactly the same request.
-3. Expected: the same action runs without asking; the Memory column says `answered by remembered permission`.
-4. Revoke the permission and repeat: it asks again.
+   **Approve and remember**. Do this for 3 requests of the same kind (e.g. 3 email searches).
+2. Press **Start / reset Workspace** and send a 4th request of that kind.
+3. Expected: it runs without asking; the Memory column says `approved by the learner`.
+4. A **Reject** stops that kind; **Forget what the learner learned** (Permission memory tab) starts over.
 
 laya-cybersec answers ASK rarely (10 of 150 rows on the team dataset), so you may need to try a few requests, for
 example ones with an unclear recipient, time or amount. File-share confirmations can never be remembered.
@@ -121,19 +122,19 @@ did and whether it ran. The Compute table shows the cost of each part.
 
 1. Run Colab cells 1-3, then cell **5b**, and open the `Learner comparison` link it prints (not the main demo's link).
 2. Choose the **Learner**: **Atharva's** or **Siddharth's**.
-3. Pick a kind (e.g. **Email searches**), press **Run the next one** and **Approve**; do it twice, then run a third.
-   Atharva's approves the third (a different request) without asking; Siddharth's still asks.
+3. Pick a kind (e.g. **Email searches**), press **Run the next one** and **Approve**; do it 3 times, then run a fourth.
+   Atharva's approves the fourth (a different request) without asking; Siddharth's still asks.
+   Both need 3 approvals on this page (Siddharth's reuses only the exact same request, after 3 approvals).
 4. **Run the same one again** repeats the last request: Siddharth's reuses only that exact request.
 5. Delete cell 5b to remove the page.
 
 ### ASK scenarios (laya-cybersec asks you)
 
-1. Choose a **Pipeline**. To see reuse at once, set memory to **Grants** in Advanced.
-2. In **Test one action**, pick an `ASK case` (the 3 verified cases: their exact model state and permission scope;
-   no tool runs) and press **Run**.
-3. It waits: press **Approve and remember**.
-4. Press **Run** again: the Memory column says `answered by remembered permission`.
-5. Revoke the permission (bottom right) and press **Run** again: it asks again.
+1. Choose a **Pipeline** and the **Email** filter.
+2. Run 3 different email searches; each waits: press **Approve and remember**.
+3. Run a 4th, different email search: the pipeline shows **Learner approved it** and the Memory column says
+   `approved by the learner`. You were not asked.
+4. A calendar lookup still asks: each kind learns on its own.
 
 With memory **Shadow**, every run still asks you (the learner only records). With **Active** (the default), reuse starts
 after about 10 runs.

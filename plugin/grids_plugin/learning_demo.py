@@ -1,4 +1,4 @@
-"""Learning demo: approve two different asks of one kind, and the next new ask of that kind is approved for you.
+"""Learning demo: approve 3 different asks of one kind, and the next new ask of that kind is approved for you.
 
 The learner is the team's `CountingMemory` (grids.core.permissions.memory), unchanged, keyed by the team's
 `pattern_key(..., granularity='class')`: the same tool on the same kinds of people, under the same Wall rules
@@ -22,7 +22,7 @@ from .session import VERIFIED_CASES, borderline
 GROUPS = {'search_emails': ('📧', 'Email searches', 'an email search'),
           'search_calendar_events': ('📅', 'Calendar lookups', 'a calendar lookup'),
           'get_file_by_id': ('📁', 'Private file reads', 'a private file read')}
-APPROVALS_TO_ALLOW = 2
+APPROVALS_TO_ALLOW = 3
 
 
 def group_cases(cases=None):
@@ -137,7 +137,7 @@ INTRO = f"""### 🧠 Permissions that learn
 Approve **{APPROVALS_TO_ALLOW} different** requests of one kind, and the next **new** request of that kind is approved
 for you, without asking. Each kind learns on its own, and one **Reject** stops that kind for good (until you reset).
 
-**Try it:** pick *Email searches*, press **Run the next one** and approve it. Do that once more, then run a third:
+**Try it:** pick *Email searches*, press **Run the next one** and approve it. Do that twice more, then run a fourth:
 it is approved by what the guard learned from you. The cases are the team's verified ASK cases; no tool actually runs.
 """
 
@@ -166,7 +166,7 @@ def result_html(demo):
     entry = demo.history[-1] if demo and demo.history else None
     if entry is None:
         return ('<div class="card placeholder"><b>Pick a kind of request and press Run</b>The guard asks you first. '
-                'After two approvals of one kind, watch it approve the next one on its own.</div>')
+                f'After {APPROVALS_TO_ALLOW} approvals of one kind, watch it approve the next one on its own.</div>')
     one = GROUPS[entry['tool']][2]
     if demo.pending is entry:
         kind, badge = 'ask', '? Waiting for you'
@@ -208,7 +208,8 @@ HISTORY_HEADERS = ['#', 'Kind', 'Subject', 'laya-cybersec', 'Decided by', 'Resul
 
 
 def main(argv=None):
-    """Real laya-cybersec: for each kind, two different requests approved, then a third new one approved by learning."""
+    """Real laya-cybersec: for each kind, APPROVALS_TO_ALLOW different requests approved, then a new one approved by
+    learning."""
     import argparse
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument('--laya-cache', required=True, help='folder for the laya-cybersec download')
@@ -217,10 +218,10 @@ def main(argv=None):
     from .cybersec import Scanner, download
     demo = LearningDemo(Scanner(download(args.laya_cache), device=args.laya_device))
     passed = True
-    print('| Kind | 1st (asked, approved) | 2nd (asked, approved) | 3rd, new request | Passed |\n|---|---|---|---|---|')
+    print('| Kind | Requests (who decided) | Passed |\n|---|---|---|')
     for tool, (_, name, _) in GROUPS.items():
         steps = []
-        while len(steps) < 3:
+        while len(steps) < demo.k + 1:
             case_id = demo.next_case(tool)
             if case_id is None:
                 break
@@ -231,9 +232,10 @@ def main(argv=None):
                 steps.append(entry)
             else:
                 print(f'  ({case_id}: laya-cybersec answered {entry["decision"]}, skipped)')
-        ok = (len(steps) == 3 and [s['by'] for s in steps] == ['you', 'you', 'memory'] and steps[2]['approved'])
+        ok = (len(steps) == demo.k + 1 and [s['by'] for s in steps] == ['you'] * demo.k + ['memory']
+              and steps[-1]['approved'])
         passed &= ok
-        print(f"| {name} | " + ' | '.join(f"{s['topic']} ({s['by']})" for s in steps) + f" | {'yes' if ok else '**no**'} |")
+        print(f"| {name} | " + ', '.join(f"{s['topic']} ({s['by']})" for s in steps) + f" | {'yes' if ok else '**no**'} |")
     return 0 if passed else 1
 
 

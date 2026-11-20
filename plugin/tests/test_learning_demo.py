@@ -1,4 +1,4 @@
-"""Learning demo: two approvals of one kind, then a new request of that kind is approved without asking (the team's
+"""Learning demo: three approvals of one kind, then a new request of that kind is approved without asking (the team's
 CountingMemory, keyed by action type), as used by the Colab learner comparison page (cell 5b). Fake laya-cybersec
 that answers ASK; the real model is checked by `python -m grids_plugin.learning_demo --laya-cache ...`."""
 from support import FakeScanner
@@ -22,20 +22,20 @@ def test_cases_are_grouped_by_action_type_without_borderline_or_single_cases():
     assert len({demo.key(VERIFIED_CASES[ids[0]]) for ids in groups.values()}) == 3
 
 
-def test_two_approvals_then_a_new_request_of_that_kind_is_approved_without_asking():
+def test_three_approvals_then_a_new_request_of_that_kind_is_approved_without_asking():
     demo = LearningDemo(ASKING)
-    first = demo.run(demo.next_case('search_emails'))
-    assert demo.pending is first and first['by'] == 'you'
-    demo.answer(True)
-    assert demo.status('search_emails') == (1, 0, 'learning')
-    second = demo.run(demo.next_case('search_emails'))
-    assert demo.pending is second and second['id'] != first['id']
-    demo.answer(True)
-    assert demo.status('search_emails') == (2, 0, 'learned')
-    third = demo.run(demo.next_case('search_emails'))
-    assert third['id'] not in (first['id'], second['id']) and third['prompt'] != first['prompt']
+    assert demo.k == 3
+    approved = []
+    for n in range(3):
+        entry = demo.run(demo.next_case('search_emails'))
+        assert demo.pending is entry and entry['by'] == 'you' and entry['id'] not in [e['id'] for e in approved]
+        demo.answer(True)
+        approved.append(entry)
+        assert demo.status('search_emails') == (n + 1, 0, 'learned' if n == 2 else 'learning')
+    third = demo.run(demo.next_case('search_emails'))   # the 4th request: a new one
+    assert third['id'] not in [e['id'] for e in approved] and third['prompt'] != approved[0]['prompt']
     assert demo.pending is None and third['by'] == 'memory' and third['approved'] is True
-    assert third['learned_from'] == [first['topic'], second['topic']]
+    assert third['learned_from'] == [e['topic'] for e in approved]
     assert 'Approved by learning' in result_html(demo) and 'Not asked' in result_html(demo)
     # Other kinds learned nothing: a calendar lookup still asks.
     calendar = demo.run(demo.next_case('search_calendar_events'))
@@ -46,7 +46,7 @@ def test_two_approvals_then_a_new_request_of_that_kind_is_approved_without_askin
     assert stopped['by'] == 'memory' and stopped['approved'] is False and demo.pending is None
     assert demo.status('search_calendar_events')[2] == 'stopped'
     assert 'Learned' in progress_html(demo) and 'Stopped' in progress_html(demo)
-    assert [row[4] for row in history_rows(demo)] == ['you', 'you', '⚡ learning (not asked)', 'you',
+    assert [row[4] for row in history_rows(demo)] == ['you', 'you', 'you', '⚡ learning (not asked)', 'you',
                                                        '⚡ learning (not asked)']
 
 

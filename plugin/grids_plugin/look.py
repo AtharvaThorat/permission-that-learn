@@ -142,8 +142,8 @@ def hero(verified_count, dataset_rows=0):
     delete. Plain code, no AI, under 1 ms.</span></div>
     <div class="layer"><b>🧠 laya-cybersec</b><span>A 322M-parameter model on the CPU decides Allow, Ask you or Block for
     each action the Wall lets through.</span></div>
-    <div class="layer"><b>🗂️ Permission memory</b><span>“Approve and remember” saves an exact permission, so the same
-    request does not ask you twice. Revoke it anytime.</span></div>
+    <div class="layer"><b>🗂️ Permission memory</b><span>“Approve and remember” teaches a learner: after 3 approvals of
+    one kind of request, new ones of that kind are approved without asking you.</span></div>
   </div>
   <div class="stats">{verified_count} verified ASK cases from the team{rows} · everything runs on AgentDojo's simulated
   Workspace, nothing real is touched</div>
@@ -156,7 +156,9 @@ HOW_IT_WORKS = """
 2. **The Wall** checks your fixed rules. A broken rule stops the action at once, with no AI involved.
 3. **laya-cybersec** reads your request, the action and the evidence, and answers **Allow**, **Ask you** or **Block**.
 4. **You decide** when it asks: *Approve*, *Approve and remember*, or *Reject*. Nothing runs until you choose.
-   With memory on, a remembered permission answers the same request next time, so you are not asked again.
+   **Approve and remember** teaches Atharva's learner: after 3 approvals of one kind of request (the same tool,
+   reaching the same kinds of people), a new request of that kind is approved without asking. One *Reject* stops
+   that kind.
 5. **The executor** rechecks the exact action and runs it, or refuses.
 
 The verified ASK cases are requests that say *“wait for my explicit confirmation”*. laya-cybersec reads each case's
@@ -232,7 +234,11 @@ def stage_html(session):
     memory = (row or {}).get('memory') or ''
     person = (result or {}).get('person')
     decision = (row or {}).get('decision')
-    if memory == 'answered by remembered permission':
+    if memory == 'approved by the learner':
+        steps.append(_step('You / memory', '⚡', 'pass', 'Learner approved it: you approved this kind before'))
+    elif memory == 'stopped by the learner':
+        steps.append(_step('You / memory', '✕', 'stop', 'Learner stopped it: you rejected this kind'))
+    elif memory == 'answered by remembered permission':
         steps.append(_step('You / memory', '✓', 'pass', 'Memory answered: you approved this before'))
     elif waiting:
         steps.append(_step('You / memory', '?', 'wait', 'Waiting for your decision'))
@@ -252,11 +258,13 @@ def stage_html(session):
                       'action. Use the buttons below.') if waiting else ('idle', 'The guard is checking this action.'))
     elif executed:
         how = ('your remembered permission' if memory == 'answered by remembered permission' else
+               'the learner (you approved this kind before)' if memory == 'approved by the learner' else
                'you' if person == 'approved' else 'the guard')
         steps.append(_step('Result', '✓', 'pass', 'Allowed' + (' (verified case: no tool actually runs)' if verified else ', it ran')))
         kind, say = 'allow', f'<b>Allowed by {how}.</b>'
     else:
-        who = ('you' if person == 'rejected' else 'the Wall' if wall_stopped else 'laya-cybersec' if decision == 'BLOCK'
+        who = ('you' if person == 'rejected' else 'the learner (you rejected this kind)' if memory == 'stopped by the learner'
+               else 'the Wall' if wall_stopped else 'laya-cybersec' if decision == 'BLOCK'
                else 'the guard')
         steps.append(_step('Result', '✕', 'stop', 'Not done'))
         kind, say = 'block', f'<b>Stopped by {who}.</b> Nothing ran.'
