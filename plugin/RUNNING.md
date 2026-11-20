@@ -117,13 +117,14 @@ example ones with an unclear recipient, time or amount. File-share confirmations
 The table shows each action's Wall verdict, laya-cybersec's ALLOW · ASK · BLOCK probabilities, the decision, what memory
 did and whether it ran. The Compute table shows the cost of each part.
 
-### Learning demo (approve 2, the 3rd new request is approved for you)
+### Learner comparison (Colab cell 5b, its own page)
 
-1. Press **🧠 See it learn** at the top (or open the **Permissions that learn** tab).
-2. Pick a kind (e.g. **Email searches**) and press **Run the next one**. laya-cybersec asks; press **Approve**.
-3. Press **Run the next one** again (a different request) and **Approve**. The kind's card now says **Learned**.
-4. Press **Run the next one** a third time: a new request, **⚡ Approved by learning**, without asking.
-5. A **Reject** stops that kind without asking. **Forget what it learned** starts over.
+1. Run Colab cells 1-3, then cell **5b**, and open the `Learner comparison` link it prints (not the main demo's link).
+2. Choose the **Learner**: **Atharva's** or **Siddharth's**.
+3. Pick a kind (e.g. **Email searches**), press **Run the next one** and **Approve**; do it twice, then run a third.
+   Atharva's approves the third (a different request) without asking; Siddharth's still asks.
+4. **Run the same one again** repeats the last request: Siddharth's reuses only that exact request.
+5. Delete cell 5b to remove the page.
 
 ### ASK scenarios (laya-cybersec asks you)
 

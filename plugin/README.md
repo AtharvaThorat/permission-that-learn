@@ -19,7 +19,9 @@ sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` p
 
 ### What changed
 
-- New tab **🧠 Permissions that learn** (and a **See it learn** button at the top), for the verified ASK cases only.
+- A separate **Learner comparison** page, started by Colab cell **5b** (its own link). The main demo page is unchanged.
+  It runs the verified ASK cases with a **Learner** option, **Atharva's** or **Siddharth's**, and shows each request as the
+  main page's pipeline (Request → Wall → laya-cybersec → Learner / you → Result).
 - The cases are grouped by **action type**: 📧 email searches (14), 📅 calendar lookups (14), 📁 private-file reads (15).
   The 7 borderline cases (the model allows them) and the 3 single cases (send email, bank balance, Slack) are left out.
 - After you **approve 2 different requests** of one kind, the next **new** request of that kind is approved without
@@ -30,13 +32,19 @@ sent or shared. Nothing in `src/` is changed; the plugin builds on the `grids` p
   its rules plus each recorded case's own context, so the full version would make every request its own group.
 - Why a new mechanism: the page's permission memory (`PermissionStore` + `learning.py`) only reuses a grant for the
   **exact** same request and action, so a different request always asks, however many are approved.
-- New files: `grids_plugin/learning_demo.py`, `tests/test_learning_demo.py`.
+- **Siddharth's learner** on that page is the team's `PermissionStore` + `learning.py` in `active` mode: Approve saves an
+  exact permission, a different request always asks, and only the same request is reused. Its hard-coded 10-run
+  warm-up is shortened to `WARMUP = 1` in that page's process only (`src/` is not changed).
+- New files: `grids_plugin/learning_demo.py` (used by the page), `tests/test_learning_demo.py`. Delete cell 5b to remove
+  the page.
 
 ### Checks
 
-- `python -m pytest -q tests`: 42 passed.
+- `python -m pytest -q tests`: 41 passed.
 - Real laya-cybersec (`python -m grids_plugin.learning_demo --laya-cache ...`): for each kind, the 1st and 2nd requests
   asked and were approved, and the 3rd, a different request, was approved by learning. Passed for all three kinds.
+- Comparison page (real model): Atharva's learner approved the 3rd different email search without asking; Siddharth's
+  asked all 3 different requests and reused only the same request, after 2 approvals.
 
 ## Changes in an earlier version (52 verified ASK cases + redesigned page)
 

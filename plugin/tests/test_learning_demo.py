@@ -1,9 +1,8 @@
 """Learning demo: two approvals of one kind, then a new request of that kind is approved without asking (the team's
-CountingMemory, keyed by action type). Fake laya-cybersec that answers ASK; the real model is checked by
-`python -m grids_plugin.learning_demo --laya-cache ...`."""
+CountingMemory, keyed by action type), as used by the Colab learner comparison page (cell 5b). Fake laya-cybersec
+that answers ASK; the real model is checked by `python -m grids_plugin.learning_demo --laya-cache ...`."""
 from support import FakeScanner
 
-from grids_plugin.app import build_app
 from grids_plugin.learning_demo import GROUPS, LearningDemo, group_cases, history_rows, progress_html, result_html
 from grids_plugin.session import VERIFIED_CASES, borderline
 
@@ -57,19 +56,3 @@ def test_a_model_allow_is_not_asked_or_learned():
     assert entry['by'] == 'laya' and entry['approved'] and demo.pending is None
     assert demo.status('get_file_by_id') == (0, 0, 'learning')
 
-
-def test_the_learning_tab_runs_on_the_page():
-    app = build_app(lambda *a, **k: None, scanner=ASKING)
-    fns = {f.fn.__name__: f.fn for f in app.fns.values() if getattr(f.fn, '__name__', None)}
-    assert [b for b in app.blocks.values() if getattr(b, 'label', None) == 'Kind of request']
-    for _ in range(2):   # asked twice, approved
-        demo, progress, card, rows, approve, reject, run_next, run_one = fns['learn_next_run'](
-            None if _ == 0 else demo, 'get_file_by_id')
-        assert demo.pending is not None and approve['interactive'] and not run_next['interactive']
-        demo.answer(True)
-    demo, progress, card, rows, approve, reject, run_next, run_one = fns['learn_next_run'](demo, 'get_file_by_id')
-    assert demo.pending is None and not approve['interactive'] and run_next['interactive']
-    assert 'Approved by learning' in card and len(rows) == 3
-    picked = group_cases()['get_file_by_id'][-1]
-    demo, *_ = fns['learn_case_run'](demo, picked)
-    assert demo.history[-1]['id'] == picked and demo.history[-1]['by'] == 'memory'
